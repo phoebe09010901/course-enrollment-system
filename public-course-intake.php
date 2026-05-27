@@ -888,7 +888,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
     }
 
     .form-screen {
-      width: min(980px, 100%);
+      width: min(1175px, 100%);
       margin: 0 auto;
       padding: 44px 22px 34px;
     }
