@@ -56,8 +56,8 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 最近一次執行結果：
 
-- tests：16
-- pass：15
+- tests：17
+- pass：16
 - fail：1
 
 本腳本專門測 LINE AI Worker 的 state machine、建檔 gate、欄位污染防護、照片階段與 confirmed payload。
@@ -67,10 +67,11 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 - `S14 真實 LINE 事故重放：Email 已給後不可再被判未填`
 - 結果：pass
 - 已驗證：貼空白表單後，空白 `LINE ID Link：` 或 `3. LINE ID Link：` 不會污染 `line_id_link`。
-- Worker 版本：`chat-c-contact-course-token-fix-2026-05-27-07`
+- Worker 版本：`chat-c-short-line-code-fix-2026-05-27-08`
 - `S16 contact gate 未完成時不可收課程形式`：pass
-- 新增 `S17 Email 在 LINE ID 補問來回中不可消失`：fail
-- 發現：短 LINE 代碼 `URZ8z2U` 會被誤判為姓名，導致系統只剩補問 LINE ID Link。
+- `S17 Email 在 LINE ID 補問來回中不可消失`：pass
+- 新增 `S18 明確要求更新 LINE ID Link 時不可改問 Email`：fail
+- 發現：客戶回 `我要更新LINE ID Link` 時，系統沒有進入 LINE ID Link 更新流程，反而回到課程類型提問。
 
 ## 測試結果摘要
 

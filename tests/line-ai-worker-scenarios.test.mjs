@@ -318,6 +318,20 @@ test('S17 Email 在 LINE ID 補問來回中不可消失，短代碼不可當姓�
   assert.equal(admissionCalls.length, 0);
 });
 
+test('S18 明確要求更新 LINE ID Link 時不可改問 Email', async () => {
+  resetNetworkCaptures();
+  const userId = 's18-update-line-link-intent';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, '姓名：鄭阿玲\nEmail：cat0704520@gmail.com\nLINE ID Link：@URZ8z2U');
+
+  const updateReply = await sendText(userId, '我要更新LINE ID Link');
+  assertIncludes(updateReply, 'LINE ID Link');
+  assertDoesNotInclude(updateReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(updateReply, '課程名稱');
+  assert.equal(admissionCalls.length, 0);
+});
+
 async function driveToSummaryWithNoPhotos(userId) {
   await sendText(userId, '我想開始');
   await sendText(userId, fullIntakeForm());

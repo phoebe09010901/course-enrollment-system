@@ -1,4 +1,4 @@
-const DEPLOY_VERSION = 'chat-c-contact-course-token-fix-2026-05-27-07';
+const DEPLOY_VERSION = 'chat-c-short-line-code-fix-2026-05-27-08';
 const intakeMemory = new Map();
 const handoffMemory = new Map();
 
@@ -486,6 +486,7 @@ function isPlausibleUserName(value, email) {
   if (!text || text === email) return false;
   if (isClearlyInvalidContactReply(text)) return false;
   if (isCourseAnswerToken(text)) return false;
+  if (isShortLineCodeLike(text)) return false;
   if (/@/.test(text) || /line|http|\.me|\.ee/i.test(text)) return false;
   if (text.length > 30) return false;
   return /[\p{Script=Han}A-Za-z]/u.test(text);
@@ -1761,6 +1762,11 @@ function looksLikeCourseFieldText(text) {
 function isCourseAnswerToken(text) {
   const value = String(text || '').trim();
   return /^(實體|線上|混合|畫畫|色鉛筆|水彩|手作|花藝|美甲|攝影|設計|瑜伽|烘焙|音樂|舞蹈|英文|程式|親子|證照)$/i.test(value);
+}
+
+function isShortLineCodeLike(text) {
+  const value = String(text || '').trim();
+  return /^[A-Za-z0-9_-]{5,20}$/.test(value) && /[A-Za-z]/.test(value) && /\d/.test(value);
 }
 
 function isGenericCourseName(text) {

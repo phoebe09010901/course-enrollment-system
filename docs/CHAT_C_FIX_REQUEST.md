@@ -12,13 +12,13 @@
 
 - `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 已存在。
 - `cloudflare-workers/workers.js` 已存在。
-- Worker 版本：`chat-c-contact-course-token-fix-2026-05-27-07`。
+- Worker 版本：`chat-c-short-line-code-fix-2026-05-27-08`。
 - `docs/TEMPLATE_REFERENCE.md` 尚未存在。
 - `docs/CLIENT_SELECTION_FLOW.md` 尚未存在。
 
-Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01 到 S16 通過，S17 失敗。
+Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。Chat C 修正後，`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01 到 S17 通過。
 
-目前新的 Chat C blocker 是 C-FIX-010。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
+目前 C-FIX-010 已由 Chat C 修正並納入 regression。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
 
 ## 目前回歸狀態
 
@@ -33,7 +33,20 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests
 | C-FIX-007 | resolved | S11 |
 | C-FIX-008 | resolved | S14 / S16 |
 | C-FIX-009 | resolved | S16 |
-| C-FIX-010 | open | S17 |
+| C-FIX-010 | fixed | S17 |
+| C-FIX-011 | open | S18 |
+
+### C-FIX-011
+
+- issue_id：C-FIX-011
+- 問題描述：客戶明確表示「我要更新 LINE ID Link」時，系統沒有進入 LINE ID Link 更新流程，反而可能要求補 Email 或回到其他欄位。
+- 出現在哪個流程階段：欄位更新意圖 / contact data edit intent
+- 目前錯誤行為：真實 LINE 對話中，客戶在聯絡資料已提供後回「我要更新LINE ID Link」，系統回覆「目前還需要先補 Email」。
+- 期望行為：偵測 `更新 / 修改 / 更改 / 改` + `LINE ID Link / LINE Link / LINE ID` 時，應提示客戶提供新的 LINE ID Link，且不得清空或重問已 valid 的 Email。
+- 建議修正話術或規則：新增 contact field edit intent guard。若文字命中 LINE Link 更新意圖，設定待更新欄位或直接回覆：「可以，請貼新的 LINE ID Link，我會幫你更新。」下一則若為 line.me / lin.ee / @id，更新 `line_id_link`。
+- 是否影響建檔：是
+- 是否影響客戶體驗：是
+- 優先級：high
 
 ### C-FIX-010
 
@@ -46,6 +59,7 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests
 - 是否影響建檔：是
 - 是否影響客戶體驗：是
 - 優先級：high
+- Chat C 修正狀態：已修正於 Worker 版本 `chat-c-short-line-code-fix-2026-05-27-08`；短英數 LINE 代碼不再通過 `user_name` 推測，S17 regression 通過。
 
 ## Chat C 修正項目
 

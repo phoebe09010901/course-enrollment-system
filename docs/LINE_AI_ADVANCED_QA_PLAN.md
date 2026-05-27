@@ -105,6 +105,7 @@
 | ADV-009 | 空白 LINE ID Link label 污染 | high | `LINE ID Link：` 不可寫入 `line_id_link`，不可讓 LINE link gate 通過。 |
 | ADV-010 | contact gate 未完成時回答課程形式 | high | `實體`、`線上`、`混合` 不可在缺姓名 / LINE ID Link 時寫入 `course_format` 或推進到課程流程。 |
 | ADV-011 | Email 在 LINE ID 補問來回中消失 | high | 重複提供 Email 與 LINE 相關資訊時，已驗證 Email 不可被清空；短 LINE 代碼不可被當成姓名。 |
+| ADV-012 | 欄位更新意圖被導到錯誤欄位 | high | 客戶說「我要更新 LINE ID Link」時，應進入 LINE ID Link 更新，不可改問 Email 或課程資料。 |
 
 ## 本輪新增檢測結果
 
@@ -116,15 +117,16 @@
 
 - `S14` pass：貼空白表單後，空白 `LINE ID Link：` / `3. LINE ID Link：` 不會污染 `line_id_link`。
 - `S15` pass：contact 完成後問「課程類型是什麼」可正確回覆欄位說明，且下一輪補 `課程類型：色鉛筆` 後才前進。
-- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S16 通過，S17 失敗。
+- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S17 通過，S18 失敗。
 - `S16` pass：contact gate 未完成時，客戶回 `實體` 不會污染 `user_name`。
-- `S17` fail：短 LINE 代碼 `URZ8z2U` 會被誤判為姓名，導致系統只剩補問 LINE ID Link。
+- `S17` pass：短 LINE 代碼 `URZ8z2U` 不會污染 `user_name`，Email 在 LINE ID 補問來回中不會消失。
+- `S18` fail：客戶回 `我要更新LINE ID Link` 時，系統沒有進入 LINE ID Link 更新流程，反而回到課程類型提問。
 
 判斷：
 
 - 原問題是 state machine / parser bug。
 - 問題不在 Email regex，而在空白 label 與 `extractLineLink()` / `cleanLabeledValue()` 的解析防護不足。
-- 空白 label 污染與課程形式詞污染目前已修正，但 S17 顯示 contact 階段仍會把短英數 LINE 代碼誤猜成姓名，需交 Chat C 修正。
+- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染目前已修正；S18 顯示欄位更新意圖尚未被 state machine 正確攔截，需交 Chat C 修正。
 
 ## 回報格式
 
