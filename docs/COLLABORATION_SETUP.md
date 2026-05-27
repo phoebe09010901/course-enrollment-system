@@ -15,17 +15,20 @@ AI Agent 在開始任何工作前，應先閱讀：
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
 5. `docs/TEMPLATE_REFERENCE.md`
-6. `styles/course-brand-template-v1.json`
-7. `styles/layout-rules/landing-page.md`
-8. `styles/typography/course-brand.md`
-9. `styles/motion/animation-style.md`
-10. `styles/tokens/course-brand.css`
+6. `docs/CLIENT_SELECTION_FLOW.md`
+7. `styles/course-brand-template-v1.json`
+8. `styles/layout-rules/landing-page.md`
+9. `styles/typography/course-brand.md`
+10. `styles/motion/animation-style.md`
+11. `styles/tokens/course-brand.css`
 
 ## AI Agent 工作規則
 
 - 先讀 repo，再做判斷。
 - 不要根據檔名或使用者提到的方向，假設功能已存在。
 - 若目錄不存在，應明確寫「尚未建立」。
+- 所有招生頁新樣板不得直接進入 HTML/CSS 改版；必須先由 Chat A 使用 Canva 製作視覺樣板草案，確認方向後才交給 Chat B / Codex 前端實作。
+- 目前優先問題是樣板美感不足，不是功能不足；未完成 Canva 視覺確認前，應停止直接前端改版。
 - 對 `course-brand-template-v1` 的前端工作應優先沿用 `styles/` 中既有 foundation，不重新發明風格。
 - 本 front-end chat 範圍限於 HTML、CSS、JS、responsive、hero、section composition 與 animation。
 - 不得在本範圍內新增 SQL、webhook、backend 或 form schema。
@@ -44,6 +47,8 @@ Chat A 負責維護：
 - `docs/TEMPLATE_REFERENCE.md`
 - `styles/`
 - 與設計規範、版型資料庫、template selection 相關的長期規則
+- Canva 樣板製作前的 template pairing 與視覺方向規格
+- 三款樣板提案流程與客戶選版交接規格
 
 Chat A 的工作重點：
 
@@ -51,16 +56,22 @@ Chat A 的工作重點：
 - 維護 10 份網站風格分析報告形成的 Template Reference System。
 - 定義哪些規則是所有招生頁都必須遵守。
 - 避免把單一模板細節塞進 `STYLE_SYSTEM.md`；單一模板細節應放在 `TEMPLATE_REFERENCE.md`。
+- 使用 Canva 製作樣板前，先指定 `primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`。
+- 為新課程產生三款樣板時，先依 `docs/CLIENT_SELECTION_FLOW.md` 從 `docs/TEMPLATE_REFERENCE.md` 選出三組 proposal。
+- Canva 樣板若被選為正式方向，需回寫 `docs/PROJECT_STATUS.md`。
 
 ### Chat B：前端實作 / 招生頁重構
 
 Chat B 負責依照 Chat A 維護的規範實作前端：
 
+- 在新招生頁樣板尚未完成 Canva 視覺草案前，Chat B 不得直接進行 HTML/CSS 改版。
 - 產生或重構招生頁前，必須先查詢 `docs/TEMPLATE_REFERENCE.md`。
 - 產生或重構招生頁前，必須指定 primary `template_id`。
 - 可指定一個 `secondary_template_id` 作為輔助風格。
 - 不可以在未查詢 `docs/TEMPLATE_REFERENCE.md` 的情況下自行發明新版型。
 - 不可以違反 `docs/STYLE_SYSTEM.md` 的全域規則。
+- 如果 Chat A 已完成 Canva 樣板，Chat B 必須依照 Canva 樣板與 template id 實作，不可自行改成另一種視覺方向。
+- Chat B / Codex 不可自行跳回舊版 sunshine-golden-pencil 的視覺邏輯，除非 Chat A 明確指定。
 
 Chat B 宣告格式：
 
@@ -70,6 +81,33 @@ secondary_template_id: TPL-005 Interior Design
 ```
 
 如果使用者沒有指定 template，Chat B 應先根據課程類型、產業、品牌調性從 `docs/TEMPLATE_REFERENCE.md` 提出候選，而不是直接實作。
+
+### 三款樣板提案流程
+
+Chat A 為新課程產生三款樣板時，必須遵守 `docs/CLIENT_SELECTION_FLOW.md`：
+
+- 三款提案必須來自 `docs/TEMPLATE_REFERENCE.md` 的 10 套樣板資料或合理組合。
+- 每款提案都要保留 `proposal_id`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、適合原因與視覺方向。
+- 客戶看到簡化後的方向名稱；內部紀錄必須保留 template id 與 source URL。
+- 若要新增第 11 套樣板，必須先更新 `docs/TEMPLATE_REFERENCE.md`。
+
+### Canva 到前端交接內容
+
+Chat A 完成 Canva 樣板後，必須交接給 Chat B：
+
+- `selected_primary_template_id`
+- `selected_secondary_template_id`
+- `source_url`
+- `secondary_source_url`
+- Canva 樣板連結或截圖
+- Hero 結構說明
+- About 結構說明
+- Gallery 結構說明
+- CTA 結構說明
+- 字體規則
+- 色彩規則
+- 圖片比例規則
+- 禁止事項
 
 ## 專案開啟與結束口令
 

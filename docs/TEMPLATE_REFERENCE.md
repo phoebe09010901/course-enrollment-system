@@ -43,6 +43,169 @@ Chat B 或 Codex 在產生、重構或調整招生頁前，必須先從本文件
 - 若 template 的桌機字級偏大，必須依 `STYLE_SYSTEM.md` 下修。
 - 不新增獨立 Contact / 聯絡我們 / 快速諮詢區塊。
 
+## Template Reference Pairing Rules
+
+這 10 組 pairing 是預設配對。之後可以依實際課程調整，但不可以沒有 `template_id` 就開始做 Canva 或前端。
+
+### Pairing 使用規則
+
+- 每次製作 Canva 樣板前，Chat A 必須先指定：
+  - `primary_template_id`
+  - `secondary_template_id`
+  - `source_url`
+  - `secondary_source_url`
+- `primary_template_id` 代表主要版型骨架，決定 Hero 架構、主要排版節奏、頁面氣質與圖片使用方式。
+- `secondary_template_id` 代表輔助視覺語言，用來補強作品展示、色彩比例、CTA 形式、圖片裁切與留白方式。
+- `source_url` 與 `secondary_source_url` 必須保留，方便 Chat A 回看原始網站，也方便 Chat B / Codex 對照設計來源，避免 AI 憑空想像樣板。
+- Chat A 使用 Canva 製作樣板時，必須根據 primary template 與 secondary template 進行視覺草案，不可以未指定模板就自由設計。
+- Chat B / Codex 接續前端實作時，必須依照 Chat A 輸出的 Canva 樣板與 `template_id`，不可以自行改成另一種視覺方向。
+- 如果某一版 Canva 樣板被選為正式方向，需回寫到 `docs/PROJECT_STATUS.md`，並標記：
+  - `selected_template_id`
+  - `selected_secondary_template_id`
+  - `selected_canva_direction`
+  - 適用課程類型
+  - 是否可納入未來共用樣板
+
+### 給 Chat B / Codex 的交接內容
+
+當 Chat A 完成 Canva 樣板後，必須輸出給 Chat B：
+
+- `selected_primary_template_id`
+- `selected_secondary_template_id`
+- `source_url`
+- `secondary_source_url`
+- Canva 樣板連結或截圖
+- Hero 結構說明
+- About 結構說明
+- Gallery 結構說明
+- CTA 結構說明
+- 字體規則
+- 色彩規則
+- 圖片比例規則
+- 禁止事項
+
+Chat B / Codex 只能依照這份交接規格進行前端，不可自行跳回舊版 sunshine-golden-pencil 的視覺邏輯。
+
+### TPL-001 LifeTime Pairing
+
+- `primary_template_id`: `TPL-001`
+- `primary_template_name`: `LifeTime`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-23871-motivation-speakers/index.html
+- `secondary_template_id`: `TPL-007`
+- `secondary_template_name`: `Furni`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62272-furni/index.html
+- `usage`: 適合手作課、色鉛課、水彩課、iPad 繪圖課、花藝課、畫室、藝術工作室、個人品牌、招生頁。
+- `layout_direction`: 小工作室感、清楚、輕鬆、簡約、左文右圖、留白型、圖片大、區塊清楚、不擁擠。
+- `pairing_reason`: LifeTime 適合作為課程招生頁主結構，Furni 可補強日系簡約、作品展示與商品感排版。
+
+### TPL-002 Aparto Pairing
+
+- `primary_template_id`: `TPL-002`
+- `primary_template_name`: `Aparto`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-15821-real-estate/index.html
+- `secondary_template_id`: `TPL-004`
+- `secondary_template_name`: `Creek Construction`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-13732-construction/index-variant-2.html
+- `usage`: 適合花藝課、場地出租、畫室、品牌網站、招生頁、藝術工作室、個人品牌。
+- `layout_direction`: 高級、舒服、時尚、自然、有空氣感、品牌形象型、中央文字、大圖背景、強烈對比。
+- `pairing_reason`: Aparto 有高級空間感與品牌形象，Creek Construction 可補強大圖氣勢與專業感。
+
+### TPL-003 Quart Pairing
+
+- `primary_template_id`: `TPL-003`
+- `primary_template_name`: `Quart`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-13850-business/index.html
+- `secondary_template_id`: `TPL-009`
+- `secondary_template_name`: `Monstroid2 Commercial`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62267-default/home-commercial.html
+- `usage`: 適合花藝課、iPad 繪圖課、手作課、品牌網站、招生頁、藝術工作室、個人品牌。
+- `layout_direction`: 專業、熱情、有品牌感、資訊清楚、中央文字、輪播、卡片式、強烈對比。
+- `pairing_reason`: Quart 適合資訊清楚型招生頁，Monstroid2 Commercial 可補強通用品牌站架構與展示完整度。
+
+### TPL-004 Creek Construction Pairing
+
+- `primary_template_id`: `TPL-004`
+- `primary_template_name`: `Creek Construction`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-13732-construction/index-variant-2.html
+- `secondary_template_id`: `TPL-002`
+- `secondary_template_name`: `Aparto`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-15821-real-estate/index.html
+- `usage`: 適合花藝課、iPad 繪圖課、畫室、品牌網站、招生頁、藝術工作室、個人品牌、銀飾課。
+- `layout_direction`: 大圖滿版、形象清楚、專業、有活力、黃色點綴、雜誌編排、區塊距離大。
+- `pairing_reason`: Creek Construction 適合需要氣勢的大圖主視覺，Aparto 可補強高級感與空間留白。
+
+### TPL-005 Interior Design Pairing
+
+- `primary_template_id`: `TPL-005`
+- `primary_template_name`: `Interior Design`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-13716-interior/index-variant-2.html
+- `secondary_template_id`: `TPL-007`
+- `secondary_template_name`: `Furni`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62272-furni/index.html
+- `usage`: 適合場地出租、手繪課、攝影、水彩課、鉛筆素描課、iPad 繪圖課、手作課、品牌網站、招生頁、藝術工作室、個人品牌。
+- `layout_direction`: 高級、舒服、日系、簡約、有空氣感、清爽、照片顏色協調、大圖滿版。
+- `pairing_reason`: Interior Design 適合清爽高級藝術課，Furni 可補強作品展示、商品感與日系留白。
+
+### TPL-006 Resto Pairing
+
+- `primary_template_id`: `TPL-006`
+- `primary_template_name`: `Resto`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62276-resto/index.html
+- `secondary_template_id`: `TPL-008`
+- `secondary_template_name`: `Fashion Blog`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62273-fashion-blog/index.html
+- `usage`: 適合美食、食品攝影、咖啡館、生活風格課程、手作課、花藝課、iPad 繪圖課、品牌網站、招生頁、藝術工作室、個人品牌。
+- `layout_direction`: 高級、有品牌感、有溫度、有藝術感、美式、故事感、黑白極簡、大圖滿版、中央文字。
+- `pairing_reason`: Resto 適合有故事感與品牌溫度的課程，Fashion Blog 可補強雜誌感與圖片主導的視覺節奏。
+
+### TPL-007 Furni Pairing
+
+- `primary_template_id`: `TPL-007`
+- `primary_template_name`: `Furni`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62272-furni/index.html
+- `secondary_template_id`: `TPL-005`
+- `secondary_template_name`: `Interior Design`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/prod-13716-interior/index-variant-2.html
+- `usage`: 適合傢俱、藝術品、作品、商品、花藝課、水彩課、鉛筆素描課、iPad 繪圖課、手作課、美甲、畫室、品牌網站、招生頁、藝術工作室、個人品牌。
+- `layout_direction`: 日系、簡約、高級、舒服、有空氣感、商品作品展示、左文右圖、留白型。
+- `pairing_reason`: Furni 適合以作品展示為核心的招生頁，Interior Design 可補強空間感、清爽感與高級藝術課氣質。
+
+### TPL-008 Fashion Blog Pairing
+
+- `primary_template_id`: `TPL-008`
+- `primary_template_name`: `Fashion Blog`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62273-fashion-blog/index.html
+- `secondary_template_id`: `TPL-007`
+- `secondary_template_name`: `Furni`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62272-furni/index.html
+- `usage`: 適合美髮、藝術照、人像攝影、彩妝、服裝、美甲、鉛筆素描課、畫室、品牌網站、招生頁、藝術工作室、個人品牌。
+- `layout_direction`: 時尚、雜誌感、黑白極簡、品牌感、藝術感、大圖滿版、輪播、留白型。
+- `pairing_reason`: Fashion Blog 適合雜誌型作品集招生頁，Furni 可補強作品展示秩序與日系簡約感。
+
+### TPL-009 Monstroid2 Commercial Pairing
+
+- `primary_template_id`: `TPL-009`
+- `primary_template_name`: `Monstroid2 Commercial`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62267-default/home-commercial.html
+- `secondary_template_id`: `TPL-010`
+- `secondary_template_name`: `Monstroid2 Landing`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/landing/
+- `usage`: 適合 iPad 繪圖課、品牌網站、招生頁、個人品牌。
+- `layout_direction`: 高級、品牌感、簡約、空氣感、通用品牌站、大圖滿版、輪播、品牌形象型。
+- `pairing_reason`: Monstroid2 Commercial 適合通用品牌展示架構，Monstroid2 Landing 可補強 landing page 節奏與快速轉換導向。
+
+### TPL-010 Monstroid2 Landing Pairing
+
+- `primary_template_id`: `TPL-010`
+- `primary_template_name`: `Monstroid2 Landing`
+- `source_url`: https://ld-wt73.template-help.com/wt_62267_v8/landing/
+- `secondary_template_id`: `TPL-009`
+- `secondary_template_name`: `Monstroid2 Commercial`
+- `secondary_source_url`: https://ld-wt73.template-help.com/wt_62267_v8/62267-default/home-commercial.html
+- `usage`: 適合品牌網站、招生頁、個人品牌、通用 landing page。
+- `layout_direction`: 療癒、品牌感、舒服、簡約、空氣感、大圖滿版、小影片、品牌形象型。
+- `pairing_reason`: Monstroid2 Landing 適合快速建立通用 landing page，Monstroid2 Commercial 可補強品牌站架構與完整展示邏輯。
+
 ## TPL-001 LifeTime
 
 - `template_id`: `TPL-001`

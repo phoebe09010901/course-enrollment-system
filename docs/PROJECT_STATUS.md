@@ -8,6 +8,8 @@
 
 目前 `docs/TEMPLATE_REFERENCE.md` 收錄 10 份網站風格分析報告，作為 Chat B 與 Codex 產生招生頁時的正式版型依據，不是一般靈感參考。
 
+目前流程已正式調整：所有招生頁新樣板不得直接由 Codex 進入 HTML/CSS，必須先由 Chat A 使用 Canva 製作視覺樣板草案，確認方向後才交給 Chat B / Codex 前端實作。
+
 ## 已確認存在
 
 - `.git`
@@ -17,6 +19,7 @@
 - `docs/STYLE_SYSTEM.md`
 - `docs/COLLABORATION_SETUP.md`
 - `docs/TEMPLATE_REFERENCE.md`
+- `docs/CLIENT_SELECTION_FLOW.md`
 - `styles/README.md`
 - `styles/course-brand-template-v1.json`
 - `styles/tokens/course-brand.css`
@@ -56,7 +59,11 @@
 - 補充 course-brand-template-v1 全域設計規則：中文優先、桌機字級下修、不新增獨立聯絡區塊。
 - 補充 Typography / 字型系統全域規範：Google Fonts 可用但需由 Chat A 統一定義，預設 `Noto Serif TC` + `Noto Sans TC`。
 - 建立 `docs/TEMPLATE_REFERENCE.md`，整理 10 份網站風格分析報告為正式版型參考資料庫。
+- 補充 10 組 Template Reference Pairing Rules，規範 Canva 樣板製作前的 primary / secondary template 配對。
+- 建立 `docs/CLIENT_SELECTION_FLOW.md`，規範三款樣板提案必須從 10 套 template reference 中挑選。
 - 補充 Chat A / Chat B 合作規則：Chat B 產生招生頁前必須先指定 `template_id`。
+- 補充 Canva 樣板到 Chat B / Codex 前端實作的交接欄位與限制。
+- 正式停止新樣板直接前端改版流程，改為先 Canva 視覺確認，再進入 Chat B / Codex 前端實作。
 
 ## 尚未完成
 
@@ -64,6 +71,9 @@
 - 尚未建立 style-selector-skill 的 skill 目錄與規格。
 - 尚未將最新全域設計規則與 Typography / 字型系統同步到 `styles/tokens/course-brand.css` 與 `styles/course-brand-template-v1.json`。
 - 尚未將 `docs/TEMPLATE_REFERENCE.md` 轉成可機讀 JSON 或 selector skill。
+- 尚未將 `docs/CLIENT_SELECTION_FLOW.md` 轉成自動選版流程或表單化輸出。
+- 尚未選定任何正式 Canva 方向，尚無 `selected_template_id`、`selected_secondary_template_id` 或 `selected_canva_direction`。
+- 尚未建立第一版 Canva 視覺樣板草案。
 - 尚未以真實課程案例替換模板示範文案。
 - 尚未建立正式圖片、攝影或生成圖資產流程。
 - 尚未建立任何測試、CI 或部署流程。
