@@ -6,7 +6,7 @@
 
 ## 目前協作基準
 
-目前 repo 是初始化狀態。除 `docs/` 以外，尚無應用程式碼或專案目錄。
+目前 repo 仍屬早期 MVP 規格與 Worker 驗證階段，但已包含 Cloudflare Worker 參考實作與可重跑 Node 測試。尚未建立正式資料庫、後台、前端預覽頁或完整部署流水線。
 
 AI Agent 在開始任何工作前，應先閱讀：
 
@@ -14,6 +14,12 @@ AI Agent 在開始任何工作前，應先閱讀：
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
+5. `docs/AI_WORKER_WORKFLOW.md`
+6. `docs/BACKEND_AUTOMATION_FLOW.md`
+7. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+8. `docs/LINE_AI_WORKER_TEST_SCENARIOS.md`
+9. `docs/LINE_AI_ADVANCED_QA_PLAN.md`
+10. `docs/HANDOFF_FOR_NEW_COMPUTER.md`
 
 ## AI Agent 工作規則
 
@@ -43,6 +49,28 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 ```
 
 如果目錄不存在，這是重要狀態，不是錯誤。
+
+## 新電腦協作流程
+
+建議新電腦先使用 GitHub remote：
+
+```bash
+git clone git@github.com:phoebe09010901/course-enrollment-system.git
+cd course-enrollment-system
+git fetch --all
+git switch codex/collaboration-handoff
+node --test tests/line-ai-worker-scenarios.test.mjs
+```
+
+若要開始新任務，從最新基準開分支：
+
+```bash
+git switch main
+git pull origin main
+git switch -c codex/<task-name>
+```
+
+目前若要接續本輪交接內容，請先閱讀 `docs/HANDOFF_FOR_NEW_COMPUTER.md`。
 
 ## 文件更新規則
 
@@ -102,3 +130,17 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 - 測試與驗證標準。
 - 文件審查流程。
 - style/template/skill 的版本管理規則。
+
+## 目前已採用的臨時規則
+
+- 分支使用 `codex/<task-name>`。
+- LINE AI Worker 修改後必跑：
+
+```bash
+node --test tests/line-ai-worker-scenarios.test.mjs
+```
+
+- 測試或 LINE 實測發現問題時，先更新：
+  - `docs/LINE_AI_TEST_REPORT.md`
+  - `docs/CHAT_C_FIX_REQUEST.md`
+- 新增主要目錄或狀態改變時，同步更新 `docs/PROJECT_STATUS.md`。

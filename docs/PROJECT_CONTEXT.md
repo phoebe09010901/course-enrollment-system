@@ -4,7 +4,9 @@
 
 本專案目前命名為「課程招生 - 系統」。依照目前 repo 內可見資訊，專案目標與產品功能尚未落地成程式碼或文件內容。
 
-目前可推定的工作方向是建立一套支援「課程招生」相關素材或系統的基礎架構，並逐步整理：
+目前工作方向是建立一套支援「課程招生」從 LINE AI 客服收件、資料整理、樣板提案、預覽通知到正式頁製作的系統。現階段重點先落在 LINE AI 客服 / AI Worker 的資料收集流程與測試。
+
+專案會逐步整理：
 
 - 美術風格系統
 - style-selector-skill
@@ -14,11 +16,11 @@
 - admin 管理介面
 - worker 背景工作
 
-以上項目目前都尚未在 repo 中出現實體檔案，因此本文件只記錄專案世界觀與待建立的邊界，不將它們描述為已完成功能。
+其中 Cloudflare Worker 參考實作與 LINE AI 測試已存在；其他前台、後台、資料庫、模板與正式部署流程仍待建立。
 
 ## 目前 repo 實際狀態
 
-截至本文件建立時，repo 內只有 git 初始狀態與本次新增的 `docs/` 文件。以下目錄目前不存在：
+截至目前，repo 仍處於早期 MVP 階段。以下目錄目前不存在：
 
 - `styles/`
 - `skills/`
@@ -26,14 +28,28 @@
 - `public/`
 - `line-webhook/`
 - `admin/`
-- `worker/`
 
-以下文件原先未在目前 worktree 中出現，本次已建立並填入初始內容：
+以下目錄 / 檔案已建立：
+
+- `worker/`
+- `cloudflare-workers/`
+- `tests/`
+
+目前已建立的專案記憶與測試文件：
 
 - `docs/PROJECT_CONTEXT.md`
 - `docs/PROJECT_STATUS.md`
 - `docs/STYLE_SYSTEM.md`
 - `docs/COLLABORATION_SETUP.md`
+- `docs/AI_WORKER_WORKFLOW.md`
+- `docs/BACKEND_AUTOMATION_FLOW.md`
+- `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+- `docs/LINE_AI_WORKER_TEST_SCENARIOS.md`
+- `docs/LINE_AI_ADVANCED_QA_PLAN.md`
+- `docs/LINE_AI_TEST_REPORT.md`
+- `docs/CHAT_C_FIX_REQUEST.md`
+- `docs/HANDOFF_FOR_NEW_COMPUTER.md`
+- `worker/README.md`
 
 ## 專案世界觀
 
@@ -72,8 +88,14 @@
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
+5. `docs/AI_WORKER_WORKFLOW.md`
+6. `docs/BACKEND_AUTOMATION_FLOW.md`
+7. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+8. `docs/LINE_AI_WORKER_TEST_SCENARIOS.md`
+9. `docs/LINE_AI_ADVANCED_QA_PLAN.md`
+10. `docs/HANDOFF_FOR_NEW_COMPUTER.md`
 
-若未來新增實作目錄，接著再讀：
+若未來新增其他實作目錄，接著再讀：
 
 1. `styles/`
 2. `skills/`
