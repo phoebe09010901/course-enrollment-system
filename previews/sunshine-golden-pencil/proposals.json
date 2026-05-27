@@ -1,0 +1,74 @@
+{
+  "course_project": {
+    "project_id": 2,
+    "project_slug": "sunshine-golden-pencil",
+    "course_title": "陽光小黃金色鉛筆課程",
+    "course_subtitle": "用色鉛筆描繪溫暖毛流與神情，完成屬於你的寵物作品",
+    "location": "中壢國泰街 130 號",
+    "time": "下午 1 點到 5 點",
+    "price": "學費 1500 元",
+    "seat_note": "名額有限，請以報名與付款完成順序為準",
+    "payment_note": "一律網路報名，收到通知後完成付款才保留名額。"
+  },
+  "default_expires_at": "2026-06-30T23:59:59+08:00",
+  "assets": {
+    "hero_work": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/hero-work.jpg",
+    "teacher": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/teacher-brand.jpg",
+    "process_01": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/process-01.jpg",
+    "process_02": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/process-02.jpg",
+    "process_03": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/process-03.jpg",
+    "about_work": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/about-work.jpg",
+    "work_duck": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/work-duck.jpg",
+    "work_box": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/work-box.jpg",
+    "work_costume": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/work-costume.jpg",
+    "work_gray": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/work-gray.jpg",
+    "work_collage": "https://ftm.com.tw/demo/admission-system/public/assets/images/courses/sunshine-golden-pencil/brand/work-collage.jpg"
+  },
+  "proposals": [
+    {
+      "proposal_id": "A",
+      "proposal_code": "SGP-PREVIEW-A",
+      "proposal_name": "清爽藝術風",
+      "primary_template_id": "TPL-005",
+      "primary_template_name": "Interior Design",
+      "secondary_template_id": "TPL-007",
+      "secondary_template_name": "Furni",
+      "canva_url": "CHAT_A_CANVA_URL_A_REQUIRED",
+      "preview_url": "/previews/sunshine-golden-pencil/proposal.html?proposal_id=A&expires_at=2026-06-30T23%3A59%3A59%2B08%3A00",
+      "preview_status": "active",
+      "selection_status": "pending",
+      "direction": "清爽留白、大圖滿版、照片色調協調、作品展示有秩序。",
+      "variant": "air"
+    },
+    {
+      "proposal_id": "B",
+      "proposal_code": "SGP-PREVIEW-B",
+      "proposal_name": "高級品牌風",
+      "primary_template_id": "TPL-002",
+      "primary_template_name": "Aparto",
+      "secondary_template_id": "TPL-004",
+      "secondary_template_name": "Creek Construction",
+      "canva_url": "CHAT_A_CANVA_URL_B_REQUIRED",
+      "preview_url": "/previews/sunshine-golden-pencil/proposal.html?proposal_id=B&expires_at=2026-06-30T23%3A59%3A59%2B08%3A00",
+      "preview_status": "active",
+      "selection_status": "pending",
+      "direction": "中央文字、大圖背景、空間感、強形象、高級留白。",
+      "variant": "brand"
+    },
+    {
+      "proposal_id": "C",
+      "proposal_code": "SGP-PREVIEW-C",
+      "proposal_name": "雜誌作品集風",
+      "primary_template_id": "TPL-008",
+      "primary_template_name": "Fashion Blog",
+      "secondary_template_id": "TPL-007",
+      "secondary_template_name": "Furni",
+      "canva_url": "CHAT_A_CANVA_URL_C_REQUIRED",
+      "preview_url": "/previews/sunshine-golden-pencil/proposal.html?proposal_id=C&expires_at=2026-06-30T23%3A59%3A59%2B08%3A00",
+      "preview_status": "active",
+      "selection_status": "pending",
+      "direction": "雜誌感、大圖滿版、作品展示、黑白極簡、個人風格。",
+      "variant": "folio"
+    }
+  ]
+}

@@ -14,7 +14,7 @@
 - admin 管理介面
 - worker 背景工作
 
-其中 `styles/` 目前保留 design foundation；`templates/` 內有三個候選視覺方向稿，尚未確認為正式模板。其他系統性功能仍是規劃方向，不得描述為已完成。
+其中 `styles/` 目前保留 design foundation；`templates/` 內有三個候選視覺方向稿，`previews/` 內有三款 proposal preview prototype，尚未確認為正式模板。其他系統性功能仍是規劃方向，不得描述為已完成。
 
 ## 目前 repo 實際狀態
 
@@ -23,6 +23,7 @@
 - `docs/`
 - `styles/`
 - `templates/`
+- `previews/`
 
 以下目錄目前不存在：
 
@@ -45,6 +46,9 @@
 - `templates/sunshine-golden-pencil-alt-a/index.html`
 - `templates/sunshine-golden-pencil-alt-b/index.html`
 - `templates/sunshine-golden-pencil-alt-c/index.html`
+- `previews/sunshine-golden-pencil/index.html`
+- `previews/sunshine-golden-pencil/proposal.html`
+- `previews/sunshine-golden-pencil/proposals.json`
 
 ## 專案世界觀
 
@@ -74,6 +78,12 @@
 預期用來提供穩定的招生素材結構、品牌 token、版型規則與可重複產出的模板。
 
 目前已建立三個候選視覺方向稿：日系工作室型錄、暗色策展導覽、雜誌索引作品。這三個範例用於確認方向，尚未定稿為可沿用模板。已刪除的 v1/v2 不應被視為參考或基準。
+
+### proposal preview
+
+`previews/sunshine-golden-pencil/` 是客戶選版用 preview prototype，不是正式上線頁。它用 `proposal_id=A|B|C` 渲染三款預覽，並透過 `expires_at`、`preview_status`、`selection_status` 控制逾期與選定狀態。
+
+目前 preview 使用靜態資料模擬 `template_proposals`，尚未連接資料庫或後台。真實 Chat A Canva URL 尚未寫入。
 
 ## AI Agent 閱讀順序
 

@@ -8,7 +8,7 @@
 
 目前 `docs/TEMPLATE_REFERENCE.md` 收錄 10 份網站風格分析報告，作為 Chat B 與 Codex 產生招生頁時的正式版型依據，不是一般靈感參考。
 
-目前 repo 有三個 sunshine-golden-pencil alternative examples，供確認視覺方向；尚未選定正式模板。正式定稿前仍應依 `docs/CLIENT_SELECTION_FLOW.md` 或使用者確認的方向進行。
+目前 repo 有三個 sunshine-golden-pencil alternative examples，供確認視覺方向；另已建立 `previews/sunshine-golden-pencil/` 作為三款 proposal preview prototype。正式定稿前仍應依 `docs/CLIENT_SELECTION_FLOW.md` 或使用者確認的方向進行。
 
 ## 已確認存在
 
@@ -34,6 +34,13 @@
 - `templates/sunshine-golden-pencil-alt-c/index.html`
 - `templates/sunshine-golden-pencil-alt-c/css/page.css`
 - `templates/sunshine-golden-pencil-alt-c/js/page.js`
+- `previews/sunshine-golden-pencil/index.html`
+- `previews/sunshine-golden-pencil/proposal.html`
+- `previews/sunshine-golden-pencil/proposals.json`
+- `previews/sunshine-golden-pencil/css/preview.css`
+- `previews/sunshine-golden-pencil/js/proposals.js`
+- `previews/sunshine-golden-pencil/js/index.js`
+- `previews/sunshine-golden-pencil/js/proposal.js`
 
 ## 目錄狀態
 
@@ -43,6 +50,7 @@
 | `styles/` | 已建立 frontend-ready foundation | 已有 CSS tokens、Hero、typography、spacing、motion、layout rules，並已被模板引用 |
 | `skills/` | 尚未建立 | 尚無 style-selector-skill 或其他 AI skill |
 | `templates/` | 已有三個候選範例 | `alt-a`、`alt-b`、`alt-c` 是視覺方向稿，尚未確認為正式模板 |
+| `previews/` | 已有三款 preview prototype | `sunshine-golden-pencil` A/B/C 預覽支援 `proposal_id`、`expires_at`、`preview_status`、`selection_status` |
 | `public/` | 尚未建立 | 尚無公開素材、圖片、靜態資源 |
 | `line-webhook/` | 尚未建立 | 尚無 LINE webhook 程式碼或設定 |
 | `admin/` | 尚未建立 | 尚無管理介面 |
@@ -67,6 +75,9 @@
 - 正式停止新樣板直接前端改版流程，改為先 Canva 視覺確認，再進入 Chat B / Codex 前端實作。
 - 刪除先前建立的 v1/v2 前端樣板，避免後續沿用不符合期待的設計方向。
 - 新增三個 sunshine-golden-pencil alternative examples：日系工作室型錄、暗色策展導覽、雜誌索引作品。
+- 新增三款招生頁 preview prototype：A 清爽藝術風、B 高級品牌風、C 雜誌作品集風。
+- preview prototype 已保留 `proposal_id`、`proposal_code`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`canva_url`、`preview_url` 欄位。
+- preview prototype 支援 `expires_at` 判斷、`preview_status=expired` 逾期畫面，以及 `selection_status=selected|not_selected` 選定狀態。
 
 ## 尚未完成
 
@@ -76,7 +87,7 @@
 - 尚未將 `docs/TEMPLATE_REFERENCE.md` 轉成可機讀 JSON 或 selector skill。
 - 尚未將 `docs/CLIENT_SELECTION_FLOW.md` 轉成自動選版流程或表單化輸出。
 - 尚未選定任何正式 Canva 方向，尚無 `selected_template_id`、`selected_secondary_template_id` 或 `selected_canva_direction`。
-- 尚未建立第一版 Canva 視覺樣板草案。
+- 尚未把真實 Chat A Canva URL 寫入 `previews/sunshine-golden-pencil/proposals.json`；目前以 `CHAT_A_CANVA_URL_*_REQUIRED` 佔位。
 - 尚未從三個候選範例中選定正式前端招生頁模板。
 - 尚未建立正式圖片、攝影或生成圖資產流程。
 - 尚未建立任何測試、CI 或部署流程。

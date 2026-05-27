@@ -39,12 +39,24 @@ cd course-enrollment-system
 
 三者皆為候選視覺稿，保留既有課程內容與圖片資料，但刻意使用不同 Hero、內容導覽、作品展示與報名 CTA 結構。
 
+## 目前預覽頁
+
+目前新增一組 sunshine-golden-pencil 三款 proposal preview：
+
+- `previews/sunshine-golden-pencil/index.html`：三款預覽入口
+- `previews/sunshine-golden-pencil/proposal.html?proposal_id=A`
+- `previews/sunshine-golden-pencil/proposal.html?proposal_id=B`
+- `previews/sunshine-golden-pencil/proposal.html?proposal_id=C`
+
+預覽頁支援 `expires_at`、`preview_status=expired`、`selection_status=selected|not_selected`，用來模擬客戶選版流程。這些 preview 不是正式上線頁。
+
 ## 目前工作範圍
 
 已建立：
 
 - `styles/`：course brand design foundation
 - `templates/`：三個 frontend alternative examples
+- `previews/`：三款 proposal preview prototype
 - `docs/`：專案脈絡、狀態與協作規則
 
 尚未建立：

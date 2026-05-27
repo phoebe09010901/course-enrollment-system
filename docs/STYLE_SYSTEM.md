@@ -151,6 +151,18 @@ templates/
 
 這些範例都應先視為方向稿，等使用者確認後再整理成正式可沿用模板。未來若重建或定稿模板，CSS 應先 import `styles/tokens/course-brand.css`，再以頁面層級 alias 消費既有 `--cb-*` token，不另行建立與 foundation 斷開的風格系統。
 
+目前另有客戶選版用 preview prototype：
+
+```text
+previews/
+  sunshine-golden-pencil/
+    index.html
+    proposal.html
+    proposals.json
+```
+
+preview prototype 不等於正式模板；它用於呈現 `template_proposals` 的 A/B/C 預覽、逾期狀態與選定狀態。
+
 ## 建議的 style 定義欄位
 
 未來每個 style 可以包含：

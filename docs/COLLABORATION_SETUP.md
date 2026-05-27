@@ -6,7 +6,7 @@
 
 ## 目前協作基準
 
-目前 repo 已有 `docs/`、`styles/` 與三個 `templates/sunshine-golden-pencil-alt-*` 候選視覺方向稿。先前建立的 v1/v2 前端樣板已依使用者要求刪除；後端、SQL、webhook、admin、worker 與 form schema 仍未建立。
+目前 repo 已有 `docs/`、`styles/`、三個 `templates/sunshine-golden-pencil-alt-*` 候選視覺方向稿，以及 `previews/sunshine-golden-pencil/` 三款 proposal preview prototype。先前建立的 v1/v2 前端樣板已依使用者要求刪除；後端、SQL、webhook、admin、worker 與 form schema 仍未建立。
 
 AI Agent 在開始任何工作前，應先閱讀：
 
@@ -35,6 +35,7 @@ AI Agent 在開始任何工作前，應先閱讀：
 - 修改文件時要同步更新狀態與缺口。
 - 新增大型功能前，先建立 README 或規格文件，說明目錄責任。
 - 不要把美術風格、模板、skill、webhook、admin、worker 混在同一層未命名邏輯中。
+- preview prototype 可以用靜態資料模擬 `template_proposals`，但不可宣稱 SQL schema、後台或正式資料流程已完成。
 
 ## Chat A / Chat B 合作方式
 
@@ -181,13 +182,14 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 - `styles/`：美術風格、品牌 token、視覺規範。已建立第一版 course brand foundation。
 - `skills/`：AI Agent 使用的 skills。
 - `templates/`：可重複使用的課程品牌模板。目前有三個候選視覺方向稿；先前 v1/v2 已刪除。
+- `previews/`：客戶選版用 preview prototype，目前有 `sunshine-golden-pencil` 三款提案預覽。
 - `public/`：公開靜態資源。
 - `line-webhook/`：LINE webhook 接收與回應邏輯。
 - `admin/`：管理介面。
 - `worker/`：背景工作、排程、非同步任務。
 - `docs/`：長期記憶、規格、協作規則。
 
-以上目錄目前僅 `styles/`、`docs/` 與 `templates/` 已建立。
+以上目錄目前僅 `styles/`、`docs/`、`templates/` 與 `previews/` 已建立。
 
 ## 提交前檢查
 
