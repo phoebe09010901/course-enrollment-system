@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__) . '/../lib/bootstrap.php';
+require_once dirname(__FILE__) . '/../lib/template_proposal_flow.php';
 require_login();
 
 function dashboard_table_exists($tableName)
@@ -104,6 +105,13 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
     background: rgba(255, 255, 255, .90);
     color: #151a24;
   }
+  .status-detail {
+    display: block;
+    margin-top: 4px;
+    color: #9f1239;
+    font-size: 14px;
+    line-height: 1.45;
+  }
 </style>
 <section class="dashboard-hero">
   <div>
@@ -150,7 +158,12 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
         <tr>
           <td><span class="project-name"><?php echo h($project['course_name']); ?></span><br><span class="muted project-id"><?php echo h($project['project_id']); ?></span></td>
           <td><?php echo h($project['client_name']); ?></td>
-          <td><span class="action-pill status-note"><?php echo h($project['project_status']); ?></span></td>
+          <td>
+            <span class="action-pill status-note"><?php echo h(chat_d_template_status_label(isset($project['template_status']) ? $project['template_status'] : '')); ?></span>
+            <?php if (!empty($project['template_error_code']) || !empty($project['template_error_message'])) { ?>
+              <span class="status-detail"><?php echo h(chat_d_template_error_label(isset($project['template_error_code']) ? $project['template_error_code'] : '')); ?><?php echo !empty($project['template_error_message']) ? '：' . h($project['template_error_message']) : ''; ?></span>
+            <?php } ?>
+          </td>
           <td><?php if (!empty($project['selection_token'])) { ?><a class="action-pill" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
         </tr>
       <?php } ?>

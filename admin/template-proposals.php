@@ -27,6 +27,12 @@ if (empty($missingTables)) {
             p.course_name,
             p.project_status,
             p.template_status,
+            p.proposal_batch_id,
+            p.template_processing_started_at,
+            p.template_processing_by,
+            p.worker_run_id,
+            p.template_error_code,
+            p.template_error_message,
             p.selected_proposal_id,
             p.selected_template_id,
             p.selected_secondary_template_id,
@@ -146,6 +152,7 @@ if (empty($missingTables)) {
         <th>Project</th>
         <th>課程</th>
         <th>狀態</th>
+        <th>批次 / Worker</th>
         <th>提案數</th>
         <th>選定樣板</th>
         <th>到期 / 更新</th>
@@ -153,7 +160,7 @@ if (empty($missingTables)) {
       </thead>
       <tbody>
       <?php if (empty($projects)) { ?>
-        <tr><td colspan="6" class="muted">目前沒有 Canva 樣板提案資料。</td></tr>
+        <tr><td colspan="7" class="muted">目前沒有 Canva 樣板提案資料。</td></tr>
       <?php } ?>
       <?php foreach ($projects as $project) { ?>
         <tr>
@@ -163,8 +170,16 @@ if (empty($missingTables)) {
           </td>
           <td><?= chat_d_admin_h($project['course_name']) ?></td>
           <td>
-            <span class="status"><?= chat_d_admin_h($project['template_status']) ?></span><br>
+            <span class="status"><?= chat_d_admin_h(chat_d_template_status_label($project['template_status'])) ?></span><br>
             <span class="muted"><?= chat_d_admin_h($project['project_status']) ?></span>
+            <?php if (!empty($project['template_error_code']) || !empty($project['template_error_message'])) { ?>
+              <br><span class="muted"><?= chat_d_admin_h(chat_d_template_error_label($project['template_error_code'])) ?><?= !empty($project['template_error_message']) ? '：' . chat_d_admin_h($project['template_error_message']) : '' ?></span>
+            <?php } ?>
+          </td>
+          <td>
+            <?= chat_d_admin_h($project['proposal_batch_id']) ?><br>
+            <span class="muted"><?= chat_d_admin_h($project['worker_run_id']) ?></span><br>
+            <span class="muted"><?= chat_d_admin_h($project['template_processing_by']) ?> <?= chat_d_admin_h($project['template_processing_started_at']) ?></span>
           </td>
           <td><?= (int) $project['proposal_count'] ?></td>
           <td>

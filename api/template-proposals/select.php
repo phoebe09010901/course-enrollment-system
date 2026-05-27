@@ -37,7 +37,7 @@ try {
         'selected_secondary_template_id' => $proposal['secondary_template_id'],
         'selected_canva_direction' => $proposal['visual_direction'],
         'selected_canva_url' => $proposal['canva_url'],
-        'template_status' => 'canva_template_selected',
+        'template_status' => 'template_ready',
     ));
 } catch (Exception $error) {
     error_log('[template-proposals-select] ' . $error->getMessage());

@@ -14,7 +14,9 @@ function chat_a_trigger_for_project($projectId)
         return array('ok' => false, 'status' => 'skipped', 'message' => 'project_not_found');
     }
 
+    $workerRunId = chat_d_generate_worker_run_id();
     $payload = chat_a_trigger_payload($project);
+    $payload['worker_run_id'] = $workerRunId;
 
     $webhookUrl = chat_a_trigger_config('CHAT_A_TRIGGER_WEBHOOK_URL');
     if ($webhookUrl === '') {
@@ -23,7 +25,7 @@ function chat_a_trigger_for_project($projectId)
              SET project_status = ?, template_status = ?, updated_at = ?
              WHERE project_id = ?',
             'ssss',
-            array('等待 Chat A 自動觸發', 'chat_a_trigger_queued', now(), $projectId)
+            array('待樣板提案', 'pending_template', now(), $projectId)
         );
         chat_a_trigger_log(
             $project,
@@ -37,17 +39,35 @@ function chat_a_trigger_for_project($projectId)
     $response = chat_a_trigger_post($webhookUrl, $payload);
 
     if ($response['ok']) {
-        db_exec(
-            'UPDATE course_projects
-             SET project_status = ?, template_status = ?, updated_at = ?
-             WHERE project_id = ?',
-            'ssss',
-            array('樣板製作中', 'chat_a_triggered', now(), $projectId)
-        );
+        $sql = 'UPDATE course_projects SET project_status = ?, template_status = ?, updated_at = ?';
+        $types = 'sss';
+        $params = array('樣板製作中', 'processing_template', now());
+
+        if (chat_d_column_exists('course_projects', 'template_processing_started_at')
+            && chat_d_column_exists('course_projects', 'template_processing_by')
+            && chat_d_column_exists('course_projects', 'worker_run_id')) {
+            $sql .= ', template_processing_started_at = ?, template_processing_by = ?, worker_run_id = ?';
+            $types .= 'sss';
+            $params[] = now();
+            $params[] = 'webhook';
+            $params[] = $workerRunId;
+        }
+
+        if (chat_d_column_exists('course_projects', 'template_error_code')
+            && chat_d_column_exists('course_projects', 'template_error_message')) {
+            $sql .= ', template_error_code = NULL, template_error_message = NULL';
+        }
+
+        $sql .= ' WHERE project_id = ?';
+        $types .= 's';
+        $params[] = $projectId;
+        db_exec($sql, $types, $params);
+
         chat_a_trigger_log($project, 'chat_a_triggered', 'sent', '公開表單已送出，系統已自動觸發 Chat A 開始產生三款 Canva 樣板。');
         return $response;
     }
 
+    chat_d_mark_template_failed($projectId, $workerRunId, 'worker_exception', $response['message']);
     chat_a_trigger_log(
         $project,
         'chat_a_trigger_failed',
@@ -69,6 +89,7 @@ function chat_a_trigger_payload($project)
     }
 
     $projectId = isset($project['project_id']) ? $project['project_id'] : '';
+    $proposalBatchId = $projectId !== '' ? chat_d_project_proposal_batch_id($projectId) : '';
     $expiresAt = date('Y-m-d H:i:s', strtotime('+3 days'));
     $prompt = chat_a_trigger_prompt($project, $rawPayload, $expiresAt);
 
@@ -76,6 +97,7 @@ function chat_a_trigger_payload($project)
         'event' => 'course_project.created',
         'source' => 'admission-system',
         'project_id' => $projectId,
+        'proposal_batch_id' => $proposalBatchId,
         'selection_url' => chat_d_project_selection_url($projectId),
         'expires_at' => $expiresAt,
         'project' => array(
@@ -89,6 +111,7 @@ function chat_a_trigger_payload($project)
         'chat_a_prompt' => $prompt,
         'required_output' => array(
             'project_id' => $projectId,
+            'proposal_batch_id' => $proposalBatchId,
             'expires_at' => $expiresAt,
             'proposals' => chat_a_trigger_required_proposal_schema($expiresAt),
         ),
@@ -106,11 +129,29 @@ function chat_a_trigger_payload($project)
         ),
         'chat_d_callback' => array(
             'template_proposals_endpoint' => app_url('api/template-proposals/'),
+            'failure_endpoint' => app_url('api/chat-a-trigger/fail.php'),
             'required_proposal_count' => 3,
             'auth' => 'Send ADMISSION_API_KEY as X-Admission-Api-Key or Bearer token.',
         ),
         'created_at' => now(),
     );
+}
+
+function chat_a_trigger_project_payload($project)
+{
+    $payload = chat_a_trigger_payload($project);
+    $payload['worker_run_id'] = isset($project['worker_run_id']) ? $project['worker_run_id'] : '';
+    $payload['proposal_batch_id'] = isset($project['proposal_batch_id']) ? $project['proposal_batch_id'] : $payload['proposal_batch_id'];
+    $payload['template_processing_started_at'] = isset($project['template_processing_started_at']) ? $project['template_processing_started_at'] : '';
+    $payload['client'] = array(
+        'client_name' => isset($project['client_name']) ? $project['client_name'] : '',
+        'contact_name' => isset($project['contact_name']) ? $project['contact_name'] : '',
+        'email' => isset($project['email']) ? $project['email'] : '',
+        'line_id' => isset($project['line_id']) ? $project['line_id'] : '',
+        'line_id_link' => isset($project['line_id_link']) ? $project['line_id_link'] : '',
+    );
+
+    return $payload;
 }
 
 function chat_a_trigger_required_proposal_schema($expiresAt)

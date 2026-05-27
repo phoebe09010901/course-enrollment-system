@@ -42,6 +42,22 @@ function chat_d_random_token()
     return sha1(uniqid('', true) . mt_rand() . microtime(true)) . sha1(mt_rand() . uniqid('', true));
 }
 
+function chat_d_project_proposal_batch_id($projectId)
+{
+    if (!chat_d_column_exists('course_projects', 'proposal_batch_id')) {
+        return '';
+    }
+
+    $project = db_one('SELECT proposal_batch_id FROM course_projects WHERE project_id = ? LIMIT 1', 's', array($projectId));
+    if ($project && !empty($project['proposal_batch_id'])) {
+        return $project['proposal_batch_id'];
+    }
+
+    $batchId = 'batch_' . substr(chat_d_random_token(), 0, 24);
+    db_exec('UPDATE course_projects SET proposal_batch_id = ?, updated_at = ? WHERE project_id = ?', 'sss', array($batchId, now(), $projectId));
+    return $batchId;
+}
+
 function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $values, $photoAssets)
 {
     if (!chat_d_table_exists('course_projects')) {
@@ -94,7 +110,7 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
                 $values['course_format'],
                 $values['course_location'],
                 '待樣板提案',
-                'pending_canva_proposals',
+                'pending_template',
                 chat_d_json($rawPayload),
                 now(),
                 $projectId,
@@ -118,7 +134,7 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
                 $values['course_format'],
                 $values['course_location'],
                 '待樣板提案',
-                'pending_canva_proposals',
+                'pending_template',
                 chat_d_json($rawPayload),
                 now(),
                 now(),
@@ -127,6 +143,7 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
     }
 
     chat_d_project_selection_token($projectId);
+    chat_d_project_proposal_batch_id($projectId);
 
     if (chat_d_table_exists('notification_logs')) {
         chat_d_log_notification($projectId, $clientId, 'data_confirmed', 'system', '', array(), '公開表單已送出，等待 Chat A / Canva 樣板提案。', 'recorded');
@@ -185,6 +202,222 @@ function chat_d_project_by_id($projectId)
     return db_one('SELECT * FROM course_projects WHERE project_id = ? LIMIT 1', 's', array($projectId));
 }
 
+function chat_d_template_status_label($status)
+{
+    $labels = array(
+        'pending_template' => '待樣板提案',
+        'processing_template' => '樣板製作中',
+        'template_ready' => '樣板已完成',
+        'template_failed' => '樣板產生失敗',
+        'template_expired' => '樣板已逾期',
+        'canva_template_selected' => '已選定樣板',
+        'canva_proposals_ready' => '樣板已完成',
+        'pending_canva_proposals' => '待樣板提案',
+        'chat_a_trigger_queued' => '待樣板提案',
+        'chat_a_triggered' => '樣板製作中',
+    );
+
+    if (isset($labels[$status])) {
+        return $labels[$status];
+    }
+
+    return $status === '' ? '狀態未設定' : $status;
+}
+
+function chat_d_template_error_label($errorCode)
+{
+    $labels = array(
+        'missing_course_data' => '缺少課程資料',
+        'canva_generation_failed' => 'Canva 產生失敗',
+        'api_writeback_failed' => 'API 回寫失敗',
+        'worker_exception' => '自動流程失敗',
+        'template_proposals_invalid' => '提案資料不完整',
+    );
+
+    if (isset($labels[$errorCode])) {
+        return $labels[$errorCode];
+    }
+
+    return $errorCode === '' ? '' : $errorCode;
+}
+
+function chat_d_generate_worker_run_id()
+{
+    return 'worker_' . date('YmdHis') . '_' . substr(chat_d_random_token(), 0, 12);
+}
+
+function chat_d_claim_template_projects($limit, $workerRunId, $workerName)
+{
+    if (!chat_d_table_exists('course_projects')) {
+        return array();
+    }
+
+    $limit = (int) $limit;
+    if ($limit <= 0 || $limit > 10) {
+        $limit = 3;
+    }
+
+    $workerRunId = trim((string) $workerRunId);
+    if ($workerRunId === '') {
+        $workerRunId = chat_d_generate_worker_run_id();
+    }
+
+    $workerName = trim((string) $workerName);
+    if ($workerName === '') {
+        $workerName = 'chat-a-worker';
+    }
+
+    $hasProcessingFields = chat_d_column_exists('course_projects', 'template_processing_started_at')
+        && chat_d_column_exists('course_projects', 'template_processing_by')
+        && chat_d_column_exists('course_projects', 'worker_run_id');
+    $hasBatchField = chat_d_column_exists('course_projects', 'proposal_batch_id');
+    $hasErrorFields = chat_d_column_exists('course_projects', 'template_error_code')
+        && chat_d_column_exists('course_projects', 'template_error_message');
+
+    $processingCondition = '';
+    if ($hasProcessingFields) {
+        $processingCondition = "OR (
+                        p.template_status IN ('processing_template', 'chat_a_triggered')
+                        AND p.template_processing_started_at IS NOT NULL
+                        AND p.template_processing_started_at < DATE_SUB(NOW(), INTERVAL 60 MINUTE)
+                    )";
+    }
+
+    db()->autocommit(false);
+    try {
+        $rows = db_all(
+            "SELECT p.*, c.name AS client_name, c.contact_name, c.email, c.line_id, c.line_id_link
+             FROM course_projects p
+             LEFT JOIN admission_clients c ON c.id = p.client_id
+             WHERE p.needs_template_proposal = 1
+               AND (
+                    p.template_status = 'pending_template'
+                    OR p.template_status IS NULL
+                    OR p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued')
+                    " . $processingCondition . "
+               )
+             ORDER BY p.updated_at ASC, p.id ASC
+             LIMIT " . $limit . " FOR UPDATE",
+            '',
+            array()
+        );
+
+        $claimed = array();
+        foreach ($rows as $row) {
+            $projectId = isset($row['project_id']) ? $row['project_id'] : '';
+            if ($projectId === '') {
+                continue;
+            }
+
+            $proposalBatchId = '';
+            if ($hasBatchField) {
+                $proposalBatchId = !empty($row['proposal_batch_id']) ? $row['proposal_batch_id'] : 'batch_' . substr(chat_d_random_token(), 0, 24);
+                $row['proposal_batch_id'] = $proposalBatchId;
+            }
+
+            $sql = 'UPDATE course_projects SET project_status = ?, template_status = ?, updated_at = ?';
+            $types = 'sss';
+            $params = array('樣板製作中', 'processing_template', now());
+
+            if ($hasBatchField) {
+                $sql .= ', proposal_batch_id = ?';
+                $types .= 's';
+                $params[] = $proposalBatchId;
+            }
+
+            if ($hasProcessingFields) {
+                $sql .= ', template_processing_started_at = ?, template_processing_by = ?, worker_run_id = ?';
+                $types .= 'sss';
+                $params[] = now();
+                $params[] = $workerName;
+                $params[] = $workerRunId;
+                $row['template_processing_started_at'] = now();
+                $row['template_processing_by'] = $workerName;
+                $row['worker_run_id'] = $workerRunId;
+            }
+
+            if ($hasErrorFields) {
+                $sql .= ', template_error_code = NULL, template_error_message = NULL';
+                $row['template_error_code'] = '';
+                $row['template_error_message'] = '';
+            }
+
+            $sql .= ' WHERE project_id = ?';
+            $types .= 's';
+            $params[] = $projectId;
+            db_exec($sql, $types, $params);
+
+            $row['project_status'] = '樣板製作中';
+            $row['template_status'] = 'processing_template';
+            $claimed[] = $row;
+        }
+
+        db()->commit();
+        db()->autocommit(true);
+        return $claimed;
+    } catch (Exception $error) {
+        db()->rollback();
+        db()->autocommit(true);
+        throw $error;
+    }
+}
+
+function chat_d_mark_template_failed($projectId, $workerRunId, $errorCode, $errorMessage)
+{
+    $projectId = trim((string) $projectId);
+    if ($projectId === '' || !chat_d_table_exists('course_projects')) {
+        return false;
+    }
+
+    $workerRunId = trim((string) $workerRunId);
+    $errorCode = trim((string) $errorCode);
+    $errorMessage = trim((string) $errorMessage);
+    if ($errorCode === '') {
+        $errorCode = 'worker_exception';
+    }
+
+    $hasWorkerField = chat_d_column_exists('course_projects', 'worker_run_id');
+    $hasErrorFields = chat_d_column_exists('course_projects', 'template_error_code')
+        && chat_d_column_exists('course_projects', 'template_error_message');
+
+    $sql = 'UPDATE course_projects SET project_status = ?, template_status = ?, needs_template_proposal = 1, updated_at = ?';
+    $types = 'sss';
+    $params = array('樣板產生失敗', 'template_failed', now());
+
+    if ($hasErrorFields) {
+        $sql .= ', template_error_code = ?, template_error_message = ?';
+        $types .= 'ss';
+        $params[] = $errorCode;
+        $params[] = function_exists('mb_substr') ? mb_substr($errorMessage, 0, 1000, 'UTF-8') : substr($errorMessage, 0, 1000);
+    }
+
+    $sql .= ' WHERE project_id = ?';
+    $types .= 's';
+    $params[] = $projectId;
+
+    if ($hasWorkerField && $workerRunId !== '') {
+        $sql .= ' AND (worker_run_id = ? OR worker_run_id IS NULL OR worker_run_id = \'\')';
+        $types .= 's';
+        $params[] = $workerRunId;
+    }
+
+    db_exec($sql, $types, $params);
+
+    $project = chat_d_project_by_id($projectId);
+    chat_d_log_notification(
+        $projectId,
+        $project && isset($project['client_id']) ? (int) $project['client_id'] : null,
+        'canva_proposals_failed',
+        'chat_a',
+        '',
+        array(),
+        chat_d_template_error_label($errorCode) . ($errorMessage !== '' ? '：' . $errorMessage : ''),
+        'failed'
+    );
+
+    return true;
+}
+
 function chat_d_project_proposals($projectId)
 {
     if (!chat_d_table_exists('template_proposals')) {
@@ -222,6 +455,11 @@ function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt)
         throw new Exception('project_not_found');
     }
 
+    $proposalBatchId = '';
+    if (chat_d_column_exists('course_projects', 'proposal_batch_id')) {
+        $proposalBatchId = !empty($project['proposal_batch_id']) ? $project['proposal_batch_id'] : chat_d_project_proposal_batch_id($projectId);
+    }
+
     $saved = array();
     $proposalExpires = array();
     foreach ($proposals as $index => $proposal) {
@@ -236,66 +474,111 @@ function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt)
             $proposalId = $proposalCode;
         }
 
-        $existing = db_one(
-            'SELECT id FROM template_proposals WHERE project_id = ? AND proposal_id = ? LIMIT 1',
-            'ss',
-            array($projectId, $proposalId)
-        );
-
-        $params = array(
-            $projectId,
-            $proposalId,
-            $proposalCode,
-            chat_d_value($proposal, 'proposal_name', ''),
-            chat_d_value($proposal, 'primary_template_id', ''),
-            chat_d_value($proposal, 'secondary_template_id', ''),
-            chat_d_value($proposal, 'source_url', ''),
-            chat_d_value($proposal, 'secondary_source_url', ''),
-            chat_d_value($proposal, 'visual_direction', ''),
-            chat_d_value($proposal, 'suitable_reason', ''),
-            chat_d_value($proposal, 'canva_url', ''),
-            chat_d_value($proposal, 'screenshot_url', ''),
-            chat_d_value($proposal, 'status', 'proposal_ready'),
-            $proposalExpiresAt,
-            now(),
-        );
-
-        if ($existing) {
-            db_exec(
-                'UPDATE template_proposals
-                 SET proposal_code = ?, proposal_name = ?, primary_template_id = ?, secondary_template_id = ?,
-                     source_url = ?, secondary_source_url = ?, visual_direction = ?, suitable_reason = ?,
-                     canva_url = ?, screenshot_url = ?, status = ?, expires_at = ?, updated_at = ?
-                 WHERE project_id = ? AND proposal_id = ?',
-                'sssssssssssssss',
-                array(
-                    $proposalCode,
-                    chat_d_value($proposal, 'proposal_name', ''),
-                    chat_d_value($proposal, 'primary_template_id', ''),
-                    chat_d_value($proposal, 'secondary_template_id', ''),
-                    chat_d_value($proposal, 'source_url', ''),
-                    chat_d_value($proposal, 'secondary_source_url', ''),
-                    chat_d_value($proposal, 'visual_direction', ''),
-                    chat_d_value($proposal, 'suitable_reason', ''),
-                    chat_d_value($proposal, 'canva_url', ''),
-                    chat_d_value($proposal, 'screenshot_url', ''),
-                    chat_d_value($proposal, 'status', 'proposal_ready'),
-                    $proposalExpiresAt,
-                    now(),
-                    $projectId,
-                    $proposalId,
-                )
+        if ($proposalBatchId !== '' && chat_d_column_exists('template_proposals', 'proposal_batch_id')) {
+            $existing = db_one(
+                'SELECT id FROM template_proposals WHERE project_id = ? AND proposal_batch_id = ? AND proposal_code = ? LIMIT 1',
+                'sss',
+                array($projectId, $proposalBatchId, $proposalCode)
             );
         } else {
-            db_exec(
-                'INSERT INTO template_proposals (
-                    project_id, proposal_id, proposal_code, proposal_name, primary_template_id, secondary_template_id,
-                    source_url, secondary_source_url, visual_direction, suitable_reason, canva_url, screenshot_url,
-                    status, expires_at, created_at, updated_at
-                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                'ssssssssssssssss',
-                array_merge($params, array(now()))
+            $existing = db_one(
+                'SELECT id FROM template_proposals WHERE project_id = ? AND proposal_id = ? LIMIT 1',
+                'ss',
+                array($projectId, $proposalId)
             );
+        }
+
+        if ($existing) {
+            $sql = 'UPDATE template_proposals
+                    SET proposal_code = ?, proposal_name = ?, primary_template_id = ?, secondary_template_id = ?,
+                        source_url = ?, secondary_source_url = ?, visual_direction = ?, suitable_reason = ?,
+                        canva_url = ?, screenshot_url = ?, status = ?, expires_at = ?, updated_at = ?';
+            $types = 'sssssssssssss';
+            $params = array(
+                $proposalCode,
+                chat_d_value($proposal, 'proposal_name', ''),
+                chat_d_value($proposal, 'primary_template_id', ''),
+                chat_d_value($proposal, 'secondary_template_id', ''),
+                chat_d_value($proposal, 'source_url', ''),
+                chat_d_value($proposal, 'secondary_source_url', ''),
+                chat_d_value($proposal, 'visual_direction', ''),
+                chat_d_value($proposal, 'suitable_reason', ''),
+                chat_d_value($proposal, 'canva_url', ''),
+                chat_d_value($proposal, 'screenshot_url', ''),
+                chat_d_value($proposal, 'status', 'proposal_ready'),
+                $proposalExpiresAt,
+                now(),
+            );
+            if ($proposalBatchId !== '' && chat_d_column_exists('template_proposals', 'proposal_batch_id')) {
+                $sql .= ' WHERE project_id = ? AND proposal_batch_id = ? AND proposal_code = ?';
+                $types .= 'sss';
+                $params[] = $projectId;
+                $params[] = $proposalBatchId;
+                $params[] = $proposalCode;
+            } else {
+                $sql .= ' WHERE project_id = ? AND proposal_id = ?';
+                $types .= 'ss';
+                $params[] = $projectId;
+                $params[] = $proposalId;
+            }
+            db_exec($sql, $types, $params);
+        } else {
+            if ($proposalBatchId !== '' && chat_d_column_exists('template_proposals', 'proposal_batch_id')) {
+                db_exec(
+                    'INSERT INTO template_proposals (
+                        project_id, proposal_batch_id, proposal_id, proposal_code, proposal_name, primary_template_id, secondary_template_id,
+                        source_url, secondary_source_url, visual_direction, suitable_reason, canva_url, screenshot_url,
+                        status, expires_at, created_at, updated_at
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    'sssssssssssssssss',
+                    array(
+                        $projectId,
+                        $proposalBatchId,
+                        $proposalId,
+                        $proposalCode,
+                        chat_d_value($proposal, 'proposal_name', ''),
+                        chat_d_value($proposal, 'primary_template_id', ''),
+                        chat_d_value($proposal, 'secondary_template_id', ''),
+                        chat_d_value($proposal, 'source_url', ''),
+                        chat_d_value($proposal, 'secondary_source_url', ''),
+                        chat_d_value($proposal, 'visual_direction', ''),
+                        chat_d_value($proposal, 'suitable_reason', ''),
+                        chat_d_value($proposal, 'canva_url', ''),
+                        chat_d_value($proposal, 'screenshot_url', ''),
+                        chat_d_value($proposal, 'status', 'proposal_ready'),
+                        $proposalExpiresAt,
+                        now(),
+                        now(),
+                    )
+                );
+            } else {
+                db_exec(
+                    'INSERT INTO template_proposals (
+                        project_id, proposal_id, proposal_code, proposal_name, primary_template_id, secondary_template_id,
+                        source_url, secondary_source_url, visual_direction, suitable_reason, canva_url, screenshot_url,
+                        status, expires_at, created_at, updated_at
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    'ssssssssssssssss',
+                    array(
+                        $projectId,
+                        $proposalId,
+                        $proposalCode,
+                        chat_d_value($proposal, 'proposal_name', ''),
+                        chat_d_value($proposal, 'primary_template_id', ''),
+                        chat_d_value($proposal, 'secondary_template_id', ''),
+                        chat_d_value($proposal, 'source_url', ''),
+                        chat_d_value($proposal, 'secondary_source_url', ''),
+                        chat_d_value($proposal, 'visual_direction', ''),
+                        chat_d_value($proposal, 'suitable_reason', ''),
+                        chat_d_value($proposal, 'canva_url', ''),
+                        chat_d_value($proposal, 'screenshot_url', ''),
+                        chat_d_value($proposal, 'status', 'proposal_ready'),
+                        $proposalExpiresAt,
+                        now(),
+                        now(),
+                    )
+                );
+            }
         }
 
         $saved[] = $proposalId;
@@ -307,12 +590,17 @@ function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt)
     sort($proposalExpires);
     $projectExpiresAt = count($proposalExpires) ? $proposalExpires[0] : $expiresAt;
 
+    $projectUpdateSql = 'UPDATE course_projects
+         SET project_status = ?, template_status = ?, needs_template_proposal = 0, preview_expires_at = ?, updated_at = ?';
+    if (chat_d_column_exists('course_projects', 'template_error_code')
+        && chat_d_column_exists('course_projects', 'template_error_message')) {
+        $projectUpdateSql .= ', template_error_code = NULL, template_error_message = NULL';
+    }
+    $projectUpdateSql .= ' WHERE project_id = ?';
     db_exec(
-        'UPDATE course_projects
-         SET project_status = ?, template_status = ?, preview_expires_at = ?, updated_at = ?
-         WHERE project_id = ?',
+        $projectUpdateSql,
         'sssss',
-        array('Canva 樣板提案完成', 'canva_proposals_ready', $projectExpiresAt, now(), $projectId)
+        array('Canva 樣板提案完成', 'template_ready', $projectExpiresAt, now(), $projectId)
     );
 
     chat_d_log_notification(
@@ -369,7 +657,7 @@ function chat_d_select_template_proposal($projectId, $proposalId)
     db_exec(
         'UPDATE course_projects
          SET selected_proposal_id = ?, selected_template_id = ?, selected_secondary_template_id = ?,
-             selected_canva_direction = ?, selected_canva_url = ?, template_selected_at = ?,
+            selected_canva_direction = ?, selected_canva_url = ?, template_selected_at = ?,
              project_status = ?, template_status = ?, needs_template_proposal = 0, updated_at = ?
          WHERE project_id = ?',
         'ssssssssss',
@@ -381,7 +669,7 @@ function chat_d_select_template_proposal($projectId, $proposalId)
             $proposal['canva_url'],
             now(),
             '已選定 Canva 樣板',
-            'canva_template_selected',
+            'template_ready',
             now(),
             $projectId,
         )

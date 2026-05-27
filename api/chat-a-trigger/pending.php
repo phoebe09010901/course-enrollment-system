@@ -21,12 +21,26 @@ try {
         $limit = 3;
     }
 
+    $processingCondition = '';
+    if (chat_d_column_exists('course_projects', 'template_processing_started_at')) {
+        $processingCondition = "OR (
+                    p.template_status IN ('processing_template', 'chat_a_triggered')
+                    AND p.template_processing_started_at IS NOT NULL
+                    AND p.template_processing_started_at < DATE_SUB(NOW(), INTERVAL 60 MINUTE)
+                )";
+    }
+
     $rows = db_all(
         "SELECT p.*, c.name AS client_name, c.contact_name, c.email, c.line_id, c.line_id_link
          FROM course_projects p
          LEFT JOIN admission_clients c ON c.id = p.client_id
          WHERE p.needs_template_proposal = 1
-           AND (p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued', 'chat_a_triggered') OR p.template_status IS NULL)
+           AND (
+                p.template_status = 'pending_template'
+                OR p.template_status IS NULL
+                OR p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued')
+                " . $processingCondition . "
+           )
          ORDER BY p.updated_at ASC, p.id ASC
          LIMIT " . $limit,
         '',
@@ -35,27 +49,13 @@ try {
 
     $projects = array();
     foreach ($rows as $row) {
-        $projects[] = chat_a_pending_project_payload($row);
+        $projects[] = chat_a_trigger_project_payload($row);
     }
 
     chat_a_pending_api_response(200, array('ok' => true, 'projects' => $projects));
 } catch (Exception $error) {
     error_log('[chat-a-pending] ' . $error->getMessage());
     chat_a_pending_api_response(500, array('ok' => false, 'error' => $error->getMessage()));
-}
-
-function chat_a_pending_project_payload($project)
-{
-    $payload = chat_a_trigger_payload($project);
-    $payload['client'] = array(
-        'client_name' => isset($project['client_name']) ? $project['client_name'] : '',
-        'contact_name' => isset($project['contact_name']) ? $project['contact_name'] : '',
-        'email' => isset($project['email']) ? $project['email'] : '',
-        'line_id' => isset($project['line_id']) ? $project['line_id'] : '',
-        'line_id_link' => isset($project['line_id_link']) ? $project['line_id_link'] : '',
-    );
-
-    return $payload;
 }
 
 function chat_a_pending_api_assert_key()

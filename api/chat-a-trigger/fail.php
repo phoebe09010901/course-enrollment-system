@@ -1,0 +1,92 @@
+<?php
+
+require_once dirname(__FILE__) . '/../../lib/bootstrap.php';
+require_once dirname(__FILE__) . '/../../lib/chat_a_trigger.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        chat_a_fail_api_response(405, array('ok' => false, 'error' => 'method_not_allowed'));
+    }
+
+    chat_a_fail_api_assert_key();
+
+    $payload = json_decode((string) file_get_contents('php://input'), true);
+    if (!is_array($payload)) {
+        chat_a_fail_api_response(400, array('ok' => false, 'error' => 'invalid_json'));
+    }
+
+    $projectId = isset($payload['project_id']) ? trim((string) $payload['project_id']) : '';
+    if ($projectId === '') {
+        chat_a_fail_api_response(422, array('ok' => false, 'error' => 'project_id_required'));
+    }
+
+    $workerRunId = isset($payload['worker_run_id']) ? trim((string) $payload['worker_run_id']) : '';
+    $errorCode = isset($payload['error_code']) ? trim((string) $payload['error_code']) : 'worker_exception';
+    $errorMessage = isset($payload['error_message']) ? trim((string) $payload['error_message']) : '';
+
+    chat_d_mark_template_failed($projectId, $workerRunId, $errorCode, $errorMessage);
+
+    chat_a_fail_api_response(200, array(
+        'ok' => true,
+        'project_id' => $projectId,
+        'template_status' => 'template_failed',
+    ));
+} catch (Exception $error) {
+    error_log('[chat-a-fail] ' . $error->getMessage());
+    chat_a_fail_api_response(500, array('ok' => false, 'error' => $error->getMessage()));
+}
+
+function chat_a_fail_api_assert_key()
+{
+    $expected = chat_a_fail_api_expected_key();
+    if ($expected === '') {
+        chat_a_fail_api_response(500, array('ok' => false, 'error' => 'api_key_not_configured'));
+    }
+
+    $provided = isset($_SERVER['HTTP_X_ADMISSION_API_KEY']) ? (string) $_SERVER['HTTP_X_ADMISSION_API_KEY'] : '';
+    $authorization = isset($_SERVER['HTTP_AUTHORIZATION']) ? (string) $_SERVER['HTTP_AUTHORIZATION'] : '';
+    if ($provided === '' && preg_match('/^Bearer\s+(.+)$/i', $authorization, $matches)) {
+        $provided = trim($matches[1]);
+    }
+
+    if (!function_exists('hash_equals')) {
+        if ($provided !== $expected) {
+            chat_a_fail_api_response(401, array('ok' => false, 'error' => 'unauthorized'));
+        }
+        return;
+    }
+
+    if (!hash_equals($expected, $provided)) {
+        chat_a_fail_api_response(401, array('ok' => false, 'error' => 'unauthorized'));
+    }
+}
+
+function chat_a_fail_api_expected_key()
+{
+    if (defined('ADMISSION_API_KEY')) {
+        return trim((string) constant('ADMISSION_API_KEY'));
+    }
+
+    $value = getenv('ADMISSION_API_KEY');
+    if ($value !== false && trim((string) $value) !== '') {
+        return trim((string) $value);
+    }
+
+    if (function_exists('admission_config')) {
+        $config = admission_config();
+        if (isset($config['api_key'])) {
+            return trim((string) $config['api_key']);
+        }
+    }
+
+    return '';
+}
+
+function chat_a_fail_api_response($status, $body)
+{
+    http_response_code((int) $status);
+    echo json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}

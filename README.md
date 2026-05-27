@@ -53,7 +53,7 @@ Authorization: Bearer {ADMISSION_API_KEY}
 3. 填入 DB 連線與 `api_key`。
 4. Cloudflare Worker 將 LINE intake JSON POST 到 `/api/line-intakes`。
 5. 後台 `admin/clients.php` 會讀取 `clients` 與 `course_intakes` 顯示客戶資料。
-6. Chat D 的 Canva 樣板資料流使用 `course_projects`、`template_proposals`、`notification_logs`，migration 在 `database/migrations/002_create_chat_d_template_flow.sql`。公開課程表單送出後會建立 `course_projects`，並透過 `CHAT_A_TRIGGER_WEBHOOK_URL` 自動觸發 Chat A / Canva 開始產生三款提案；若尚未設定 webhook，系統會記錄 `chat_a_trigger_queued` 以便後續補觸發。
+6. Chat D 的 Canva 樣板資料流使用 `course_projects`、`template_proposals`、`notification_logs`，migration 在 `database/migrations/002_create_chat_d_template_flow.sql`；既有環境請再套用 `database/migrations/004_harden_chat_a_template_queue.sql`。公開課程表單送出後會建立 `course_projects`，狀態會進入 `pending_template`，等待雲端 Chat A worker 原子化領取。
 
 ## Chat A 自動觸發
 
@@ -76,14 +76,25 @@ X-Admission-Api-Key: {ADMISSION_API_KEY}
 {"project_id":"CP-20260528-00011"}
 ```
 
-雲端 Chat A worker 可以用同一把 API key 讀取待處理專案：
+雲端 Chat A worker 需先用同一把 API key 原子化領取待處理專案；領取成功時系統會把案件更新為 `processing_template`，並記錄 `worker_run_id`、`template_processing_started_at`：
 
 ```text
-GET /api/chat-a-trigger/pending.php?limit=3
+POST /api/chat-a-trigger/claim.php
 X-Admission-Api-Key: {ADMISSION_API_KEY}
+
+{"limit":3,"worker_run_id":"chat-a-20260528-001","worker_name":"chat-a-canva-cron"}
 ```
 
-回傳的每筆 project payload 已包含課程資料、圖片 raw payload、客戶選版頁與 Chat D 回填端點。
+回傳的每筆 project payload 已包含課程資料、圖片 raw payload、客戶選版頁、`proposal_batch_id`、`worker_run_id` 與 Chat D 回填端點。`GET /api/chat-a-trigger/pending.php?limit=3` 只作為檢查待處理資料使用，不應作為正式執行入口。
+
+若 Canva 產生或 worker 執行失敗，請回寫：
+
+```text
+POST /api/chat-a-trigger/fail.php
+X-Admission-Api-Key: {ADMISSION_API_KEY}
+
+{"project_id":"CP-20260528-00011","worker_run_id":"chat-a-20260528-001","error_code":"canva_generation_failed","error_message":"Canva API returned ..."}
+```
 
 ## Canva 樣板提案 API
 
@@ -92,6 +103,8 @@ Chat A 產出三款 Canva 樣板後，POST 到 `api/template-proposals/`，paylo
 ```json
 {
   "project_id": "CP-20260527-00001",
+  "proposal_batch_id": "batch_xxxxxxxxxxxxxxxxxxxxxxxx",
+  "worker_run_id": "chat-a-20260528-001",
   "expires_at": "2026-06-03 23:59:59",
   "proposals": [
     {

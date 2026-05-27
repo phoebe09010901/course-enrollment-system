@@ -36,17 +36,22 @@ try {
         $expiresAt = date('Y-m-d H:i:s', strtotime('+7 days'));
     }
 
+    $workerRunId = isset($payload['worker_run_id']) ? trim((string) $payload['worker_run_id']) : '';
     $saved = chat_d_sync_template_proposals($projectId, $proposals, $expiresAt);
 
     chat_d_api_response(200, array(
         'ok' => true,
         'project_id' => $projectId,
         'saved_proposal_ids' => $saved,
-        'template_status' => 'canva_proposals_ready',
+        'template_status' => 'template_ready',
         'expires_at' => $expiresAt,
     ));
 } catch (Exception $error) {
     error_log('[template-proposals] ' . $error->getMessage());
+    if (isset($projectId) && $projectId !== '') {
+        $workerRunId = isset($workerRunId) ? $workerRunId : '';
+        chat_d_mark_template_failed($projectId, $workerRunId, 'api_writeback_failed', $error->getMessage());
+    }
     chat_d_api_response(500, array('ok' => false, 'error' => $error->getMessage()));
 }
 

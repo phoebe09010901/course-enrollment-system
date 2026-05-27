@@ -10,8 +10,14 @@ CREATE TABLE IF NOT EXISTS course_projects (
   course_format VARCHAR(120) NULL,
   course_location VARCHAR(190) NULL,
   project_status VARCHAR(40) NOT NULL DEFAULT '待樣板提案',
-  template_status VARCHAR(40) NOT NULL DEFAULT 'pending_canva_proposals',
+  template_status VARCHAR(40) NOT NULL DEFAULT 'pending_template',
   needs_template_proposal TINYINT(1) NOT NULL DEFAULT 1,
+  proposal_batch_id VARCHAR(64) NULL,
+  template_processing_started_at DATETIME NULL,
+  template_processing_by VARCHAR(120) NULL,
+  worker_run_id VARCHAR(120) NULL,
+  template_error_code VARCHAR(80) NULL,
+  template_error_message TEXT NULL,
   selected_proposal_id VARCHAR(64) NULL,
   selected_template_id VARCHAR(190) NULL,
   selected_secondary_template_id VARCHAR(190) NULL,
@@ -28,12 +34,15 @@ CREATE TABLE IF NOT EXISTS course_projects (
   KEY idx_course_projects_client_id (client_id),
   KEY idx_course_projects_status (project_status),
   KEY idx_course_projects_template_status (template_status),
+  KEY idx_course_projects_worker_run_id (worker_run_id),
+  KEY idx_course_projects_proposal_batch_id (proposal_batch_id),
   KEY idx_course_projects_preview_expires_at (preview_expires_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS template_proposals (
   id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   project_id VARCHAR(40) NOT NULL,
+  proposal_batch_id VARCHAR(64) NULL,
   proposal_id VARCHAR(64) NOT NULL,
   proposal_code CHAR(1) NULL,
   proposal_name VARCHAR(190) NULL,
@@ -52,8 +61,9 @@ CREATE TABLE IF NOT EXISTS template_proposals (
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_template_proposals_project_proposal (project_id, proposal_id),
+  UNIQUE KEY uq_template_proposals_project_batch_code (project_id, proposal_batch_id, proposal_code),
   KEY idx_template_proposals_project_id (project_id),
+  KEY idx_template_proposals_batch_id (proposal_batch_id),
   KEY idx_template_proposals_code (proposal_code),
   KEY idx_template_proposals_status (status),
   KEY idx_template_proposals_expires_at (expires_at)

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__) . '/../lib/bootstrap.php';
+require_once dirname(__FILE__) . '/../lib/template_proposal_flow.php';
 require_login();
 
 function projects_table_exists($tableName)
@@ -110,6 +111,13 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   .action-pill:hover { background: rgba(255, 255, 255, .90); color: #151a24; }
   .action-pill-danger { color: #b42318; }
   .action-pill-danger:hover { color: #7a271a; }
+  .template-status-note {
+    display: block;
+    margin-top: 4px;
+    color: #9f1239;
+    font-size: 14px;
+    line-height: 1.45;
+  }
 </style>
 
 <form class="panel filters" method="get">
@@ -126,7 +134,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 </form>
 <div class="actions"><a class="button" href="project-edit.php">新增專案</a></div>
 <table class="project-table">
-  <tr><th>專案</th><th>客戶</th><th>課程</th><th>選定樣板</th><th>選版頁</th><th>操作</th></tr>
+  <tr><th>專案</th><th>客戶</th><th>課程</th><th>樣板狀態</th><th>選定樣板</th><th>選版頁</th><th>操作</th></tr>
   <?php foreach ($projects as $project) { ?>
     <tr>
       <td><span class="project-name"><?php echo h($project['course_name']); ?></span><br><span class="muted project-id"><?php echo h($project['project_id']); ?></span></td>
@@ -134,6 +142,12 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
       <td>
         <span class="course-info"><?php echo h($project['course_type']); ?></span><br>
         <span class="muted course-meta"><?php echo h($project['course_format']); ?> / <?php echo h($project['course_location']); ?></span>
+      </td>
+      <td>
+        <span class="action-pill"><?php echo h(chat_d_template_status_label(isset($project['template_status']) ? $project['template_status'] : '')); ?></span>
+        <?php if (!empty($project['template_error_code']) || !empty($project['template_error_message'])) { ?>
+          <span class="template-status-note"><?php echo h(chat_d_template_error_label(isset($project['template_error_code']) ? $project['template_error_code'] : '')); ?><?php echo !empty($project['template_error_message']) ? '：' . h($project['template_error_message']) : ''; ?></span>
+        <?php } ?>
       </td>
       <td>
         <?php echo h($project['selected_proposal_id']); ?><br>
@@ -153,6 +167,6 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
       </td>
     </tr>
   <?php } ?>
-  <?php if (empty($projects)) { ?><tr><td colspan="6" class="muted">目前沒有符合條件的專案。</td></tr><?php } ?>
+  <?php if (empty($projects)) { ?><tr><td colspan="7" class="muted">目前沒有符合條件的專案。</td></tr><?php } ?>
 </table>
 <?php include dirname(__FILE__) . '/../templates/admin-footer.php'; ?>
