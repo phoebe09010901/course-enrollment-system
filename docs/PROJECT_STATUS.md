@@ -2,19 +2,21 @@
 
 ## 狀態摘要
 
-目前專案已從初始化階段進入第一版前端模板階段。repo 已包含 `styles/` design foundation 與 `templates/course-brand-template-v1/` 靜態招生頁模板，但尚未包含 skill 實作、公開資源或後端服務。
+目前專案已從初始化階段進入第一版前端模板階段。repo 已包含 `styles/` design foundation、`templates/course-brand-template-v1/` 靜態招生頁模板，以及 `docs/TEMPLATE_REFERENCE.md` 版型參考資料庫；尚未包含 skill 實作、公開資源或後端服務。
 
-目前已新增 `styles/` design foundation，用來支撐品牌型課程頁的 Hero、typography、spacing、motion、gallery rhythm、visual hierarchy 與 section choreography。
+目前 `styles/` design foundation 用來支撐品牌型課程頁的 Hero、typography、spacing、motion、gallery rhythm、visual hierarchy 與 section choreography。
 
-本次工作建立四份基礎文件、第一版 design foundation，以及可直接在瀏覽器開啟的靜態招生頁模板。
+目前 `docs/TEMPLATE_REFERENCE.md` 收錄 10 份網站風格分析報告，作為 Chat B 與 Codex 產生招生頁時的正式版型依據，不是一般靈感參考。
 
 ## 已確認存在
 
 - `.git`
+- `README.md`
 - `docs/PROJECT_CONTEXT.md`
 - `docs/PROJECT_STATUS.md`
 - `docs/STYLE_SYSTEM.md`
 - `docs/COLLABORATION_SETUP.md`
+- `docs/TEMPLATE_REFERENCE.md`
 - `styles/README.md`
 - `styles/course-brand-template-v1.json`
 - `styles/tokens/course-brand.css`
@@ -27,13 +29,14 @@
 - `templates/course-brand-template-v1/js/page.js`
 - `templates/course-brand-template-v1/assets/course-workspace.svg`
 
-## 尚未存在的目錄與狀態
+## 目錄狀態
 
 | 目錄 | 目前狀態 | 備註 |
 | --- | --- | --- |
+| `docs/` | 已建立 | 已有專案記憶、協作規則、Style System 與 Template Reference System |
 | `styles/` | 已建立 frontend-ready foundation | 已有 CSS tokens、Hero、typography、spacing、motion、layout rules，並已被模板引用 |
-| `skills/` | 尚未建立 | 尚無 style-selector-skill 或其他 AI skill |
 | `templates/` | 已建立 | 已有 `templates/course-brand-template-v1/` 靜態前端模板 |
+| `skills/` | 尚未建立 | 尚無 style-selector-skill 或其他 AI skill |
 | `public/` | 尚未建立 | 尚無公開素材、圖片、靜態資源 |
 | `line-webhook/` | 尚未建立 | 尚無 LINE webhook 程式碼或設定 |
 | `admin/` | 尚未建立 | 尚無管理介面 |
@@ -45,34 +48,37 @@
 - 建立專案狀態文件。
 - 建立美術風格系統初始文件。
 - 建立 AI 協作規則文件。
-- 明確記錄目前 repo 仍沒有實體系統功能。
 - 建立品牌型課程頁 frontend-ready design foundation。
 - 建立 course-brand-template-v1 的機讀設計規格。
 - 建立 `styles/tokens/course-brand.css`，提供前端可引用的 CSS custom properties 與穩定 class contract。
 - 建立 `templates/course-brand-template-v1/`，完成 HTML、CSS、JS、responsive、Hero、section composition 與前端動畫。
 - 建立根目錄 `README.md`，提供另一台電腦 clone 與接手方式。
+- 補充 course-brand-template-v1 全域設計規則：中文優先、桌機字級下修、不新增獨立聯絡區塊。
+- 補充 Typography / 字型系統全域規範：Google Fonts 可用但需由 Chat A 統一定義，預設 `Noto Serif TC` + `Noto Sans TC`。
+- 建立 `docs/TEMPLATE_REFERENCE.md`，整理 10 份網站風格分析報告為正式版型參考資料庫。
+- 補充 Chat A / Chat B 合作規則：Chat B 產生招生頁前必須先指定 `template_id`。
 
 ## 尚未完成
 
-- 尚未定義產品需求與實際使用者流程。
-- 尚未建立應用架構。
-- 尚未選定前端、後端、資料庫或部署技術。
+- 尚未定義完整產品需求與實際使用者流程。
 - 尚未建立 style-selector-skill 的 skill 目錄與規格。
-- 尚未建立任何測試、CI 或部署流程。
-- 尚未建立 LINE webhook、admin、worker 的責任分工。
+- 尚未將最新全域設計規則與 Typography / 字型系統同步到 `styles/tokens/course-brand.css` 與 `styles/course-brand-template-v1.json`。
+- 尚未將 `docs/TEMPLATE_REFERENCE.md` 轉成可機讀 JSON 或 selector skill。
 - 尚未以真實課程案例替換模板示範文案。
 - 尚未建立正式圖片、攝影或生成圖資產流程。
+- 尚未建立任何測試、CI 或部署流程。
+- 尚未建立 LINE webhook、admin、worker 的責任分工。
 
 ## 目前風險
 
 - 專案已有前端模板實作，但 SQL、webhook、backend、admin、worker 等關鍵名詞仍只是未建立方向，容易被誤判為已有系統。
-- 如果後續先寫程式碼而不補規格，AI Agent 可能會各自發明不一致的目錄結構。
+- 如果 Chat B 不先查詢 `docs/TEMPLATE_REFERENCE.md` 就直接做前端，可能會回到自由發揮與模板感過重的問題。
 - 現有模板使用示範文案與示意視覺資產，正式招生前仍需替換成真實課程資料。
 
 ## 下一步建議
 
-1. 補第一個真實課程品牌案例，用來驗證 Hero、typography、spacing 與 motion 規則。
-2. 建立 `skills/style-selector-skill/README.md`，描述 skill 輸入、輸出與選擇邏輯。
-3. 建立正式圖片、攝影或生成圖資產流程。
-4. 決定 `public/`、`line-webhook/`、`admin/`、`worker/` 是否屬於同一 repo 的 monorepo 架構。
-5. 新增 `docs/ARCHITECTURE.md` 與 `docs/ROADMAP.md`，補上系統架構與短期里程碑。
+1. 指定第一個真實課程品牌案例的 primary `template_id` 與 optional `secondary_template_id`。
+2. 將 `docs/TEMPLATE_REFERENCE.md` 的欄位整理成 `styles/style-index.json` 或 style-selector-skill 可讀格式。
+3. 建立 `skills/style-selector-skill/README.md`，描述 skill 輸入、輸出與選擇邏輯。
+4. 依據全域規則調整 `styles/tokens/course-brand.css` 的桌機字級 token。
+5. 建立正式圖片、攝影或生成圖資產流程。

@@ -14,11 +14,12 @@ AI Agent 在開始任何工作前，應先閱讀：
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
-5. `styles/course-brand-template-v1.json`
-6. `styles/layout-rules/landing-page.md`
-7. `styles/typography/course-brand.md`
-8. `styles/motion/animation-style.md`
-9. `styles/tokens/course-brand.css`
+5. `docs/TEMPLATE_REFERENCE.md`
+6. `styles/course-brand-template-v1.json`
+7. `styles/layout-rules/landing-page.md`
+8. `styles/typography/course-brand.md`
+9. `styles/motion/animation-style.md`
+10. `styles/tokens/course-brand.css`
 
 ## AI Agent 工作規則
 
@@ -32,6 +33,43 @@ AI Agent 在開始任何工作前，應先閱讀：
 - 修改文件時要同步更新狀態與缺口。
 - 新增大型功能前，先建立 README 或規格文件，說明目錄責任。
 - 不要把美術風格、模板、skill、webhook、admin、worker 混在同一層未命名邏輯中。
+
+## Chat A / Chat B 合作方式
+
+### Chat A：美術風格系統 / 設計規範維護
+
+Chat A 負責維護：
+
+- `docs/STYLE_SYSTEM.md`
+- `docs/TEMPLATE_REFERENCE.md`
+- `styles/`
+- 與設計規範、版型資料庫、template selection 相關的長期規則
+
+Chat A 的工作重點：
+
+- 整理全域視覺規則。
+- 維護 10 份網站風格分析報告形成的 Template Reference System。
+- 定義哪些規則是所有招生頁都必須遵守。
+- 避免把單一模板細節塞進 `STYLE_SYSTEM.md`；單一模板細節應放在 `TEMPLATE_REFERENCE.md`。
+
+### Chat B：前端實作 / 招生頁重構
+
+Chat B 負責依照 Chat A 維護的規範實作前端：
+
+- 產生或重構招生頁前，必須先查詢 `docs/TEMPLATE_REFERENCE.md`。
+- 產生或重構招生頁前，必須指定 primary `template_id`。
+- 可指定一個 `secondary_template_id` 作為輔助風格。
+- 不可以在未查詢 `docs/TEMPLATE_REFERENCE.md` 的情況下自行發明新版型。
+- 不可以違反 `docs/STYLE_SYSTEM.md` 的全域規則。
+
+Chat B 宣告格式：
+
+```text
+本頁採用 TPL-001 LifeTime 作為主要版型依據。
+secondary_template_id: TPL-005 Interior Design
+```
+
+如果使用者沒有指定 template，Chat B 應先根據課程類型、產業、品牌調性從 `docs/TEMPLATE_REFERENCE.md` 提出候選，而不是直接實作。
 
 ## 專案開啟與結束口令
 
