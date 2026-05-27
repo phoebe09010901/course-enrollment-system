@@ -13,7 +13,11 @@ AI Agent 在開始任何工作前，應先閱讀：
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
-4. `docs/COLLABORATION_SETUP.md`
+4. `docs/TEMPLATE_REFERENCE.md`
+5. `docs/CLIENT_SELECTION_FLOW.md`
+6. `docs/FORM_SCHEMA.md`
+7. `docs/BACKEND_AUTOMATION_FLOW.md`
+8. `docs/COLLABORATION_SETUP.md`
 
 ## AI Agent 工作規則
 
@@ -39,7 +43,7 @@ find . -maxdepth 3 -type d
 若要檢查指定區塊：
 
 ```bash
-find styles skills templates public line-webhook admin worker -maxdepth 3 -type f
+find styles schemas skills templates public line-webhook admin worker -maxdepth 3 -type f
 ```
 
 如果目錄不存在，這是重要狀態，不是錯誤。
@@ -64,6 +68,30 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 
 每次新增 style token、模板、品牌案例或風格選擇邏輯後應更新。
 
+### `FORM_SCHEMA.md`
+
+用來記錄表單 schema、資料規則與欄位系統的初始規格。
+
+每次新增 field registry、表單版本、資料驗證規則、admin 欄位或 webhook 寫入流程後應更新。
+
+### `TEMPLATE_REFERENCE.md`
+
+用來記錄三款樣板提案的挑選規則、提案欄位與課程類型對應。
+
+每次新增 Canva template、模板 id 或樣板挑選規則後應更新。
+
+### `CLIENT_SELECTION_FLOW.md`
+
+用來記錄客戶選擇 A / B / C 樣板、逾期作廢與重新開啟預覽的流程。
+
+每次新增預覽頁、選款 API、LINE 選款語句或逾期邏輯後應更新。
+
+### `BACKEND_AUTOMATION_FLOW.md`
+
+用來記錄資料庫、後台畫面、AI Worker、自動通知與三天作廢流程。
+
+每次新增資料表、migration、worker、notification 或 admin 狀態欄位後應更新。
+
 ### `COLLABORATION_SETUP.md`
 
 用來記錄 AI 協作流程、repo 探查規則與文件維護規則。
@@ -75,6 +103,7 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 未來可以將 repo 拆成以下責任區：
 
 - `styles/`：美術風格、品牌 token、視覺規範。
+- `schemas/`：表單 schema、欄位 registry、資料規則。
 - `skills/`：AI Agent 使用的 skills。
 - `templates/`：可重複使用的課程品牌模板。
 - `public/`：公開靜態資源。
