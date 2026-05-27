@@ -23,6 +23,8 @@ function admission_config(): array
         'cloudflare_r2_secret_access_key' => getenv('CLOUDFLARE_R2_SECRET_ACCESS_KEY') ?: '',
         'cloudflare_r2_bucket' => getenv('CLOUDFLARE_R2_BUCKET') ?: '',
         'cloudflare_r2_public_base_url' => getenv('CLOUDFLARE_R2_PUBLIC_BASE_URL') ?: '',
+        'cloudflare_turnstile_site_key' => getenv('CLOUDFLARE_TURNSTILE_SITE_KEY') ?: '',
+        'cloudflare_turnstile_secret_key' => getenv('CLOUDFLARE_TURNSTILE_SECRET_KEY') ?: '',
     ];
 
     $localConfigPath = __DIR__ . '/local.php';

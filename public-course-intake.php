@@ -105,7 +105,57 @@ function validate_course_form_security()
         $errors[] = '表單已送出，請稍候再送下一筆。';
     }
 
+    if (course_turnstile_is_enabled() && !course_turnstile_verify()) {
+        $errors[] = '安全驗證未通過，請重新整理頁面後再試。';
+    }
+
     return array_values(array_unique($errors));
+}
+
+function course_turnstile_is_enabled()
+{
+    return course_config_value('CLOUDFLARE_TURNSTILE_SITE_KEY') !== ''
+        && course_config_value('CLOUDFLARE_TURNSTILE_SECRET_KEY') !== '';
+}
+
+function course_turnstile_site_key()
+{
+    return course_config_value('CLOUDFLARE_TURNSTILE_SITE_KEY');
+}
+
+function course_turnstile_verify()
+{
+    $token = post('cf-turnstile-response', '');
+    if ($token === '') {
+        return false;
+    }
+
+    $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    if (!$ch) {
+        return false;
+    }
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array(
+        'secret' => course_config_value('CLOUDFLARE_TURNSTILE_SECRET_KEY'),
+        'response' => $token,
+        'remoteip' => course_form_client_ip(),
+    )));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($response === false || $status < 200 || $status >= 300) {
+        error_log('[course-form-turnstile] verify failed status=' . $status . ' error=' . $error);
+        return false;
+    }
+
+    $result = json_decode($response, true);
+    return is_array($result) && !empty($result['success']);
 }
 
 function register_course_form_attempt()
@@ -809,6 +859,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>課程資料表單｜菲兔麥 課程招生 - 系統 V.1</title>
   <link rel="stylesheet" href="public/assets/css/admin.css?v=2026052607">
+  <?php if (course_turnstile_is_enabled()) { ?><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><?php } ?>
   <style>
     body.form-body {
       min-height: 100vh;
@@ -935,6 +986,10 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       gap: 12px;
       align-items: center;
       margin-top: 24px;
+    }
+
+    .turnstile-wrap {
+      margin-top: 20px;
     }
 
     .form-submit {
@@ -1123,6 +1178,12 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
           </label>
         </div>
       </section>
+
+      <?php if (course_turnstile_is_enabled()) { ?>
+        <div class="turnstile-wrap">
+          <div class="cf-turnstile" data-sitekey="<?php echo h(course_turnstile_site_key()); ?>" data-action="course-intake"></div>
+        </div>
+      <?php } ?>
 
       <div class="form-actions">
         <button class="form-submit" type="submit">送出資料</button>

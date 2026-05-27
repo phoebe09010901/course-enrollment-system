@@ -74,6 +74,8 @@ cp config/local.example.php config/local.php
 - Cloudflare R2 secret access key
 - Cloudflare R2 bucket
 - Cloudflare R2 public base URL
+- Cloudflare Turnstile site key
+- Cloudflare Turnstile secret key
 
 `config/local.php` 已被 `.gitignore` 排除。
 
@@ -106,6 +108,17 @@ course_intakes.photo_asset_statuses_json
 ```
 
 若 R2 尚未設定，表單會退回使用本機 `public/uploads/course-intakes/`，避免測試環境中斷。
+
+## Cloudflare Turnstile 表單驗證
+
+公開課程資料表單支援 Cloudflare Turnstile。啟用條件是以下設定皆存在：
+
+```text
+CLOUDFLARE_TURNSTILE_SITE_KEY
+CLOUDFLARE_TURNSTILE_SECRET_KEY
+```
+
+表單會在前端載入 Turnstile widget，後端會呼叫 Cloudflare Siteverify API 驗證 `cf-turnstile-response`。驗證失敗時不會寫入 MySQL，也不會處理圖片上傳。
 
 ## LINE Intake API 合約
 

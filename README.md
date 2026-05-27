@@ -24,6 +24,8 @@ https://ftm.com.tw/demo/admission-system/public-course-intake.php
 
 照片素材可設定 Cloudflare R2 儲存。啟用後 MySQL 只保留圖片瀏覽網址；未設定 R2 時會使用本機 `public/uploads/course-intakes/` 作為測試備援。
 
+公開表單可設定 Cloudflare Turnstile。啟用後，後端會驗證 Turnstile token，驗證失敗不會寫入 MySQL 或處理圖片。
+
 ## LINE Intake API
 
 Endpoint:

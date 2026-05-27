@@ -13,4 +13,6 @@ return [
     'cloudflare_r2_secret_access_key' => 'your_r2_secret_access_key',
     'cloudflare_r2_bucket' => 'your_r2_bucket_name',
     'cloudflare_r2_public_base_url' => 'https://assets.example.com',
+    'cloudflare_turnstile_site_key' => 'your_turnstile_site_key',
+    'cloudflare_turnstile_secret_key' => 'your_turnstile_secret_key',
 ];
