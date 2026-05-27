@@ -1,12 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
 return [
     'db_host' => 'localhost',
     'db_name' => 'your_database_name',
     'db_user' => 'your_database_user',
     'db_pass' => 'your_database_password',
+    'app_name' => 'AI 招生頁產生系統',
+    'app_base_url' => 'https://example.com/demo/admission-system',
+    'app_timezone' => 'Asia/Taipei',
+    'session_name' => 'admission_system_session',
+    'install_key' => 'replace-with-install-key',
     'api_key' => 'replace-with-a-long-random-api-key',
     'cloudflare_r2_account_id' => 'your_cloudflare_account_id',
     'cloudflare_r2_access_key_id' => 'your_r2_access_key_id',
@@ -15,4 +18,7 @@ return [
     'cloudflare_r2_public_base_url' => 'https://assets.example.com',
     'cloudflare_turnstile_site_key' => 'your_turnstile_site_key',
     'cloudflare_turnstile_secret_key' => 'your_turnstile_secret_key',
+    'chat_a_trigger_webhook_url' => 'https://example.com/chat-a-trigger',
+    'chat_a_trigger_secret' => 'replace-with-chat-a-webhook-secret',
+    'chat_a_trigger_timeout' => '3',
 ];

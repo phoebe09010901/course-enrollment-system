@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__FILE__) . '/lib/bootstrap.php';
 require_once dirname(__FILE__) . '/lib/template_proposal_flow.php';
+require_once dirname(__FILE__) . '/lib/chat_a_trigger.php';
 
 $errors = array();
 $success = false;
@@ -41,6 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $saveResult = save_course_intake_form($values);
+        try {
+            chat_a_trigger_for_project($saveResult['project_id']);
+        } catch (Exception $triggerError) {
+            error_log('[public-course-intake] chat_a_trigger_failed ' . $triggerError->getMessage());
+        }
         register_course_form_success();
         $selectionUrl = chat_d_project_selection_url($saveResult['project_id']);
         if ($selectionUrl !== '') {

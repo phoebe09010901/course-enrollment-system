@@ -53,7 +53,28 @@ Authorization: Bearer {ADMISSION_API_KEY}
 3. 填入 DB 連線與 `api_key`。
 4. Cloudflare Worker 將 LINE intake JSON POST 到 `/api/line-intakes`。
 5. 後台 `admin/clients.php` 會讀取 `clients` 與 `course_intakes` 顯示客戶資料。
-6. Chat D 的 Canva 樣板資料流使用 `course_projects`、`template_proposals`、`notification_logs`，migration 在 `database/migrations/002_create_chat_d_template_flow.sql`。公開課程表單送出後會建立 `course_projects` 並停在 `pending_canva_proposals`，等待 Chat A / Canva 回填三款提案。
+6. Chat D 的 Canva 樣板資料流使用 `course_projects`、`template_proposals`、`notification_logs`，migration 在 `database/migrations/002_create_chat_d_template_flow.sql`。公開課程表單送出後會建立 `course_projects`，並透過 `CHAT_A_TRIGGER_WEBHOOK_URL` 自動觸發 Chat A / Canva 開始產生三款提案；若尚未設定 webhook，系統會記錄 `chat_a_trigger_queued` 以便後續補觸發。
+
+## Chat A 自動觸發
+
+公開課程表單儲存成功後會呼叫 `lib/chat_a_trigger.php`。請在 `config/local.php` 或環境變數設定：
+
+```text
+CHAT_A_TRIGGER_WEBHOOK_URL=https://your-chat-a-worker.example.com/trigger
+CHAT_A_TRIGGER_SECRET=replace-with-chat-a-webhook-secret
+CHAT_A_TRIGGER_TIMEOUT=3
+```
+
+Webhook 會收到 `project_id`、客戶選版頁、課程資料、圖片資產 raw payload，以及 Chat D 回填端點 `api/template-proposals/`。Chat A 完成 Canva 三款樣板後，仍需依照下方 API 寫回 `template_proposals`。
+
+需要補觸發既有專案時，可 POST 到：
+
+```text
+POST /api/chat-a-trigger/
+X-Admission-Api-Key: {ADMISSION_API_KEY}
+
+{"project_id":"CP-20260528-00011"}
+```
 
 ## Canva 樣板提案 API
 
