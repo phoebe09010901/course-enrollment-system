@@ -1,4 +1,4 @@
-const DEPLOY_VERSION = 'chat-c-blank-label-parser-fix-2026-05-27-06';
+const DEPLOY_VERSION = 'chat-c-contact-course-token-fix-2026-05-27-07';
 const intakeMemory = new Map();
 const handoffMemory = new Map();
 
@@ -392,7 +392,7 @@ function applyContactText(state, text) {
     state.line_id_link_status = classifyLineIdLink(lineValue);
   }
 
-  if (!state.user_name && !looksLikeForm(value) && !looksLikeCourseFieldText(value) && !isFieldHelpQuestion(value)) {
+  if (!state.user_name && !looksLikeForm(value) && !looksLikeCourseFieldText(value) && !isCourseAnswerToken(value) && !isFieldHelpQuestion(value)) {
     const name = value
       .split(/\r?\n/)
       .map((line) => cleanLabeledValue(line, ['姓名', '使用者姓名', '名字', '稱呼']))
@@ -485,6 +485,7 @@ function isPlausibleUserName(value, email) {
   const text = String(value || '').trim();
   if (!text || text === email) return false;
   if (isClearlyInvalidContactReply(text)) return false;
+  if (isCourseAnswerToken(text)) return false;
   if (/@/.test(text) || /line|http|\.me|\.ee/i.test(text)) return false;
   if (text.length > 30) return false;
   return /[\p{Script=Han}A-Za-z]/u.test(text);
@@ -1755,6 +1756,11 @@ function isFieldHelpQuestion(text) {
 
 function looksLikeCourseFieldText(text) {
   return /課程名稱|課名|課程類型|課程形式|上課形式|上課地點|預計招生時間|預計開課時間|課程名額|課程費用|適合對象|課程特色|課後支援/i.test(String(text || ''));
+}
+
+function isCourseAnswerToken(text) {
+  const value = String(text || '').trim();
+  return /^(實體|線上|混合|畫畫|色鉛筆|水彩|手作|花藝|美甲|攝影|設計|瑜伽|烘焙|音樂|舞蹈|英文|程式|親子|證照)$/i.test(value);
 }
 
 function isGenericCourseName(text) {

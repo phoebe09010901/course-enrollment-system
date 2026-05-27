@@ -12,13 +12,13 @@
 
 - `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 已存在。
 - `cloudflare-workers/workers.js` 已存在。
-- Worker 版本：`chat-c-blank-label-parser-fix-2026-05-27-06`。
+- Worker 版本：`chat-c-contact-course-token-fix-2026-05-27-07`。
 - `docs/TEMPLATE_REFERENCE.md` 尚未存在。
 - `docs/CLIENT_SELECTION_FLOW.md` 尚未存在。
 
-Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01 到 S15 通過，S16 失敗。
+Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01 到 S16 通過，S17 失敗。
 
-目前新的 Chat C blocker 是 C-FIX-009。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
+目前新的 Chat C blocker 是 C-FIX-010。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
 
 ## 目前回歸狀態
 
@@ -32,7 +32,20 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests
 | C-FIX-006 | resolved | confirmed payload date status coverage |
 | C-FIX-007 | resolved | S11 |
 | C-FIX-008 | resolved | S14 / S16 |
-| C-FIX-009 | open | S16 |
+| C-FIX-009 | resolved | S16 |
+| C-FIX-010 | open | S17 |
+
+### C-FIX-010
+
+- issue_id：C-FIX-010
+- 問題描述：短 LINE 代碼會被誤當成 `user_name`；真實 LINE 對話中同時出現 Email 已提供後又被判缺的狀態錯亂。
+- 出現在哪個流程階段：必填聯絡資料 / Email persistence / LINE ID retry
+- 目前錯誤行為：本地 S17 中，客戶提供 valid Email 後，回覆短代碼 `URZ8z2U`，worker 只補問 LINE ID Link，代表 `user_name` 被誤判已填。真實 LINE 對話中則進一步出現補 line.me URL 後又回頭要求 Email 的狀態錯亂。
+- 期望行為：Email 一旦以 valid 狀態寫入，後續 LINE ID 補問、短代碼、line.me URL 都不可清掉 Email。短代碼如 `URZ8z2U` 不可推測為姓名；若不符合 LINE Link，應繼續要求姓名與 LINE ID Link。
+- 建議修正話術或規則：確認 `applyContactText()` / `applyFormFields()` 不會用空白或無關訊息覆蓋 valid email；將純英數短碼列為 contact 階段不可推測姓名，可回覆「這看起來像 LINE ID，但不是完整連結」並繼續要求姓名與 LINE ID Link。保留 S17 作為 regression test。
+- 是否影響建檔：是
+- 是否影響客戶體驗：是
+- 優先級：high
 
 ## Chat C 修正項目
 

@@ -289,6 +289,35 @@ test('S16 contact gate 未完成時，「實體」不可被當成 course_format'
   assert.equal(admissionCalls.length, 0);
 });
 
+test('S17 Email 在 LINE ID 補問來回中不可消失，短代碼不可當姓名', async () => {
+  resetNetworkCaptures();
+  const userId = 's17-email-persists-through-line-link-retries';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, blankIntakeForm());
+
+  const firstEmailReply = await sendText(userId, 'cat0704520@gmail.com');
+  assertIncludes(firstEmailReply, '姓名');
+  assertIncludes(firstEmailReply, 'LINE ID Link');
+  assertDoesNotInclude(firstEmailReply, 'Email（未來會作為登入帳號）');
+
+  const shortCodeReply = await sendText(userId, 'URZ8z2U');
+  assertIncludes(shortCodeReply, '姓名');
+  assertIncludes(shortCodeReply, 'LINE ID Link');
+  assertDoesNotInclude(shortCodeReply, 'Email（未來會作為登入帳號）');
+
+  const secondEmailReply = await sendText(userId, 'cat0704520@gmail.com');
+  assertIncludes(secondEmailReply, '姓名');
+  assertIncludes(secondEmailReply, 'LINE ID Link');
+  assertDoesNotInclude(secondEmailReply, 'Email（未來會作為登入帳號）');
+
+  const validLineReply = await sendText(userId, 'https://line.me/ti/p/wisURZ8z2U');
+  assertIncludes(validLineReply, '姓名');
+  assertDoesNotInclude(validLineReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(validLineReply, 'LINE ID Link（用於後續通知與聯繫）');
+  assert.equal(admissionCalls.length, 0);
+});
+
 async function driveToSummaryWithNoPhotos(userId) {
   await sendText(userId, '我想開始');
   await sendText(userId, fullIntakeForm());

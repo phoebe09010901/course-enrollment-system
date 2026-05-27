@@ -42,13 +42,14 @@
 - 建立後端自動化流程規格，涵蓋資料庫、後台、AI Worker、通知與三天作廢邏輯。
 - 建立 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`，作為 Chat E 驗證 LINE AI 客服流程的核心依據。
 - 同步 Chat C 可部署 Worker：`cloudflare-workers/workers.js`、`cloudflare-workers/worker.js`、`cloudflare-workers/line-webhook-worker.js`。
-- Worker 版本：`chat-c-blank-label-parser-fix-2026-05-27-06`。
+- Worker 版本：`chat-c-contact-course-token-fix-2026-05-27-07`。
 - 已依 Chat E 實測修正 C-FIX-001～C-FIX-005、C-FIX-007 的主要 Worker 行為：入口 2 / 3 先分流、初次非明確 intent 顯示開場、單獨姓名可寫入 `user_name`、Email-only 不誤判 LINE ID Link、課程形式「還沒確定」可暫存為 `未定`、付款問題明確由 service price guard 處理。
 - 已在 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 補上 `line_id_link_status = need_review` 通過 gate 的決策、Email-only 解析限制、單獨姓名規則、課程 unknown 處理與付款 guard 例外說明。
 - 已依 Chat E 最新回歸修正 C-FIX-001～C-FIX-007：`ready_for_confirmation` 前確認詞不可污染欄位；contact fallback 改為聯絡資料導向；unknown-like 欄位成功寫入後不再混 fallback；泛稱課程名稱會追問是否作為暫定課名；Email 拒答會標記 `email_status = declined` 與 `needs_human_contact_review = true`；模糊日期會標記 `expected_launch_date_status` / `expected_start_date_status = tentative`；圖片素材因無法自動辨識內容先標 `need_review`。
 - 已修正欄位說明情境：客戶問「課程類型是什麼 / 怎麼填 / 看不懂」時，Worker 會先解釋課程類型是主題分類，並提供例子；不會把問題句寫入 `course_type`，也不會跳到下一步。
-- 已修正 C-FIX-008 / S14：空白 `LINE ID Link：` 或 `3. LINE ID Link：` 不會污染 `line_id_link`。`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01 到 S15 通過。
-- 新增 C-FIX-009 / S16：聯絡資料未補齊時，客戶回 `實體` 會讓 `user_name` 被誤判已填；需 Chat C 修正課程形式詞污染姓名的問題。
+- 已修正 C-FIX-008 / S14：空白 `LINE ID Link：` 或 `3. LINE ID Link：` 不會污染 `line_id_link`；聯絡資料未補齊時，課程欄位文字不會被推測成 `user_name`。
+- 已修正 C-FIX-009 / S16：聯絡資料未補齊時，`實體`、`線上`、`混合`、`畫畫`、`色鉛筆` 等課程形式 / 類型詞不會被推測成 `user_name`。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S16。
+- 新增 C-FIX-010 / S17：聯絡資料未補齊時，短 LINE 代碼如 `URZ8z2U` 會被推測成 `user_name`，導致系統只剩補問 LINE ID Link；需 Chat C 修正短英數代碼污染姓名的問題。
 - 將 MVP 流程定位為免費試營運階段，報價、付款、訂閱與續約先列為 future phase。
 - 建立 `worker/README.md`，定義 worker 預期責任與目前缺口。
 - 明確記錄目前 repo 仍沒有實體系統功能。
