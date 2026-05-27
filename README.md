@@ -16,6 +16,12 @@ docs/COLLABORATION_SETUP.md
 https://ftm.com.tw/demo/admission-system
 ```
 
+公開課程資料表單：
+
+```text
+https://ftm.com.tw/demo/admission-system/public-course-intake.php
+```
+
 ## LINE Intake API
 
 Endpoint:
