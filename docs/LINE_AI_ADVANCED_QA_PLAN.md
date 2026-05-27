@@ -106,6 +106,9 @@
 | ADV-010 | contact gate 未完成時回答課程形式 | high | `實體`、`線上`、`混合` 不可在缺姓名 / LINE ID Link 時寫入 `course_format` 或推進到課程流程。 |
 | ADV-011 | Email 在 LINE ID 補問來回中消失 | high | 重複提供 Email 與 LINE 相關資訊時，已驗證 Email 不可被清空；短 LINE 代碼不可被當成姓名。 |
 | ADV-012 | 欄位更新意圖被導到錯誤欄位 | high | 客戶說「我要更新 LINE ID Link」時，應進入 LINE ID Link 更新，不可改問 Email 或課程資料。 |
+| ADV-013 | contact 更新矩陣 | high | Email / 姓名 / LINE Link 更新應只影響指定欄位，且更新後回到原本流程。 |
+| ADV-014 | 摘要確認前更新 contact | high | ready_for_confirmation 階段更新聯絡資料後，不可跳回照片流程，也不可直接建檔。 |
+| ADV-015 | contact 更新後 confirmed payload | high | 連續更新多個 contact 欄位後，建檔 payload 必須使用最新值。 |
 
 ## 本輪新增檢測結果
 
@@ -117,7 +120,7 @@
 
 - `S14` pass：貼空白表單後，空白 `LINE ID Link：` / `3. LINE ID Link：` 不會污染 `line_id_link`。
 - `S15` pass：contact 完成後問「課程類型是什麼」可正確回覆欄位說明，且下一輪補 `課程類型：色鉛筆` 後才前進。
-- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S18 全部通過。
+- `node --test tests/line-ai-worker-scenarios.test.mjs`：新增嚴格 contact update matrix 後，S01-S18、S21、S24 通過；S19、S20、S22、S23 失敗。
 - `S16` pass：contact gate 未完成時，客戶回 `實體` 不會污染 `user_name`。
 - `S17` pass：短 LINE 代碼 `URZ8z2U` 不會污染 `user_name`，Email 在 LINE ID 補問來回中不會消失。
 - `S18` pass：客戶回 `我要更新LINE ID Link` 時，系統會鎖定 LINE ID Link 更新，不會改問 Email 或污染課程欄位。
@@ -126,7 +129,7 @@
 
 - 原問題是 state machine / parser bug。
 - 問題不在 Email regex，而在空白 label 與 `extractLineLink()` / `cleanLabeledValue()` 的解析防護不足。
-- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染與欄位更新意圖目前皆已修正；S01 到 S18 保留作為 regression tests。
+- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染與基礎欄位更新意圖目前皆已修正；嚴格 contact update matrix 仍發現 Email 更新 validation、姓名更新 intent、摘要確認前更新恢復流程、多欄位更新 payload 四個 blocker。
 
 ## 回報格式
 

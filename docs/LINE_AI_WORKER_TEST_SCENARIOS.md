@@ -56,6 +56,12 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 | S16 | contact gate 未完成時不可收課程形式 | start 後貼空白表單、給 Email、問課程類型、再回 `實體` | 仍應要求補姓名與 LINE ID Link；`實體` 不可被當成 `course_format` 推進。 |
 | S17 | Email 在 LINE ID 補問來回中不可消失 | start 後貼空白表單、給 Email、給短代碼、再給 Email、再給 line.me URL | Email 必須持續保存；短代碼不可當姓名；有效 line.me URL 後只應缺姓名。 |
 | S18 | 明確要求更新 LINE ID Link 不可改問 Email | contact 完成後，客戶回 `我要更新LINE ID Link` | 應聚焦 LINE ID Link 更新；不可要求補 Email 或課程資料。 |
+| S19 | 更新 Email 不可清掉其他 contact 欄位 | contact 完成後要求更新 Email，先給錯誤 Email 再給正確 Email | 錯誤 Email 應有格式提示；姓名與 LINE ID Link 不可被清空。 |
+| S20 | 課程收集中更新姓名後回到課程欄位 | 已進課程資料階段後，客戶回 `我要改姓名` 再給新姓名 | 應進入姓名更新；更新後回到原缺漏的課程欄位。 |
+| S21 | 更新 LINE ID Link 時誤貼 Email 不可完成更新 | LINE Link 更新模式下，客戶誤貼 Email | 不可把 Email 當 LINE Link；仍應要求 LINE ID Link。 |
+| S22 | 摘要確認前更新 LINE ID Link 不可跳回照片流程 | 已到摘要確認，客戶更新 LINE ID Link | 不可建檔；更新後應回到摘要確認。 |
+| S23 | 多個 contact 欄位連續更新後 payload 使用最新值 | 摘要確認前連續更新 Email、姓名、LINE Link，再確認 | confirmed payload 應使用三個最新 contact 值。 |
+| S24 | `Link ID Link` 拼法也要判定為 LINE ID Link | 客戶使用錯字 `Link ID Link` / `link id link` | 應仍映射為 LINE ID Link，不可改問 Email。 |
 
 ## 建檔 Gate 規則
 

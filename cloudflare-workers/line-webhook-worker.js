@@ -1,4 +1,4 @@
-const DEPLOY_VERSION = 'chat-c-contact-update-field-fix-2026-05-27-09';
+const DEPLOY_VERSION = 'chat-c-link-id-link-alias-fix-2026-05-27-10';
 const intakeMemory = new Map();
 const handoffMemory = new Map();
 
@@ -799,6 +799,7 @@ function fieldKeyByLabel(label) {
     '信箱': 'email',
     '電子信箱': 'email',
     'lineidlink': 'line_id_link',
+    'linkidlink': 'line_id_link',
     'lineid的link': 'line_id_link',
     'linelink': 'line_id_link',
     'lineid': 'line_id_link',
@@ -1702,7 +1703,7 @@ function detectContactUpdateRequest(text) {
   const value = String(text || '').trim();
   if (!/(更新|更正|修改|改成|改掉|改一下|換成|變更|重填|重新填)/i.test(value)) return '';
 
-  if (/LINE\s*ID\s*Link|LINE\s*Link|LINE\s*ID|line_id_link|line\.me|lin\.ee/i.test(value)) {
+  if (/LINE\s*ID\s*Link|LINK\s*ID\s*LINK|LINE\s*Link|LINE\s*ID|line_id_link|line\.me|lin\.ee/i.test(value)) {
     return 'line_id_link';
   }
 
@@ -1731,14 +1732,14 @@ function extractLineLink(text) {
   const line = raw
     .split(/\r?\n/)
     .map((item) => item.trim())
-    .find((item) => /LINE ID Link|LINE ID 的 Link|LINE Link|LINE ID|line_id_link|line\.me|lin\.ee/i.test(item));
+    .find((item) => /LINE ID Link|Link ID Link|LINE ID 的 Link|LINE Link|LINE ID|line_id_link|line\.me|lin\.ee/i.test(item));
 
   if (!line) {
     const withoutEmails = raw.replace(emailPattern, ' ');
     return withoutEmails.match(/(?:https?:\/\/)?(?:line\.me|lin\.ee)\/[^\s]+|@[\w.-]{3,}/i)?.[0] || '';
   }
 
-  const cleaned = cleanLabeledValue(line, ['LINE ID Link', 'LINE ID 的 Link', 'LINE Link', 'LINE ID', 'line_id_link']);
+  const cleaned = cleanLabeledValue(line, ['LINE ID Link', 'Link ID Link', 'LINE ID 的 Link', 'LINE Link', 'LINE ID', 'line_id_link']);
   return emailPattern.test(cleaned) ? '' : cleaned;
 }
 

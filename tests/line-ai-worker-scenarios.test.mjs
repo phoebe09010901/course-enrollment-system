@@ -339,6 +339,125 @@ test('S18 明確要求更新 LINE ID Link 時不可改問 Email', async () => {
   assert.equal(admissionCalls.length, 0);
 });
 
+test('S19 更新 Email 時不可清掉姓名與 LINE ID Link', async () => {
+  resetNetworkCaptures();
+  const userId = 's19-update-email-preserves-contact';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, contactOnlyForm());
+
+  const updateReply = await sendText(userId, '我要修改 Email');
+  assertIncludes(updateReply, '更新 Email');
+  assertDoesNotInclude(updateReply, 'LINE ID Link（用於後續通知與聯繫）');
+
+  const invalidReply = await sendText(userId, 'abc123');
+  assertIncludes(invalidReply, 'Email 格式');
+  assertDoesNotInclude(invalidReply, 'LINE ID Link（用於後續通知與聯繫）');
+
+  const validReply = await sendText(userId, 'new.qa@example.com');
+  assertIncludes(validReply, '課程名稱');
+  assertIncludes(validReply, '課程類型');
+  assertDoesNotInclude(validReply, 'LINE ID Link（用於後續通知與聯繫）');
+  assert.equal(admissionCalls.length, 0);
+});
+
+test('S20 課程收集中更新姓名後，應回到原本缺的課程欄位', async () => {
+  resetNetworkCaptures();
+  const userId = 's20-update-name-during-course-step';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, contactOnlyForm());
+  await sendText(userId, '課程名稱：水彩花卉入門課');
+
+  const updateReply = await sendText(userId, '我要改姓名');
+  assertIncludes(updateReply, '更新姓名');
+  assertDoesNotInclude(updateReply, 'Email（未來會作為登入帳號）');
+
+  const nameReply = await sendText(userId, '鄭阿玲');
+  assertIncludes(nameReply, '課程類型');
+  assertDoesNotInclude(nameReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(nameReply, 'LINE ID Link（用於後續通知與聯繫）');
+  assert.equal(admissionCalls.length, 0);
+});
+
+test('S21 更新 LINE ID Link 時誤貼 Email，不可完成 LINE Link 更新', async () => {
+  resetNetworkCaptures();
+  const userId = 's21-update-line-link-wrong-field';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, contactOnlyForm());
+
+  await sendText(userId, '我要更新LINE ID Link');
+  const wrongFieldReply = await sendText(userId, 'new.qa@example.com');
+  assertIncludes(wrongFieldReply, 'LINE ID Link');
+  assertDoesNotInclude(wrongFieldReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(wrongFieldReply, '課程名稱');
+
+  const correctReply = await sendText(userId, 'https://line.me/ti/p/finalLine123');
+  assertIncludes(correctReply, '課程名稱');
+  assertIncludes(correctReply, '課程類型');
+  assertDoesNotInclude(correctReply, 'Email（未來會作為登入帳號）');
+  assert.equal(admissionCalls.length, 0);
+});
+
+test('S22 ready_for_confirmation 前更新 LINE ID Link 不可建檔，更新後仍需確認', async () => {
+  resetNetworkCaptures();
+  const userId = 's22-update-line-link-before-confirm';
+
+  await driveToSummaryWithNoPhotos(userId);
+  await sendText(userId, '我要更新LINE ID Link');
+  const updatedReply = await sendText(userId, 'https://line.me/ti/p/readyUpdate123');
+
+  assert.equal(admissionCalls.length, 0);
+  assertIncludes(updatedReply, '我幫你整理一下目前資料');
+  assertIncludes(updatedReply, '以上資料是否正確');
+
+  const confirmReply = await sendText(userId, '確認');
+  assertIncludes(confirmReply, '資料已確認並送出建檔');
+  assert.equal(admissionCalls.length, 1);
+  assert.equal(admissionCalls[0].client.line_id_link, 'https://line.me/ti/p/readyUpdate123');
+});
+
+test('S23 三個 contact 欄位連續更新後 confirmed payload 使用最新值', async () => {
+  resetNetworkCaptures();
+  const userId = 's23-multiple-contact-updates-payload';
+
+  await driveToSummaryWithNoPhotos(userId);
+  await sendText(userId, '我要修改 Email');
+  await sendText(userId, 'latest.qa@example.com');
+  await sendText(userId, '我要改姓名');
+  await sendText(userId, '最新姓名');
+  await sendText(userId, '我要更新LINE ID Link');
+  await sendText(userId, 'https://line.me/ti/p/latestLine123');
+  await sendText(userId, '確認');
+
+  assert.equal(admissionCalls.length, 1);
+  assert.equal(admissionCalls[0].client.user_name, '最新姓名');
+  assert.equal(admissionCalls[0].client.email, 'latest.qa@example.com');
+  assert.equal(admissionCalls[0].client.line_id_link, 'https://line.me/ti/p/latestLine123');
+});
+
+test('S24 Link ID Link 拼法也要判定為 LINE ID Link', async () => {
+  resetNetworkCaptures();
+  const userId = 's19-link-id-link-alias';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, '姓名：測試小美\nEmail：qa@example.com\nLink ID Link：https://line.me/ti/p/linkAlias123');
+  const courseReply = await sendText(userId, '我要更新 link id link');
+
+  assertIncludes(courseReply, '更新 LINE ID Link');
+  assertIncludes(courseReply, 'LINE 連結');
+  assertDoesNotInclude(courseReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(courseReply, '姓名（建立客戶資料與通知稱呼）');
+
+  const updatedReply = await sendText(userId, 'Link ID Link：https://line.me/ti/p/updatedAlias456');
+  assertIncludes(updatedReply, '課程名稱');
+  assertIncludes(updatedReply, '課程類型');
+  assertDoesNotInclude(updatedReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(updatedReply, 'LINE ID Link（用於後續通知與聯繫）');
+  assert.equal(admissionCalls.length, 0);
+});
+
 async function driveToSummaryWithNoPhotos(userId) {
   await sendText(userId, '我想開始');
   await sendText(userId, fullIntakeForm());

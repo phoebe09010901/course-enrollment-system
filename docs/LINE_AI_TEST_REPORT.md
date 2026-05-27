@@ -56,9 +56,9 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 最近一次執行結果：
 
-- tests：17
-- pass：17
-- fail：0
+- tests：23
+- pass：19
+- fail：4
 
 本腳本專門測 LINE AI Worker 的 state machine、建檔 gate、欄位污染防護、照片階段與 confirmed payload。
 
@@ -72,6 +72,8 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 - `S17 Email 在 LINE ID 補問來回中不可消失`：pass
 - `S18 明確要求更新 LINE ID Link 時不可改問 Email`：pass
 - 已驗證：客戶回 `我要更新LINE ID Link` 時，系統會要求貼新的 LINE 連結；下一則貼新 line.me URL 後，回到課程資料，不會改問 Email。
+- 新增嚴格矩陣 `S19-S24`：S21 / S24 pass，S19 / S20 / S22 / S23 fail。
+- 發現：contact 更新流程仍有 4 個 blocker：Email 更新格式錯誤未精準提示、`我要改姓名` 未命中更新意圖、摘要確認前更新 LINE Link 會跳回照片流程、連續更新後無法用最新 contact payload 建檔。
 
 ## 測試結果摘要
 

@@ -86,7 +86,7 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 目前預期：
 
-- S01 到 S18 全部通過。
+- 嚴格矩陣前 S01 到 S18 全部通過；新增 S19-S24 後，目前 S19 / S20 / S22 / S23 失敗，S21 / S24 通過。
 - 測試範圍包含入口分流、contact gate、欄位污染防護、欄位說明、照片階段、建檔 gate、confirmed payload。
 
 ## 目前已知狀態
@@ -101,6 +101,7 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 - S16 已通過：contact gate 未完成時，`實體` 不會被當成姓名。
 - S17 已通過：短 LINE 代碼 `URZ8z2U` 不會被當成姓名，Email 在 LINE ID 補問來回中不會消失。
 - S18 已通過：客戶說「我要更新 LINE ID Link」時，系統會要求貼新的 LINE 連結，不會改問 Email。
+- 新增嚴格 contact update matrix：S19 / S20 / S22 / S23 是新的 blocker，詳見 `docs/CHAT_C_FIX_REQUEST.md`。
 
 ## 下一步建議
 
@@ -131,4 +132,4 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 ## 給下一位 Chat 的一句話
 
-這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 S01-S18 全部通過。
+這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 S19 / S20 / S22 / S23 失敗並等待 Chat C 修 contact update matrix。
