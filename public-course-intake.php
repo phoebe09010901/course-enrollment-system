@@ -4,6 +4,7 @@ require_once dirname(__FILE__) . '/lib/bootstrap.php';
 $errors = array();
 $success = false;
 $recordId = '';
+$security = course_form_security_state();
 
 $values = array(
     'user_name' => '',
@@ -29,18 +30,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $values[$key] = post($key, $default);
     }
 
-    $errors = validate_course_intake_form($values);
-    $errors = array_merge($errors, validate_course_photo_uploads());
+    $errors = validate_course_form_security();
+    register_course_form_attempt();
+
+    if (empty($errors)) {
+        $errors = validate_course_intake_form($values);
+        $errors = array_merge($errors, validate_course_photo_uploads());
+    }
 
     if (empty($errors)) {
         $saveResult = save_course_intake_form($values);
+        register_course_form_success();
         $success = true;
         $recordId = $saveResult['record_id'];
+        $security = reset_course_form_security_state();
 
         foreach ($values as $key => $default) {
             $values[$key] = '';
         }
     }
+}
+
+function course_form_security_state()
+{
+    if (empty($_SESSION['course_form_token']) || empty($_SESSION['course_form_started_at'])) {
+        return reset_course_form_security_state();
+    }
+
+    return array(
+        'token' => $_SESSION['course_form_token'],
+        'started_at' => (int) $_SESSION['course_form_started_at'],
+    );
+}
+
+function reset_course_form_security_state()
+{
+    $_SESSION['course_form_token'] = sha1(uniqid('', true) . mt_rand());
+    $_SESSION['course_form_started_at'] = time();
+
+    return array(
+        'token' => $_SESSION['course_form_token'],
+        'started_at' => (int) $_SESSION['course_form_started_at'],
+    );
+}
+
+function validate_course_form_security()
+{
+    $errors = array();
+    $postedToken = post('course_form_token', '');
+    $honeypot = post('website_url', '');
+
+    if ($honeypot !== '') {
+        $errors[] = '送出失敗，請重新整理頁面後再試。';
+    }
+
+    if (
+        $postedToken === ''
+        || empty($_SESSION['course_form_token'])
+        || !safe_equals($_SESSION['course_form_token'], $postedToken)
+    ) {
+        $errors[] = '表單已逾時，請重新整理頁面後再送出。';
+    }
+
+    $startedAt = empty($_SESSION['course_form_started_at']) ? 0 : (int) $_SESSION['course_form_started_at'];
+    if ($startedAt <= 0 || time() - $startedAt < 5) {
+        $errors[] = '送出速度過快，請確認資料後再送出。';
+    }
+
+    if (course_form_recent_attempt_count() >= 8) {
+        $errors[] = '短時間送出次數過多，請稍後再試。';
+    }
+
+    if (!empty($_SESSION['course_form_last_success_at']) && time() - (int) $_SESSION['course_form_last_success_at'] < 120) {
+        $errors[] = '表單已送出，請稍候再送下一筆。';
+    }
+
+    return array_values(array_unique($errors));
+}
+
+function register_course_form_attempt()
+{
+    $events = course_form_rate_events();
+    $events[] = time();
+    course_form_write_rate_events($events);
+}
+
+function register_course_form_success()
+{
+    $_SESSION['course_form_last_success_at'] = time();
+}
+
+function course_form_recent_attempt_count()
+{
+    return count(course_form_rate_events());
+}
+
+function course_form_rate_events()
+{
+    $file = course_form_rate_file();
+    if (!file_exists($file)) {
+        return array();
+    }
+
+    $data = json_decode((string) file_get_contents($file), true);
+    if (!is_array($data)) {
+        return array();
+    }
+
+    $cutoff = time() - 1800;
+    $events = array();
+    foreach ($data as $timestamp) {
+        if ((int) $timestamp >= $cutoff) {
+            $events[] = (int) $timestamp;
+        }
+    }
+
+    return $events;
+}
+
+function course_form_write_rate_events($events)
+{
+    $file = course_form_rate_file();
+    $dir = dirname($file);
+
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+
+    $cutoff = time() - 1800;
+    $fresh = array();
+    foreach ($events as $timestamp) {
+        if ((int) $timestamp >= $cutoff) {
+            $fresh[] = (int) $timestamp;
+        }
+    }
+
+    file_put_contents($file, json_encode($fresh), LOCK_EX);
+}
+
+function course_form_rate_file()
+{
+    return sys_get_temp_dir() . '/admission-course-form-rate/' . sha1(course_form_client_ip()) . '.json';
+}
+
+function course_form_client_ip()
+{
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($parts[0]);
+    }
+
+    return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
 }
 
 function validate_course_intake_form($values)
@@ -657,6 +801,14 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       padding-left: 20px;
     }
 
+    .bot-field {
+      position: absolute;
+      left: -10000px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
     .asset-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -718,6 +870,10 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       <?php } ?>
 
       <?php echo csrf_field(); ?>
+      <input type="hidden" name="course_form_token" value="<?php echo h($security['token']); ?>">
+      <label class="bot-field" aria-hidden="true">Website
+        <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+      </label>
 
       <section class="form-section" aria-labelledby="contactTitle">
         <h2 id="contactTitle">基本聯絡資料</h2>
