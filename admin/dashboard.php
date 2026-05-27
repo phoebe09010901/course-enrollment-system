@@ -150,7 +150,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
         <tr>
           <td><span class="project-name"><?php echo h($project['course_name']); ?></span><br><span class="muted project-id"><?php echo h($project['project_id']); ?></span></td>
           <td><?php echo h($project['client_name']); ?></td>
-          <td><span class="action-pill"><?php echo h($project['template_status']); ?></span><br><span class="action-pill status-note"><?php echo h($project['project_status']); ?></span></td>
+          <td><span class="action-pill status-note"><?php echo h($project['project_status']); ?></span></td>
           <td><?php if (!empty($project['selection_token'])) { ?><a class="action-pill" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
         </tr>
       <?php } ?>
