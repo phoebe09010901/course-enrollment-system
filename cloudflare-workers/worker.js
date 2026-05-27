@@ -1,4 +1,4 @@
-const DEPLOY_VERSION = 'chat-c-link-id-link-alias-fix-2026-05-27-10';
+const DEPLOY_VERSION = 'chat-c-course-type-help-fix-2026-05-27-12';
 const intakeMemory = new Map();
 const handoffMemory = new Map();
 
@@ -320,6 +320,10 @@ function contactFormPrompt() {
 }
 
 async function handleContactStep(eventData, state, env) {
+  if (state.pending_contact_update_field) {
+    return handlePendingContactFieldUpdate(eventData, state, env);
+  }
+
   if (handleEmailDeclineText(state, eventData.user_message)) {
     await saveIntakeState(eventData.user_id, state, env);
     return [
@@ -467,6 +471,12 @@ function contactFallbackForState(state) {
 }
 
 async function beginContactFieldUpdate(eventData, state, env, key) {
+  if (!state.pending_contact_update_field) {
+    state.resume_intake_step = state.current_intake_step;
+    state.resume_required_fields = Array.isArray(state.current_required_fields) ? [...state.current_required_fields] : [];
+    state.resume_last_asked_field = state.last_asked_field || '';
+  }
+
   if (key === 'email') {
     state.email = '';
     state.email_status = 'pending';
@@ -489,6 +499,103 @@ async function beginContactFieldUpdate(eventData, state, env, key) {
   refreshCollectedData(state);
   await saveIntakeState(eventData.user_id, state, env);
   return contactUpdatePrompt(key);
+}
+
+async function handlePendingContactFieldUpdate(eventData, state, env) {
+  const key = state.pending_contact_update_field;
+  const text = eventData.user_message;
+
+  if (detectContactUpdateRequest(text) === key) {
+    await saveIntakeState(eventData.user_id, state, env);
+    return contactUpdatePrompt(key);
+  }
+
+  if (key === 'email') {
+    const email = String(text || '').match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || '';
+    if (!email || !isValidEmail(email)) {
+      state.email_status = 'invalid';
+      await saveIntakeState(eventData.user_id, state, env);
+      return '這個 Email 格式看起來不完整。\n請提供像 name@example.com 這樣的 Email，之後會作為登入帳號與通知使用。';
+    }
+
+    state.email = email;
+    state.email_status = 'valid';
+    return completePendingContactFieldUpdate(eventData, state, env, 'Email 已更新');
+  }
+
+  if (key === 'line_id_link') {
+    const lineValue = extractLineLink(text);
+    const lineStatus = classifyLineIdLink(lineValue);
+
+    if (!lineValue || lineStatus !== 'provided') {
+      await saveIntakeState(eventData.user_id, state, env);
+      return '這個看起來還不是可用的 LINE ID Link。\n請貼新的 LINE 連結，例如 line.me 或 lin.ee 開頭的連結。';
+    }
+
+    state.line_id_link = lineValue;
+    state.line_id_link_status = lineStatus;
+    return completePendingContactFieldUpdate(eventData, state, env, 'LINE ID Link 已更新');
+  }
+
+  if (key === 'user_name') {
+    const name = String(text || '')
+      .split(/\r?\n/)
+      .map((line) => cleanLabeledValue(line, ['姓名', '使用者姓名', '名字', '稱呼']))
+      .find((line) => isPlausibleUserName(line, state.email));
+
+    if (!name) {
+      await saveIntakeState(eventData.user_id, state, env);
+      return '我還沒抓到要更新的姓名。\n請直接提供姓名或稱呼，例如「王小明」。';
+    }
+
+    state.user_name = name;
+    return completePendingContactFieldUpdate(eventData, state, env, '姓名已更新');
+  }
+
+  state.pending_contact_update_field = '';
+  await saveIntakeState(eventData.user_id, state, env);
+  return contactMissingHint(state);
+}
+
+async function completePendingContactFieldUpdate(eventData, state, env, prefix) {
+  state.pending_contact_update_field = '';
+  const resumeStep = state.resume_intake_step || '';
+  state.resume_intake_step = '';
+  state.resume_required_fields = [];
+  state.last_asked_field = state.resume_last_asked_field || state.last_asked_field || '';
+  state.resume_last_asked_field = '';
+  state.invalid_reply_count = 0;
+  refreshCollectedData(state);
+
+  const missingContact = missingContactFields(state);
+  if (missingContact.length) {
+    state.current_intake_step = 'collecting_required_contact';
+    state.current_required_fields = missingContact.map((field) => field.key);
+    state.missing_fields = allMissingRequiredFields(state).map((field) => field.key);
+    await saveIntakeState(eventData.user_id, state, env);
+    return [`收到，${prefix}。`, '', contactMissingHint(state)].join('\n');
+  }
+
+  if (resumeStep === 'ready_for_confirmation') {
+    state.current_intake_step = 'ready_for_confirmation';
+    state.current_required_fields = [];
+    state.missing_fields = [];
+    await saveIntakeState(eventData.user_id, state, env);
+    return [`收到，${prefix}。`, '', buildIntakeSummary(state)].join('\n');
+  }
+
+  if (isPhotoStep(resumeStep)) {
+    state.current_intake_step = resumeStep;
+    state.current_required_fields = [photoFieldForStep(resumeStep)].filter(Boolean);
+    state.missing_fields = allMissingRequiredFields(state).map((field) => field.key);
+    await saveIntakeState(eventData.user_id, state, env);
+    return [`收到，${prefix}。`, '', currentPhotoPromptForStep(resumeStep)].join('\n');
+  }
+
+  state.current_intake_step = isCourseStep(resumeStep) ? resumeStep : 'collecting_course_name_type';
+  moveToNextIncompleteStep(state);
+  await saveIntakeState(eventData.user_id, state, env);
+  return nextCoursePrompt(state, `收到，${prefix}。`);
 }
 
 function contactUpdatePrompt(key) {
@@ -605,7 +712,12 @@ function applyCourseTextByStep(state, text) {
 
     if (!state.course_type) {
       const typed = value.match(/(?:課程類型|類型)\s*[:：]?\s*([^\n，,。]+)/i)?.[1] || '';
-      state.course_type = cleanValue(typed || inferCourseType(value));
+      if (typed) {
+        state.course_type = cleanValue(typed);
+      } else if (!/(?:課程名稱|課名)\s*[:：]/i.test(value)) {
+        const inferred = inferCourseType(value);
+        if (inferred) state.course_type = cleanValue(inferred);
+      }
     }
   }
 
@@ -710,11 +822,11 @@ function fieldHelpReply(state, text) {
       '課程類型是指這堂課的「主題分類」，不是正式課名 😊',
       '它會幫我們判斷招生頁適合用什麼內容和視覺方向。',
       '',
-      '例如可以填：色鉛筆、畫畫、水彩、手作、花藝、美甲、攝影、設計、瑜伽、烘焙。',
+      '例如可以填：水彩、色鉛、色鉛筆、營養宣導、手作、花藝、美甲、攝影、設計、瑜伽、烘焙。',
       '',
       state.course_name ? `我已先記下課程名稱：${state.course_name}` : '',
-      '如果你的課是色鉛筆，可以直接回覆：',
-      '課程類型：色鉛筆',
+      '如果你的課是色鉛，可以直接回覆：',
+      '課程類型：色鉛',
     ].filter(Boolean).join('\n');
   }
 
@@ -985,6 +1097,46 @@ function heroArtworkPrompt() {
     uses: ['招生頁主視覺', '課程作品展示', '三款樣板提案時判斷整體風格'],
     tips: ['作品要清楚', '光線明亮', '背景不要太亂', '最好能代表這堂課成果'],
   });
+}
+
+function currentPhotoPromptForStep(step) {
+  if (step === 'collecting_detail_artwork_images') {
+    return photoPrompt({
+      title: '第 2 階段｜作品細節圖',
+      ask: '請提供 2～5 張比較近拍、可以看出筆觸或細節的照片。',
+      uses: ['作品展示區', '課程細節介紹', '呈現作品質感與完成度'],
+      tips: ['可以拍作品局部', '看得到細節或色彩層次', '光線清楚'],
+    });
+  }
+
+  if (step === 'collecting_teacher_images') {
+    return photoPrompt({
+      title: '第 3 階段｜老師照片',
+      ask: '請提供 1～2 張老師照片。',
+      uses: ['講師介紹區', '增加學生對課程的信任感', '讓招生頁看起來更有溫度'],
+      tips: ['自然半身照', '創作或教學中的照片', '光線清楚、表情自然'],
+    });
+  }
+
+  if (step === 'collecting_classroom_images') {
+    return photoPrompt({
+      title: '第 4 階段｜教室 / 上課空間照片',
+      ask: '請提供 1～3 張教室、工作室或上課空間照片。',
+      uses: ['上課環境介紹區', '呈現實體課空間氛圍', '增加安心感與真實感'],
+      tips: ['空間盡量明亮', '桌面稍微整理', '可拍教室一角、座位區或作品展示區'],
+    });
+  }
+
+  if (step === 'collecting_class_activity_images') {
+    return photoPrompt({
+      title: '第 5 階段｜上課過程照片',
+      ask: '請提供 2～5 張上課過程或課堂氛圍照片。',
+      uses: ['課堂氛圍區', '呈現老師示範與學生創作', '讓學生更容易想像實際上課情境'],
+      tips: ['老師示範', '學生手部創作', '桌面材料或作品進行中畫面', '若有人臉，請先確認同意使用'],
+    });
+  }
+
+  return heroArtworkPrompt();
 }
 
 function photoPrompt(config) {
@@ -1701,7 +1853,7 @@ function isSystemInstructionLike(text) {
 
 function detectContactUpdateRequest(text) {
   const value = String(text || '').trim();
-  if (!/(更新|更正|修改|改成|改掉|改一下|換成|變更|重填|重新填)/i.test(value)) return '';
+  if (!/(更新|更正|修改|改|換成|變更|重填|重新填)/i.test(value)) return '';
 
   if (/LINE\s*ID\s*Link|LINK\s*ID\s*LINK|LINE\s*Link|LINE\s*ID|line_id_link|line\.me|lin\.ee/i.test(value)) {
     return 'line_id_link';
@@ -1760,7 +1912,7 @@ function isUnknownLike(value) {
 }
 
 function inferCourseType(text) {
-  return String(text || '').match(/畫畫|色鉛筆|水彩|手作|花藝|美甲|攝影|設計|瑜伽|烘焙|音樂|舞蹈|英文|程式|親子|證照/i)?.[0] || '';
+  return String(text || '').match(/營養宣導|畫畫|色鉛筆|色鉛|水彩|手作|花藝|美甲|攝影|設計|瑜伽|烘焙|音樂|舞蹈|英文|程式|親子|證照/i)?.[0] || '';
 }
 
 function hasCourseUsefulSignal(text) {
@@ -1823,7 +1975,7 @@ function looksLikeCourseFieldText(text) {
 
 function isCourseAnswerToken(text) {
   const value = String(text || '').trim();
-  return /^(實體|線上|混合|畫畫|色鉛筆|水彩|手作|花藝|美甲|攝影|設計|瑜伽|烘焙|音樂|舞蹈|英文|程式|親子|證照)$/i.test(value);
+  return /^(實體|線上|混合|畫畫|色鉛筆|色鉛|水彩|營養宣導|手作|花藝|美甲|攝影|設計|瑜伽|烘焙|音樂|舞蹈|英文|程式|親子|證照)$/i.test(value);
 }
 
 function isShortLineCodeLike(text) {
@@ -1834,7 +1986,7 @@ function isShortLineCodeLike(text) {
 function isGenericCourseName(text) {
   const value = String(text || '').trim();
   if (!value || /[:：\n]/.test(value)) return false;
-  return /^(畫畫課|畫畫|色鉛筆課|水彩課|手作課|花藝課|美甲課|攝影課|設計課|瑜伽課|烘焙課|音樂課|舞蹈課|英文課|程式課)$/i.test(value);
+  return /^(畫畫課|畫畫|色鉛筆課|色鉛課|水彩課|營養宣導課|營養宣導|手作課|花藝課|美甲課|攝影課|設計課|瑜伽課|烘焙課|音樂課|舞蹈課|英文課|程式課)$/i.test(value);
 }
 
 function classifyDateStatus(value) {

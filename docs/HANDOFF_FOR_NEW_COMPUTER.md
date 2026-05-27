@@ -86,22 +86,22 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 目前預期：
 
-- 嚴格矩陣前 S01 到 S18 全部通過；新增 S19-S24 後，目前 S19 / S20 / S22 / S23 失敗，S21 / S24 通過。
+- S01 到 S24 全部通過，目前 23 個 test blocks 預期 pass 23 / fail 0。
 - 測試範圍包含入口分流、contact gate、欄位污染防護、欄位說明、照片階段、建檔 gate、confirmed payload。
 
 ## 目前已知狀態
 
 - MVP 階段是免費試營運。
 - 報價、付款、訂閱、續約都先列為 future phase，不放入目前主流程。
-- Worker 目前已修正多個 QA issue，包括確認詞 guard、Email-only、contact fallback、unknown-like input、日期 status、圖片 `need_review`、欄位說明與空白 label 污染。
-- 目前 Worker 版本：`chat-c-contact-update-field-fix-2026-05-27-09`。
+- Worker 目前已修正多個 QA issue，包括確認詞 guard、Email-only、contact fallback、unknown-like input、日期 status、圖片 `need_review`、欄位說明、空白 label 污染、短 LINE 代碼污染與 contact update matrix。
+- 目前 Worker 版本：`chat-c-course-type-help-fix-2026-05-27-12`。
 - 要貼到 Cloudflare 的檔案：`cloudflare-workers/worker.js`。
-- 線上 Worker GET health check 的 JSON `version` 應為：`chat-c-contact-update-field-fix-2026-05-27-09`。
+- 線上 Worker GET health check 的 JSON `version` 應為：`chat-c-course-type-help-fix-2026-05-27-12`。
 - 最新重要測試：S14 真實 LINE 事故重放，確認空白 `LINE ID Link：` 不會污染 `line_id_link`。
 - S16 已通過：contact gate 未完成時，`實體` 不會被當成姓名。
 - S17 已通過：短 LINE 代碼 `URZ8z2U` 不會被當成姓名，Email 在 LINE ID 補問來回中不會消失。
 - S18 已通過：客戶說「我要更新 LINE ID Link」時，系統會要求貼新的 LINE 連結，不會改問 Email。
-- 新增嚴格 contact update matrix：S19 / S20 / S22 / S23 是新的 blocker，詳見 `docs/CHAT_C_FIX_REQUEST.md`。
+- 新增嚴格 contact update matrix：S19 / S20 / S21 / S22 / S23 / S24 皆已通過，詳見 `docs/CHAT_C_FIX_REQUEST.md`。
 
 ## 下一步建議
 
@@ -132,4 +132,4 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 ## 給下一位 Chat 的一句話
 
-這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 S19 / S20 / S22 / S23 失敗並等待 Chat C 修 contact update matrix。
+這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 S01 到 S24 全部通過，若 LINE App 實測不同，優先檢查 Cloudflare 部署版本與測試 user state。

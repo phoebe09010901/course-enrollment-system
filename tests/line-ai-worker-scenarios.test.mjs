@@ -260,8 +260,11 @@ test('S15 課程類型說明不污染 course_type，回答後才前進', async (
     '課程名稱：鄭阿貓色鉛筆一微笑的黃金獵犬\n課程類型 這是指什麼我看不懂？',
   );
   assertIncludes(helpReply, '課程類型是指這堂課的「主題分類」');
+  assertIncludes(helpReply, '水彩');
+  assertIncludes(helpReply, '色鉛');
+  assertIncludes(helpReply, '營養宣導');
   assertIncludes(helpReply, '我已先記下課程名稱：鄭阿貓色鉛筆一微笑的黃金獵犬');
-  assertIncludes(helpReply, '課程類型：色鉛筆');
+  assertIncludes(helpReply, '課程類型：色鉛');
   assertDoesNotInclude(helpReply, '實體、線上');
 
   const typeReply = await sendText(userId, '課程類型：色鉛筆');

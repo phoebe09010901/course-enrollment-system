@@ -42,7 +42,7 @@
 - 建立後端自動化流程規格，涵蓋資料庫、後台、AI Worker、通知與三天作廢邏輯。
 - 建立 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`，作為 Chat E 驗證 LINE AI 客服流程的核心依據。
 - 同步 Chat C 可部署 Worker：`cloudflare-workers/workers.js`、`cloudflare-workers/worker.js`、`cloudflare-workers/line-webhook-worker.js`。
-- Worker 版本：`chat-c-link-id-link-alias-fix-2026-05-27-10`。
+- Worker 版本：`chat-c-course-type-help-fix-2026-05-27-12`。
 - 已依 Chat E 實測修正 C-FIX-001～C-FIX-005、C-FIX-007 的主要 Worker 行為：入口 2 / 3 先分流、初次非明確 intent 顯示開場、單獨姓名可寫入 `user_name`、Email-only 不誤判 LINE ID Link、課程形式「還沒確定」可暫存為 `未定`、付款問題明確由 service price guard 處理。
 - 已在 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 補上 `line_id_link_status = need_review` 通過 gate 的決策、Email-only 解析限制、單獨姓名規則、課程 unknown 處理與付款 guard 例外說明。
 - 已依 Chat E 最新回歸修正 C-FIX-001～C-FIX-007：`ready_for_confirmation` 前確認詞不可污染欄位；contact fallback 改為聯絡資料導向；unknown-like 欄位成功寫入後不再混 fallback；泛稱課程名稱會追問是否作為暫定課名；Email 拒答會標記 `email_status = declined` 與 `needs_human_contact_review = true`；模糊日期會標記 `expected_launch_date_status` / `expected_start_date_status = tentative`；圖片素材因無法自動辨識內容先標 `need_review`。
@@ -52,7 +52,8 @@
 - 已修正 C-FIX-010 / S17：聯絡資料未補齊時，短 LINE 代碼如 `URZ8z2U` 不會被推測成 `user_name`；有效 Email 在 LINE ID 補問重試中不會消失。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S17。
 - 已修正 S18：客戶明確要求「我要更新 LINE ID Link」時，Worker 只補問新的 LINE 連結，不會改問 Email，也不會污染課程欄位。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S18。
 - 已修正 S24：`Link ID Link` / `link id link` 也會映射為 `line_id_link`，不會因拼法錯誤改問 Email。
-- Chat E 新增更嚴格 contact update matrix 後，S19 / S20 / S22 / S23 失敗：Email 更新格式錯誤提示不精準、`我要改姓名` 未命中更新意圖、摘要確認前更新 LINE Link 會跳回照片流程、連續更新後無法用最新 contact payload 建檔。
+- 已修正 C-FIX-012～C-FIX-015 / contact update matrix：更新 Email 格式錯誤會明確提示、`我要改姓名` 會進入姓名更新、摘要確認前更新 LINE Link 後會回到摘要、連續更新 Email / 姓名 / LINE Link 後 confirmed payload 會使用最新值。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S24。
+- 已補強課程類型說明：範例改為水彩、色鉛、色鉛筆、營養宣導等，並讓 Worker 可辨識 `色鉛` 與 `營養宣導`。
 - 將 MVP 流程定位為免費試營運階段，報價、付款、訂閱與續約先列為 future phase。
 - 建立 `worker/README.md`，定義 worker 預期責任與目前缺口。
 - 明確記錄目前 repo 仍沒有實體系統功能。

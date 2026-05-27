@@ -12,13 +12,13 @@
 
 - `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 已存在。
 - `cloudflare-workers/workers.js` 已存在。
-- Worker 版本：`chat-c-link-id-link-alias-fix-2026-05-27-10`。
+- Worker 版本：`chat-c-course-type-help-fix-2026-05-27-12`。
 - `docs/TEMPLATE_REFERENCE.md` 尚未存在。
 - `docs/CLIENT_SELECTION_FLOW.md` 尚未存在。
 
-Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。嚴格矩陣新增後，`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01-S18、S21、S24 通過；S19、S20、S22、S23 失敗。
+Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。Chat C 修正後，`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01-S24 全部通過。
 
-目前 C-FIX-010 已由 Chat C 修正並納入 regression。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
+目前 C-FIX-010、C-FIX-012、C-FIX-013、C-FIX-014、C-FIX-015 已由 Chat C 修正並納入 regression。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
 
 ## 目前回歸狀態
 
@@ -35,11 +35,11 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。嚴格矩陣新增
 | C-FIX-009 | resolved | S16 |
 | C-FIX-010 | fixed | S17 |
 | S18 contact update intent | fixed | S18 |
-| S19 update email validation | open | S19 |
-| S20 update name intent | open | S20 |
+| S19 update email validation | fixed | S19 |
+| S20 update name intent | fixed | S20 |
 | S21 update LINE wrong-field guard | pass | S21 |
-| S22 update contact before confirmation | open | S22 |
-| S23 multiple contact updates payload | open | S23 |
+| S22 update contact before confirmation | fixed | S22 |
+| S23 multiple contact updates payload | fixed | S23 |
 | S24 line id alias | fixed | S24 |
 
 ### C-FIX-012
@@ -53,6 +53,7 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。嚴格矩陣新增
 - 是否影響建檔：是
 - 是否影響客戶體驗：是
 - 優先級：high
+- Chat C 修正狀態：已修正於 Worker 版本 `chat-c-contact-update-resume-fix-2026-05-27-11`；S19 regression 通過。
 
 ### C-FIX-013
 
@@ -65,6 +66,7 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。嚴格矩陣新增
 - 是否影響建檔：是
 - 是否影響客戶體驗：是
 - 優先級：high
+- Chat C 修正狀態：已修正於 Worker 版本 `chat-c-contact-update-resume-fix-2026-05-27-11`；S20 regression 通過。
 
 ### C-FIX-014
 
@@ -77,6 +79,7 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。嚴格矩陣新增
 - 是否影響建檔：是
 - 是否影響客戶體驗：是
 - 優先級：high
+- Chat C 修正狀態：已修正於 Worker 版本 `chat-c-contact-update-resume-fix-2026-05-27-11`；S22 regression 通過。
 
 ### C-FIX-015
 
@@ -89,6 +92,7 @@ Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。嚴格矩陣新增
 - 是否影響建檔：是
 - 是否影響客戶體驗：是
 - 優先級：high
+- Chat C 修正狀態：已修正於 Worker 版本 `chat-c-contact-update-resume-fix-2026-05-27-11`；S23 regression 通過。
 
 ### C-FIX-010
 

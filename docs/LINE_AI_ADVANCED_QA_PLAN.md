@@ -120,16 +120,17 @@
 
 - `S14` pass：貼空白表單後，空白 `LINE ID Link：` / `3. LINE ID Link：` 不會污染 `line_id_link`。
 - `S15` pass：contact 完成後問「課程類型是什麼」可正確回覆欄位說明，且下一輪補 `課程類型：色鉛筆` 後才前進。
-- `node --test tests/line-ai-worker-scenarios.test.mjs`：新增嚴格 contact update matrix 後，S01-S18、S21、S24 通過；S19、S20、S22、S23 失敗。
+- `node --test tests/line-ai-worker-scenarios.test.mjs`：Worker 版本 `chat-c-course-type-help-fix-2026-05-27-12` 已通過 S01-S24，23 個 test blocks 全部 pass。
 - `S16` pass：contact gate 未完成時，客戶回 `實體` 不會污染 `user_name`。
 - `S17` pass：短 LINE 代碼 `URZ8z2U` 不會污染 `user_name`，Email 在 LINE ID 補問來回中不會消失。
 - `S18` pass：客戶回 `我要更新LINE ID Link` 時，系統會鎖定 LINE ID Link 更新，不會改問 Email 或污染課程欄位。
+- `S19-S24` pass：更新 Email / 姓名 / LINE ID Link、摘要確認前更新 contact、連續更新後 confirmed payload、`Link ID Link` 拼法 alias 皆通過。
 
 判斷：
 
 - 原問題是 state machine / parser bug。
 - 問題不在 Email regex，而在空白 label 與 `extractLineLink()` / `cleanLabeledValue()` 的解析防護不足。
-- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染與基礎欄位更新意圖目前皆已修正；嚴格 contact update matrix 仍發現 Email 更新 validation、姓名更新 intent、摘要確認前更新恢復流程、多欄位更新 payload 四個 blocker。
+- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染、欄位更新意圖與嚴格 contact update matrix 目前皆已修正並納入 regression。
 
 ## 回報格式
 
