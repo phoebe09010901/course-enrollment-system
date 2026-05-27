@@ -364,13 +364,13 @@ function course_photo_upload_rules()
             'label' => '作品的照片',
             'category' => 'works',
             'min' => 1,
-            'max' => 3,
+            'max' => 10,
         ),
         'classroom_photos' => array(
             'label' => '教室的照片',
             'category' => 'classroom',
-            'min' => 0,
-            'max' => 10,
+            'min' => 1,
+            'max' => 5,
         ),
     );
 }
@@ -1180,13 +1180,13 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
             <p class="form-hint">請上傳老師個人照、授課照或形象照，每張 5MB 以內。</p>
           </label>
           <label class="asset-field">作品的照片
-            <strong>1-3 張</strong>
-            <input type="file" name="work_photos[]" accept="image/*" multiple required data-min-files="1" data-max-files="3" data-label="作品的照片">
+            <strong>1-10 張</strong>
+            <input type="file" name="work_photos[]" accept="image/*" multiple required data-min-files="1" data-max-files="10" data-label="作品的照片">
             <p class="form-hint">請上傳成品、學生作品或課程成果照，每張 5MB 以內。</p>
           </label>
           <label class="asset-field">教室的照片
-            <strong>10 張以內</strong>
-            <input type="file" name="classroom_photos[]" accept="image/*" multiple data-min-files="0" data-max-files="10" data-label="教室的照片">
+            <strong>1-5 張</strong>
+            <input type="file" name="classroom_photos[]" accept="image/*" multiple required data-min-files="1" data-max-files="5" data-label="教室的照片">
             <p class="form-hint">可上傳教室環境、座位、設備或入口照片，每張 5MB 以內。</p>
           </label>
         </div>
