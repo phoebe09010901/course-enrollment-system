@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $errors = validate_course_intake_form($values);
+    $errors = array_merge($errors, validate_course_photo_uploads());
 
     if (empty($errors)) {
         $saveResult = save_course_intake_form($values);
@@ -104,6 +105,92 @@ function validate_course_intake_form($values)
     return $errors;
 }
 
+function validate_course_photo_uploads()
+{
+    $errors = array();
+    $rules = course_photo_upload_rules();
+
+    foreach ($rules as $field => $rule) {
+        $count = uploaded_photo_count($field);
+
+        if ($count < $rule['min']) {
+            $errors[] = $rule['label'] . '至少需要 ' . $rule['min'] . ' 張。';
+        }
+
+        if ($count > $rule['max']) {
+            $errors[] = $rule['label'] . '最多只能上傳 ' . $rule['max'] . ' 張。';
+        }
+
+        if (!isset($_FILES[$field])) {
+            continue;
+        }
+
+        $fileCount = count($_FILES[$field]['name']);
+        for ($i = 0; $i < $fileCount; $i++) {
+            $errorCode = (int) $_FILES[$field]['error'][$i];
+
+            if ($errorCode === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if ($errorCode !== UPLOAD_ERR_OK) {
+                $errors[] = $rule['label'] . '第 ' . ($i + 1) . ' 張上傳失敗，請重新選擇。';
+                continue;
+            }
+
+            if ((int) $_FILES[$field]['size'][$i] > 5 * 1024 * 1024) {
+                $errors[] = $rule['label'] . '第 ' . ($i + 1) . ' 張超過 5MB。';
+            }
+
+            if (!is_uploaded_file($_FILES[$field]['tmp_name'][$i]) || !getimagesize($_FILES[$field]['tmp_name'][$i])) {
+                $errors[] = $rule['label'] . '第 ' . ($i + 1) . ' 張不是可辨識的圖片。';
+            }
+        }
+    }
+
+    return $errors;
+}
+
+function course_photo_upload_rules()
+{
+    return array(
+        'teacher_photos' => array(
+            'label' => '老師的照片',
+            'category' => 'teacher',
+            'min' => 1,
+            'max' => 3,
+        ),
+        'work_photos' => array(
+            'label' => '作品的照片',
+            'category' => 'works',
+            'min' => 1,
+            'max' => 3,
+        ),
+        'classroom_photos' => array(
+            'label' => '教室的照片',
+            'category' => 'classroom',
+            'min' => 0,
+            'max' => 10,
+        ),
+    );
+}
+
+function uploaded_photo_count($field)
+{
+    if (!isset($_FILES[$field]) || !is_array($_FILES[$field]['name'])) {
+        return 0;
+    }
+
+    $count = 0;
+    foreach ($_FILES[$field]['error'] as $errorCode) {
+        if ((int) $errorCode !== UPLOAD_ERR_NO_FILE) {
+            $count++;
+        }
+    }
+
+    return $count;
+}
+
 function save_course_intake_form($values)
 {
     db()->autocommit(false);
@@ -112,6 +199,8 @@ function save_course_intake_form($values)
         $clientId = upsert_form_client($values);
         $recordId = ensure_form_client_record_id($clientId);
         $intakeId = insert_form_course_intake($clientId, $recordId, $values);
+        $photoAssets = store_course_photo_uploads($recordId, $intakeId);
+        update_form_course_intake_assets($intakeId, $values, $photoAssets);
 
         db()->commit();
         db()->autocommit(true);
@@ -126,6 +215,164 @@ function save_course_intake_form($values)
         db()->autocommit(true);
         throw $e;
     }
+}
+
+function store_course_photo_uploads($recordId, $intakeId)
+{
+    $assets = array();
+    $baseDir = dirname(__FILE__) . '/public/uploads/course-intakes/' . safe_path_segment($recordId) . '/' . (int) $intakeId;
+    $baseUrl = app_url('public/uploads/course-intakes/' . rawurlencode($recordId) . '/' . (int) $intakeId);
+    $rules = course_photo_upload_rules();
+
+    foreach ($rules as $field => $rule) {
+        $items = array();
+
+        if (!isset($_FILES[$field])) {
+            $assets[$field] = $items;
+            continue;
+        }
+
+        $targetDir = $baseDir . '/' . $rule['category'];
+        ensure_upload_dir($targetDir);
+        $fileCount = count($_FILES[$field]['name']);
+        $photoIndex = 1;
+
+        for ($i = 0; $i < $fileCount; $i++) {
+            if ((int) $_FILES[$field]['error'][$i] === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            $extension = image_extension_from_upload($_FILES[$field]['tmp_name'][$i], $_FILES[$field]['name'][$i]);
+            $fileName = $rule['category'] . '-' . str_pad((string) $photoIndex, 2, '0', STR_PAD_LEFT) . '-' . date('His') . '.' . $extension;
+            $targetPath = $targetDir . '/' . $fileName;
+
+            if (!move_uploaded_file($_FILES[$field]['tmp_name'][$i], $targetPath)) {
+                throw new Exception('photo_upload_failed');
+            }
+
+            $items[] = array(
+                'original_name' => $_FILES[$field]['name'][$i],
+                'file_name' => $fileName,
+                'url' => $baseUrl . '/' . rawurlencode($rule['category']) . '/' . rawurlencode($fileName),
+                'size' => (int) $_FILES[$field]['size'][$i],
+                'status' => 'provided',
+            );
+            $photoIndex++;
+        }
+
+        $assets[$field] = $items;
+    }
+
+    return $assets;
+}
+
+function ensure_upload_dir($dir)
+{
+    if (is_dir($dir)) {
+        return;
+    }
+
+    if (!mkdir($dir, 0755, true) && !is_dir($dir)) {
+        throw new Exception('upload_dir_failed');
+    }
+}
+
+function safe_path_segment($value)
+{
+    $value = preg_replace('/[^a-zA-Z0-9_-]+/', '-', (string) $value);
+    $value = trim($value, '-');
+
+    return $value === '' ? 'intake-' . date('YmdHis') : $value;
+}
+
+function image_extension_from_upload($tmpName, $originalName)
+{
+    $image = getimagesize($tmpName);
+    if ($image && isset($image[2])) {
+        if ((int) $image[2] === IMAGETYPE_JPEG) {
+            return 'jpg';
+        }
+        if ((int) $image[2] === IMAGETYPE_PNG) {
+            return 'png';
+        }
+        if ((int) $image[2] === IMAGETYPE_GIF) {
+            return 'gif';
+        }
+        if (defined('IMAGETYPE_WEBP') && (int) $image[2] === IMAGETYPE_WEBP) {
+            return 'webp';
+        }
+    }
+
+    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    return preg_match('/^(jpg|jpeg|png|gif|webp)$/', $extension) ? ($extension === 'jpeg' ? 'jpg' : $extension) : 'jpg';
+}
+
+function update_form_course_intake_assets($intakeId, $values, $photoAssets)
+{
+    $imageFields = build_form_image_fields($photoAssets);
+    $photoStatuses = build_form_photo_statuses($photoAssets);
+    $rawPayload = build_form_raw_payload($values, $photoAssets);
+    $primaryKey = course_intakes_primary_key();
+
+    db_exec(
+        'UPDATE course_intakes
+         SET image_fields_json = ?, photo_asset_statuses_json = ?, course_assets_json = ?, raw_payload = ?, updated_at = ?
+         WHERE ' . $primaryKey . ' = ?',
+        'sssssi',
+        array(
+            json_encode($imageFields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            json_encode($photoStatuses, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            json_encode($photoAssets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            json_encode($rawPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            now(),
+            (int) $intakeId,
+        )
+    );
+}
+
+function course_intakes_primary_key()
+{
+    $rows = db_all('SHOW COLUMNS FROM course_intakes', '', array());
+
+    foreach ($rows as $row) {
+        if (isset($row['Field']) && $row['Field'] === 'intake_id') {
+            return 'intake_id';
+        }
+    }
+
+    return 'id';
+}
+
+function build_form_image_fields($photoAssets)
+{
+    $rules = course_photo_upload_rules();
+    $fields = array();
+
+    foreach ($rules as $field => $rule) {
+        $items = isset($photoAssets[$field]) ? $photoAssets[$field] : array();
+        $fields[$field] = array(
+            'label' => $rule['label'],
+            'status' => count($items) ? 'provided' : ($rule['min'] > 0 ? 'missing' : 'none'),
+            'min' => $rule['min'],
+            'max' => $rule['max'],
+            'files' => $items,
+        );
+    }
+
+    return $fields;
+}
+
+function build_form_photo_statuses($photoAssets)
+{
+    $rules = course_photo_upload_rules();
+    $statuses = array();
+
+    foreach ($rules as $field => $rule) {
+        $items = isset($photoAssets[$field]) ? $photoAssets[$field] : array();
+        $statuses[$field] = count($items) ? 'provided' : ($rule['min'] > 0 ? 'missing' : 'none');
+    }
+
+    return $statuses;
 }
 
 function upsert_form_client($values)
@@ -174,31 +421,7 @@ function ensure_form_client_record_id($clientId)
 
 function insert_form_course_intake($clientId, $recordId, $values)
 {
-    $rawPayload = array(
-        'type' => 'public_course_intake_form',
-        'client' => array(
-            'user_name' => $values['user_name'],
-            'email' => $values['email'],
-            'email_status' => 'provided',
-            'line_id_link' => $values['line_id_link'],
-            'line_id_link_status' => 'provided',
-        ),
-        'course_project' => array(
-            'course_name' => $values['course_name'],
-            'course_type' => $values['course_type'],
-            'course_format' => $values['course_format'],
-            'course_location' => $values['course_location'],
-            'expected_launch_date' => $values['expected_launch_date'],
-            'expected_launch_date_status' => 'provided',
-            'expected_start_date' => $values['expected_start_date'],
-            'expected_start_date_status' => 'provided',
-            'course_capacity' => $values['course_capacity'],
-            'course_price' => $values['course_price'],
-            'target_audience' => $values['target_audience'],
-            'course_features' => $values['course_features'],
-            'post_course_support' => $values['post_course_support'],
-        ),
-    );
+    $rawPayload = build_form_raw_payload($values, array());
 
     return db_exec(
         'INSERT INTO course_intakes (
@@ -231,6 +454,38 @@ function insert_form_course_intake($clientId, $recordId, $values)
             now(),
             now(),
         )
+    );
+}
+
+function build_form_raw_payload($values, $photoAssets)
+{
+    return array(
+        'type' => 'public_course_intake_form',
+        'client' => array(
+            'user_name' => $values['user_name'],
+            'email' => $values['email'],
+            'email_status' => 'provided',
+            'line_id_link' => $values['line_id_link'],
+            'line_id_link_status' => 'provided',
+        ),
+        'course_project' => array(
+            'course_name' => $values['course_name'],
+            'course_type' => $values['course_type'],
+            'course_format' => $values['course_format'],
+            'course_location' => $values['course_location'],
+            'expected_launch_date' => $values['expected_launch_date'],
+            'expected_launch_date_status' => 'provided',
+            'expected_start_date' => $values['expected_start_date'],
+            'expected_start_date_status' => 'provided',
+            'course_capacity' => $values['course_capacity'],
+            'course_price' => $values['course_price'],
+            'target_audience' => $values['target_audience'],
+            'course_features' => $values['course_features'],
+            'post_course_support' => $values['post_course_support'],
+        ),
+        'image_fields' => build_form_image_fields($photoAssets),
+        'photo_asset_statuses' => build_form_photo_statuses($photoAssets),
+        'course_assets' => $photoAssets,
     );
 }
 
@@ -340,6 +595,11 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .82);
     }
 
+    .form-card input[type="file"] {
+      padding: 10px;
+      background: rgba(255, 255, 255, .62);
+    }
+
     .form-card textarea {
       min-height: 118px;
       resize: vertical;
@@ -397,6 +657,27 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       padding-left: 20px;
     }
 
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    .asset-field {
+      min-height: 156px;
+      padding: 14px;
+      border: 1px solid rgba(87, 116, 94, .16);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .46);
+    }
+
+    .asset-field strong {
+      display: block;
+      color: #20362a;
+      font-size: 14px;
+    }
+
     @media (max-width: 760px) {
       .form-screen {
         padding: 24px 16px;
@@ -407,7 +688,8 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
         border-radius: 24px;
       }
 
-      .form-grid {
+      .form-grid,
+      .asset-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -415,7 +697,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
 </head>
 <body class="form-body">
   <main class="form-screen">
-    <form class="form-card" method="post" id="courseIntakeForm" novalidate>
+    <form class="form-card" method="post" id="courseIntakeForm" enctype="multipart/form-data" novalidate>
       <div class="form-heading">
         <span>Course Intake</span>
         <h1>課程招生資料表單</h1>
@@ -498,6 +780,27 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
         </div>
       </section>
 
+      <section class="form-section" aria-labelledby="assetTitle">
+        <h2 id="assetTitle">照片素材</h2>
+        <div class="asset-grid">
+          <label class="asset-field">老師的照片
+            <strong>1-3 張</strong>
+            <input type="file" name="teacher_photos[]" accept="image/*" multiple required data-min-files="1" data-max-files="3" data-label="老師的照片">
+            <p class="form-hint">請上傳老師個人照、授課照或形象照，每張 5MB 以內。</p>
+          </label>
+          <label class="asset-field">作品的照片
+            <strong>1-3 張</strong>
+            <input type="file" name="work_photos[]" accept="image/*" multiple required data-min-files="1" data-max-files="3" data-label="作品的照片">
+            <p class="form-hint">請上傳成品、學生作品或課程成果照，每張 5MB 以內。</p>
+          </label>
+          <label class="asset-field">教室的照片
+            <strong>10 張以內</strong>
+            <input type="file" name="classroom_photos[]" accept="image/*" multiple data-min-files="0" data-max-files="10" data-label="教室的照片">
+            <p class="form-hint">可上傳教室環境、座位、設備或入口照片，每張 5MB 以內。</p>
+          </label>
+        </div>
+      </section>
+
       <div class="form-actions">
         <button class="form-submit" type="submit">送出資料</button>
         <button class="button secondary form-reset" type="reset">清除重填</button>
@@ -511,6 +814,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       var launchDate = form.elements.expected_launch_date;
       var startDate = form.elements.expected_start_date;
       var lineLink = form.elements.line_id_link;
+      var fileInputs = form.querySelectorAll('input[type="file"][data-max-files]');
 
       function setDateMessage() {
         startDate.setCustomValidity('');
@@ -526,13 +830,35 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
         }
       }
 
+      function setFileMessage(input) {
+        var min = parseInt(input.getAttribute('data-min-files'), 10);
+        var max = parseInt(input.getAttribute('data-max-files'), 10);
+        var label = input.getAttribute('data-label');
+        var count = input.files ? input.files.length : 0;
+
+        input.setCustomValidity('');
+        if (count < min) {
+          input.setCustomValidity(label + '至少需要 ' + min + ' 張。');
+        } else if (count > max) {
+          input.setCustomValidity(label + '最多只能上傳 ' + max + ' 張。');
+        }
+      }
+
       launchDate.addEventListener('change', setDateMessage);
       startDate.addEventListener('change', setDateMessage);
       lineLink.addEventListener('input', setLineLinkMessage);
+      for (var i = 0; i < fileInputs.length; i++) {
+        fileInputs[i].addEventListener('change', function () {
+          setFileMessage(this);
+        });
+      }
 
       form.addEventListener('submit', function (event) {
         setDateMessage();
         setLineLinkMessage();
+        for (var i = 0; i < fileInputs.length; i++) {
+          setFileMessage(fileInputs[i]);
+        }
 
         if (!form.checkValidity()) {
           event.preventDefault();

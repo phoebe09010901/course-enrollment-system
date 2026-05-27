@@ -60,7 +60,7 @@
 - 建立 `clients` / `course_intakes` migration 與寫入流程。
 - 建立 `admin/clients.php`，可查看 API 寫入的客戶資料。
 - 建立遠端協作文件，讓另一台電腦可從 GitHub 接手。
-- 建立公開課程資料表單，可寫入客戶與 intake 資料。
+- 建立公開課程資料表單，可寫入客戶、intake 資料與照片素材欄位。
 - 建立 AI 協作規則文件。
 
 ## 尚未完成
