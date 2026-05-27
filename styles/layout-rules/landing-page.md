@@ -11,9 +11,9 @@ Required page classes:
   <section class="cb-hero">
     <div class="cb-shell cb-hero__grid">
       <div class="cb-hero__content">
-        <p class="cb-kicker">Course category</p>
-        <h1 class="cb-hero-title">Hero title</h1>
-        <p class="cb-body">Course promise.</p>
+        <p class="cb-kicker">課程分類</p>
+        <h1 class="cb-hero-title">課程主標題</h1>
+        <p class="cb-body">課程承諾與學習成果。</p>
         <div class="cb-hero__actions">...</div>
       </div>
       <div class="cb-hero__visual">...</div>
@@ -107,6 +107,16 @@ Rules:
 - Use compact sections for utility, never for the Hero.
 - Do not use identical section rhythm across the whole page.
 
+## Visible Copy Rules
+
+Rules:
+
+- Visible navigation, kicker, heading, CTA, form label, footer, and decorative background words must use Chinese by default.
+- Do not show English labels such as About, Offer, Gallery, Register, Contact Us, FAQ, Course, Workshop, or PENCIL in the rendered UI unless the user explicitly requests bilingual copy.
+- Do not add a separate contact-us section to course landing pages. Use the registration CTA and registration form as the conversion endpoint.
+- Footer copy may mention how to ask questions, but it must point back to the registration form or existing enrollment flow.
+- Desktop section titles must stay restrained; they should never visually compete with the Hero H1.
+
 ## Spacing Rules
 
 Frontend spacing must use `--cb-space-*` or section tokens.
@@ -147,17 +157,17 @@ Default order:
 4. Method
 5. Proof
 6. Curriculum
-7. Gallery
+7. 作品牆
 8. Instructor trust
-9. FAQ
-10. Final CTA
+9. 常見問題
+10. 最終報名 CTA
 
 Rules:
 
 - Promise follows Hero quickly.
 - Proof appears before final commitment.
-- Gallery appears after enough context exists.
-- Final CTA should feel like a conclusion, not a repeated button block.
+- Gallery or 作品牆 appears after enough context exists.
+- Final CTA should feel like a conclusion, not a repeated contact block.
 
 ## Gallery Rhythm
 
@@ -193,4 +203,3 @@ Frontend structure:
 - small amount of text
 
 Use as a breathing section between dense blocks.
-

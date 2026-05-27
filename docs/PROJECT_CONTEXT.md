@@ -2,19 +2,19 @@
 
 ## 專案定位
 
-本專案目前命名為「課程招生 - 系統」。目前 repo 已開始落地第一組課程品牌設計基礎與靜態招生頁模板，但尚未包含後端、資料庫、webhook、admin 或 worker 功能。
+本專案目前命名為「課程招生 - 系統」。目前 repo 保留課程品牌設計基礎、協作文件，以及三個全新視覺方向範例；先前建立的兩個前端樣板已依使用者要求刪除，不再作為可沿用模板。repo 尚未包含後端、資料庫、webhook、admin 或 worker 功能。
 
 目前可推定的工作方向是建立一套支援「課程招生」相關素材或系統的基礎架構，並逐步整理：
 
 - 美術風格系統
 - style-selector-skill
-- course-brand-template-v1
+- 未來新招生頁模板
 - 前台或公開素材區
 - LINE webhook
 - admin 管理介面
 - worker 背景工作
 
-其中 `styles/` 與 `templates/course-brand-template-v1/` 已有第一版前端實作。其他系統性功能仍是規劃方向，不得描述為已完成。
+其中 `styles/` 目前保留 design foundation；`templates/` 內有三個候選視覺方向稿，尚未確認為正式模板。其他系統性功能仍是規劃方向，不得描述為已完成。
 
 ## 目前 repo 實際狀態
 
@@ -22,7 +22,7 @@
 
 - `docs/`
 - `styles/`
-- `templates/course-brand-template-v1/`
+- `templates/`
 
 以下目錄目前不存在：
 
@@ -38,14 +38,13 @@
 - `docs/PROJECT_STATUS.md`
 - `docs/STYLE_SYSTEM.md`
 - `docs/COLLABORATION_SETUP.md`
-- `styles/course-brand-template-v1.json`
 - `styles/layout-rules/landing-page.md`
 - `styles/typography/course-brand.md`
 - `styles/motion/animation-style.md`
 - `styles/tokens/course-brand.css`
-- `templates/course-brand-template-v1/index.html`
-- `templates/course-brand-template-v1/css/page.css`
-- `templates/course-brand-template-v1/js/page.js`
+- `templates/sunshine-golden-pencil-alt-a/index.html`
+- `templates/sunshine-golden-pencil-alt-b/index.html`
+- `templates/sunshine-golden-pencil-alt-c/index.html`
 
 ## 專案世界觀
 
@@ -62,7 +61,7 @@
 
 預期用來定義課程品牌的視覺語言，例如色彩、字體、構圖、圖片風格、語氣與素材規範。
 
-目前已有 `styles/` 目錄與 `course-brand-template-v1` 的第一版風格資料、版面規則、字體規則、動態規則與 CSS token。
+目前已有 `styles/` 目錄、版面規則、字體規則、動態規則與 CSS token。先前的 template-specific 風格資料已刪除。
 
 ### style-selector-skill
 
@@ -70,11 +69,11 @@
 
 目前尚未有 `skills/` 目錄或 style-selector-skill 實作。
 
-### course-brand-template-v1
+### 未來新招生頁模板
 
-預期是一個課程品牌模板重構方向，可能用來提供穩定的招生素材結構、品牌 token、版型規則與可重複產出的模板。
+預期用來提供穩定的招生素材結構、品牌 token、版型規則與可重複產出的模板。
 
-目前已有 `templates/course-brand-template-v1/` 靜態前端模板，包含 HTML、CSS、JS 與本地 hero 視覺資產。此模板不包含後端、表單 schema、SQL 或 webhook。
+目前已建立三個候選視覺方向稿：日系工作室型錄、暗色策展導覽、雜誌索引作品。這三個範例用於確認方向，尚未定稿為可沿用模板。已刪除的 v1/v2 不應被視為參考或基準。
 
 ## AI Agent 閱讀順序
 

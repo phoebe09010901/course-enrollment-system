@@ -1,6 +1,6 @@
 # 課程招生 - 系統
 
-這個 repo 目前已建立第一版課程招生頁前端模板與 design foundation。
+這個 repo 目前保留課程招生頁的 design foundation、協作文件，以及三個全新視覺方向範例。先前建立的兩個前端樣板已依使用者要求刪除，不再作為可沿用模板。
 
 ## 另一台電腦接手方式
 
@@ -18,38 +18,38 @@ git clone https://github.com/phoebe09010901/course-enrollment-system.git
 cd course-enrollment-system
 ```
 
-## 開啟目前招生頁模板
-
-直接用瀏覽器開啟：
-
-```text
-templates/course-brand-template-v1/index.html
-```
-
-目前模板是靜態 HTML/CSS/JS，不需要安裝套件或啟動後端。
-
 ## 接手前建議閱讀
 
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
-5. `styles/course-brand-template-v1.json`
-6. `styles/layout-rules/landing-page.md`
-7. `styles/typography/course-brand.md`
-8. `styles/motion/animation-style.md`
-9. `styles/tokens/course-brand.css`
+5. `styles/layout-rules/landing-page.md`
+6. `styles/typography/course-brand.md`
+7. `styles/motion/animation-style.md`
+8. `styles/tokens/course-brand.css`
+
+## 目前視覺範例
+
+目前新增三個 sunshine-golden-pencil alternative examples，供確認視覺方向：
+
+- `templates/sunshine-golden-pencil-alt-a/`：日系工作室型錄版
+- `templates/sunshine-golden-pencil-alt-b/`：暗色策展導覽版
+- `templates/sunshine-golden-pencil-alt-c/`：雜誌索引作品版
+
+三者皆為候選視覺稿，保留既有課程內容與圖片資料，但刻意使用不同 Hero、內容導覽、作品展示與報名 CTA 結構。
 
 ## 目前工作範圍
 
 已建立：
 
 - `styles/`：course brand design foundation
-- `templates/course-brand-template-v1/`：靜態招生頁模板
+- `templates/`：三個 frontend alternative examples
 - `docs/`：專案脈絡、狀態與協作規則
 
 尚未建立：
 
+- 已確認採用的正式前端招生頁模板
 - SQL
 - webhook
 - backend

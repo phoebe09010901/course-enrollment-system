@@ -2,13 +2,13 @@
 
 ## 狀態摘要
 
-目前專案已從初始化階段進入第一版前端模板階段。repo 已包含 `styles/` design foundation、`templates/course-brand-template-v1/` 靜態招生頁模板，以及 `docs/TEMPLATE_REFERENCE.md` 版型參考資料庫；尚未包含 skill 實作、公開資源或後端服務。
+目前專案保留 `styles/` design foundation、協作文件，以及三個全新視覺方向範例。先前建立的兩個前端樣板已依使用者要求刪除，不再作為目前狀態或未來參考基準。
 
 目前 `styles/` design foundation 用來支撐品牌型課程頁的 Hero、typography、spacing、motion、gallery rhythm、visual hierarchy 與 section choreography。
 
 目前 `docs/TEMPLATE_REFERENCE.md` 收錄 10 份網站風格分析報告，作為 Chat B 與 Codex 產生招生頁時的正式版型依據，不是一般靈感參考。
 
-目前流程已正式調整：所有招生頁新樣板不得直接由 Codex 進入 HTML/CSS，必須先由 Chat A 使用 Canva 製作視覺樣板草案，確認方向後才交給 Chat B / Codex 前端實作。
+目前 repo 有三個 sunshine-golden-pencil alternative examples，供確認視覺方向；尚未選定正式模板。正式定稿前仍應依 `docs/CLIENT_SELECTION_FLOW.md` 或使用者確認的方向進行。
 
 ## 已確認存在
 
@@ -21,16 +21,19 @@
 - `docs/TEMPLATE_REFERENCE.md`
 - `docs/CLIENT_SELECTION_FLOW.md`
 - `styles/README.md`
-- `styles/course-brand-template-v1.json`
 - `styles/tokens/course-brand.css`
 - `styles/layout-rules/landing-page.md`
 - `styles/typography/course-brand.md`
 - `styles/motion/animation-style.md`
-- `templates/course-brand-template-v1/README.md`
-- `templates/course-brand-template-v1/index.html`
-- `templates/course-brand-template-v1/css/page.css`
-- `templates/course-brand-template-v1/js/page.js`
-- `templates/course-brand-template-v1/assets/course-workspace.svg`
+- `templates/sunshine-golden-pencil-alt-a/index.html`
+- `templates/sunshine-golden-pencil-alt-a/css/page.css`
+- `templates/sunshine-golden-pencil-alt-a/js/page.js`
+- `templates/sunshine-golden-pencil-alt-b/index.html`
+- `templates/sunshine-golden-pencil-alt-b/css/page.css`
+- `templates/sunshine-golden-pencil-alt-b/js/page.js`
+- `templates/sunshine-golden-pencil-alt-c/index.html`
+- `templates/sunshine-golden-pencil-alt-c/css/page.css`
+- `templates/sunshine-golden-pencil-alt-c/js/page.js`
 
 ## 目錄狀態
 
@@ -38,8 +41,8 @@
 | --- | --- | --- |
 | `docs/` | 已建立 | 已有專案記憶、協作規則、Style System 與 Template Reference System |
 | `styles/` | 已建立 frontend-ready foundation | 已有 CSS tokens、Hero、typography、spacing、motion、layout rules，並已被模板引用 |
-| `templates/` | 已建立 | 已有 `templates/course-brand-template-v1/` 靜態前端模板 |
 | `skills/` | 尚未建立 | 尚無 style-selector-skill 或其他 AI skill |
+| `templates/` | 已有三個候選範例 | `alt-a`、`alt-b`、`alt-c` 是視覺方向稿，尚未確認為正式模板 |
 | `public/` | 尚未建立 | 尚無公開素材、圖片、靜態資源 |
 | `line-webhook/` | 尚未建立 | 尚無 LINE webhook 程式碼或設定 |
 | `admin/` | 尚未建立 | 尚無管理介面 |
@@ -52,9 +55,7 @@
 - 建立美術風格系統初始文件。
 - 建立 AI 協作規則文件。
 - 建立品牌型課程頁 frontend-ready design foundation。
-- 建立 course-brand-template-v1 的機讀設計規格。
 - 建立 `styles/tokens/course-brand.css`，提供前端可引用的 CSS custom properties 與穩定 class contract。
-- 建立 `templates/course-brand-template-v1/`，完成 HTML、CSS、JS、responsive、Hero、section composition 與前端動畫。
 - 建立根目錄 `README.md`，提供另一台電腦 clone 與接手方式。
 - 補充 course-brand-template-v1 全域設計規則：中文優先、桌機字級下修、不新增獨立聯絡區塊。
 - 補充 Typography / 字型系統全域規範：Google Fonts 可用但需由 Chat A 統一定義，預設 `Noto Serif TC` + `Noto Sans TC`。
@@ -64,26 +65,28 @@
 - 補充 Chat A / Chat B 合作規則：Chat B 產生招生頁前必須先指定 `template_id`。
 - 補充 Canva 樣板到 Chat B / Codex 前端實作的交接欄位與限制。
 - 正式停止新樣板直接前端改版流程，改為先 Canva 視覺確認，再進入 Chat B / Codex 前端實作。
+- 刪除先前建立的 v1/v2 前端樣板，避免後續沿用不符合期待的設計方向。
+- 新增三個 sunshine-golden-pencil alternative examples：日系工作室型錄、暗色策展導覽、雜誌索引作品。
 
 ## 尚未完成
 
 - 尚未定義完整產品需求與實際使用者流程。
 - 尚未建立 style-selector-skill 的 skill 目錄與規格。
-- 尚未將最新全域設計規則與 Typography / 字型系統同步到 `styles/tokens/course-brand.css` 與 `styles/course-brand-template-v1.json`。
+- 尚未將最新全域設計規則與 Typography / 字型系統同步到 `styles/tokens/course-brand.css`。
 - 尚未將 `docs/TEMPLATE_REFERENCE.md` 轉成可機讀 JSON 或 selector skill。
 - 尚未將 `docs/CLIENT_SELECTION_FLOW.md` 轉成自動選版流程或表單化輸出。
 - 尚未選定任何正式 Canva 方向，尚無 `selected_template_id`、`selected_secondary_template_id` 或 `selected_canva_direction`。
 - 尚未建立第一版 Canva 視覺樣板草案。
-- 尚未以真實課程案例替換模板示範文案。
+- 尚未從三個候選範例中選定正式前端招生頁模板。
 - 尚未建立正式圖片、攝影或生成圖資產流程。
 - 尚未建立任何測試、CI 或部署流程。
 - 尚未建立 LINE webhook、admin、worker 的責任分工。
 
 ## 目前風險
 
-- 專案已有前端模板實作，但 SQL、webhook、backend、admin、worker 等關鍵名詞仍只是未建立方向，容易被誤判為已有系統。
+- 專案已有前端候選範例，但 SQL、webhook、backend、admin、worker 等關鍵名詞仍只是未建立方向，容易被誤判為已有系統。
 - 如果 Chat B 不先查詢 `docs/TEMPLATE_REFERENCE.md` 就直接做前端，可能會回到自由發揮與模板感過重的問題。
-- 現有模板使用示範文案與示意視覺資產，正式招生前仍需替換成真實課程資料。
+- 目前三個候選範例仍待使用者確認；不得把任一範例視為已定稿模板。
 
 ## 下一步建議
 

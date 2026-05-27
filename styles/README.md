@@ -16,8 +16,6 @@ The goal is to prevent the course page from feeling like a generic landing-page 
 
 ## Current Files
 
-- `styles/course-brand-template-v1.json`
-  - Machine-readable frontend contract for the first course brand template.
 - `styles/tokens/course-brand.css`
   - CSS custom properties, base classes, Hero layout classes, section classes, button styles, and reveal animation.
 - `styles/layout-rules/landing-page.md`
@@ -103,10 +101,9 @@ Those belong to other chats or future system documents.
 Before designing or editing a course landing page, read:
 
 1. `styles/README.md`
-2. `styles/course-brand-template-v1.json`
-3. `styles/layout-rules/landing-page.md`
-4. `styles/typography/course-brand.md`
-5. `styles/motion/animation-style.md`
+2. `styles/layout-rules/landing-page.md`
+3. `styles/typography/course-brand.md`
+4. `styles/motion/animation-style.md`
 
 Then apply the rules in this order:
 

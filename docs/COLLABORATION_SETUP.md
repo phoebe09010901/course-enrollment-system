@@ -6,7 +6,7 @@
 
 ## 目前協作基準
 
-目前 repo 已有 `docs/`、`styles/` 與 `templates/course-brand-template-v1/`。前端模板已落地第一版；後端、SQL、webhook、admin、worker 與 form schema 仍未建立。
+目前 repo 已有 `docs/`、`styles/` 與三個 `templates/sunshine-golden-pencil-alt-*` 候選視覺方向稿。先前建立的 v1/v2 前端樣板已依使用者要求刪除；後端、SQL、webhook、admin、worker 與 form schema 仍未建立。
 
 AI Agent 在開始任何工作前，應先閱讀：
 
@@ -16,20 +16,19 @@ AI Agent 在開始任何工作前，應先閱讀：
 4. `docs/COLLABORATION_SETUP.md`
 5. `docs/TEMPLATE_REFERENCE.md`
 6. `docs/CLIENT_SELECTION_FLOW.md`
-7. `styles/course-brand-template-v1.json`
-8. `styles/layout-rules/landing-page.md`
-9. `styles/typography/course-brand.md`
-10. `styles/motion/animation-style.md`
-11. `styles/tokens/course-brand.css`
+7. `styles/layout-rules/landing-page.md`
+8. `styles/typography/course-brand.md`
+9. `styles/motion/animation-style.md`
+10. `styles/tokens/course-brand.css`
 
 ## AI Agent 工作規則
 
 - 先讀 repo，再做判斷。
 - 不要根據檔名或使用者提到的方向，假設功能已存在。
 - 若目錄不存在，應明確寫「尚未建立」。
-- 所有招生頁新樣板不得直接進入 HTML/CSS 改版；必須先由 Chat A 使用 Canva 製作視覺樣板草案，確認方向後才交給 Chat B / Codex 前端實作。
-- 目前優先問題是樣板美感不足，不是功能不足；未完成 Canva 視覺確認前，應停止直接前端改版。
-- 對 `course-brand-template-v1` 的前端工作應優先沿用 `styles/` 中既有 foundation，不重新發明風格。
+- 所有招生頁新樣板預設需先由 Chat A 使用 Canva 或文字 wireframe 製作視覺方向草案，確認方向後才交給 Chat B / Codex 前端實作；若使用者明確要求先做多版前端候選稿，需標記為候選視覺稿，不得視為正式模板。
+- 目前優先問題是樣板美感與差異化，不是功能不足；正式定稿前應先確認視覺方向。
+- 若未來重做或定稿前端模板，應先確認三個候選方向是否採用；不得沿用已刪除的 v1/v2 樣板作為基準。
 - 本 front-end chat 範圍限於 HTML、CSS、JS、responsive、hero、section composition 與 animation。
 - 不得在本範圍內新增 SQL、webhook、backend 或 form schema。
 - 若功能只是規劃，應明確寫「預期」、「建議」、「待建立」。
@@ -165,7 +164,7 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 
 ### `STYLE_SYSTEM.md`
 
-用來記錄美術風格系統、style-selector-skill 與 course-brand-template-v1 的規則。
+用來記錄美術風格系統、style-selector-skill 與未來模板規則。
 
 每次新增 style token、模板、品牌案例或風格選擇邏輯後應更新。
 
@@ -181,14 +180,14 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 
 - `styles/`：美術風格、品牌 token、視覺規範。已建立第一版 course brand foundation。
 - `skills/`：AI Agent 使用的 skills。
-- `templates/`：可重複使用的課程品牌模板。已建立 `course-brand-template-v1` 靜態前端模板。
+- `templates/`：可重複使用的課程品牌模板。目前有三個候選視覺方向稿；先前 v1/v2 已刪除。
 - `public/`：公開靜態資源。
 - `line-webhook/`：LINE webhook 接收與回應邏輯。
 - `admin/`：管理介面。
 - `worker/`：背景工作、排程、非同步任務。
 - `docs/`：長期記憶、規格、協作規則。
 
-以上目錄目前僅 `styles/`、`templates/` 與 `docs/` 已建立。
+以上目錄目前僅 `styles/`、`docs/` 與 `templates/` 已建立。
 
 ## 提交前檢查
 
