@@ -44,7 +44,7 @@
 | `api/` | 已建立初版 | 目前只有 `api/line-intakes/` 接收 Cloudflare Worker intake JSON |
 | `config/` | 已建立初版 | 使用環境變數或 ignored `config/local.php` 管理 DB 與 API key |
 | `lib/` | 已建立初版 | DB 連線與 intake repository |
-| `database/` | 已建立初版 | 目前只有 clients / course_intakes migration |
+| `database/` | 已建立 Chat D 基礎表 | 已有 clients / course_intakes migration，並新增 course_projects / template_proposals / notification_logs migration |
 | `worker/` | 尚未建立 | 尚無背景工作或排程 |
 
 ## 已完成
@@ -87,7 +87,7 @@
 
 1. 建立 `styles/README.md`，定義風格資料格式。
 2. 建立 `schemas/README.md` 與 `schemas/field-registry.json`，定義第一版欄位格式。
-3. 將 `course_projects`、`template_proposals`、`notification_logs`、`line_conversations` 補成 migration。
+3. 將 `line_conversations` 補成 migration。
 4. 盤點遠端 PHP 後台與本機 repo 差異，決定是否匯入 `admin/`。
 5. 建立 `skills/style-selector-skill/README.md`，描述 skill 輸入、輸出與選擇邏輯。
 6. 建立 `templates/course-brand-template-v1/README.md`，定義模板目標與資料結構。

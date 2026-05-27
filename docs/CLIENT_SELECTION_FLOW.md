@@ -41,7 +41,7 @@
 2. 選中的 `template_proposals.selected_at` 寫入目前時間。
 3. 其他兩筆 proposal 改為 `not_selected` 或 `cancelled`。
 4. `course_projects.selected_proposal_id` 寫入選中 proposal。
-5. `course_projects.selected_primary_template_id` 寫入選中 proposal 的 primary template。
+5. `course_projects.selected_template_id` 寫入選中 proposal 的 primary template。
 6. `course_projects.selected_secondary_template_id` 寫入選中 proposal 的 secondary template。
 7. `course_projects.project_status` 改為 `已選定樣板`。
 8. 寫入 `notification_logs`，類型為 `proposal_selected`。

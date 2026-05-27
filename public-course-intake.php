@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__) . '/lib/bootstrap.php';
+require_once dirname(__FILE__) . '/lib/template_proposal_flow.php';
 
 $errors = array();
 $success = false;
@@ -401,6 +402,7 @@ function save_course_intake_form($values)
         $intakeId = insert_form_course_intake($clientId, $recordId, $values);
         $photoAssets = store_course_photo_uploads($recordId, $intakeId);
         update_form_course_intake_assets($intakeId, $values, $photoAssets);
+        $projectId = chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $values, $photoAssets);
 
         db()->commit();
         db()->autocommit(true);
@@ -409,6 +411,7 @@ function save_course_intake_form($values)
             'client_id' => $clientId,
             'record_id' => $recordId,
             'intake_id' => $intakeId,
+            'project_id' => $projectId,
         );
     } catch (Exception $e) {
         db()->rollback();
