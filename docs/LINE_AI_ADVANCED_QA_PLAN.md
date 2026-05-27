@@ -117,16 +117,16 @@
 
 - `S14` pass：貼空白表單後，空白 `LINE ID Link：` / `3. LINE ID Link：` 不會污染 `line_id_link`。
 - `S15` pass：contact 完成後問「課程類型是什麼」可正確回覆欄位說明，且下一輪補 `課程類型：色鉛筆` 後才前進。
-- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S17 通過，S18 失敗。
+- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S18 全部通過。
 - `S16` pass：contact gate 未完成時，客戶回 `實體` 不會污染 `user_name`。
 - `S17` pass：短 LINE 代碼 `URZ8z2U` 不會污染 `user_name`，Email 在 LINE ID 補問來回中不會消失。
-- `S18` fail：客戶回 `我要更新LINE ID Link` 時，系統沒有進入 LINE ID Link 更新流程，反而回到課程類型提問。
+- `S18` pass：客戶回 `我要更新LINE ID Link` 時，系統會鎖定 LINE ID Link 更新，不會改問 Email 或污染課程欄位。
 
 判斷：
 
 - 原問題是 state machine / parser bug。
 - 問題不在 Email regex，而在空白 label 與 `extractLineLink()` / `cleanLabeledValue()` 的解析防護不足。
-- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染目前已修正；S18 顯示欄位更新意圖尚未被 state machine 正確攔截，需交 Chat C 修正。
+- 空白 label 污染、課程形式詞污染、短 LINE 代碼污染與欄位更新意圖目前皆已修正；S01 到 S18 保留作為 regression tests。
 
 ## 回報格式
 

@@ -1,4 +1,4 @@
-const DEPLOY_VERSION = 'chat-c-short-line-code-fix-2026-05-27-08';
+const DEPLOY_VERSION = 'chat-c-contact-update-field-fix-2026-05-27-09';
 const intakeMemory = new Map();
 const handoffMemory = new Map();
 
@@ -160,6 +160,11 @@ async function handleIntake(eventData, env) {
 
   if (isServicePriceQuestion(text) && !isCoursePriceAnswerContext(state)) {
     return `${freeTrialReply()}\n\n我們可以先回到目前資料整理：${currentStepHint(state)}`;
+  }
+
+  const contactUpdateField = detectContactUpdateRequest(text);
+  if (contactUpdateField) {
+    return beginContactFieldUpdate(eventData, state, env, contactUpdateField);
   }
 
   if (state.current_intake_step === 'collecting_required_contact') {
@@ -459,6 +464,43 @@ function contactFallbackForState(state) {
   state.last_fallback_id = `contact_required_${index}`;
   state.last_fallback_key = state.last_fallback_id;
   return `${pool[index]}\n\n${contactMissingHint(state)}`;
+}
+
+async function beginContactFieldUpdate(eventData, state, env, key) {
+  if (key === 'email') {
+    state.email = '';
+    state.email_status = 'pending';
+  }
+
+  if (key === 'line_id_link') {
+    state.line_id_link = '';
+    state.line_id_link_status = 'pending';
+  }
+
+  if (key === 'user_name') {
+    state.user_name = '';
+  }
+
+  state.current_intake_step = 'collecting_required_contact';
+  state.current_required_fields = [key];
+  state.missing_fields = allMissingRequiredFields(state).map((field) => field.key);
+  state.invalid_reply_count = 0;
+  state.pending_contact_update_field = key;
+  refreshCollectedData(state);
+  await saveIntakeState(eventData.user_id, state, env);
+  return contactUpdatePrompt(key);
+}
+
+function contactUpdatePrompt(key) {
+  if (key === 'line_id_link') {
+    return '可以，我幫你更新 LINE ID Link。\n請直接貼新的 LINE 連結給我，例如 line.me 或 lin.ee 開頭的連結。';
+  }
+
+  if (key === 'email') {
+    return '可以，我幫你更新 Email。\n請直接提供新的 Email，之後會作為登入帳號與通知使用。';
+  }
+
+  return '可以，我幫你更新姓名。\n請直接提供要使用的姓名或稱呼。';
 }
 
 function handleEmailDeclineText(state, text) {
@@ -1654,6 +1696,25 @@ function freeTrialReply() {
 
 function isSystemInstructionLike(text) {
   return /忽略.*規則|修改.*規則|系統設定|prompt|api|資料庫|後台|密碼|token|access token|channel secret|cloudflare|worker|webhook/i.test(String(text || ''));
+}
+
+function detectContactUpdateRequest(text) {
+  const value = String(text || '').trim();
+  if (!/(更新|更正|修改|改成|改掉|改一下|換成|變更|重填|重新填)/i.test(value)) return '';
+
+  if (/LINE\s*ID\s*Link|LINE\s*Link|LINE\s*ID|line_id_link|line\.me|lin\.ee/i.test(value)) {
+    return 'line_id_link';
+  }
+
+  if (/Email|E-mail|信箱|電子信箱|mail/i.test(value)) {
+    return 'email';
+  }
+
+  if (/姓名|名字|稱呼|使用者姓名/i.test(value)) {
+    return 'user_name';
+  }
+
+  return '';
 }
 
 function isNoPhotoReply(text) {

@@ -320,15 +320,22 @@ test('S17 Email 在 LINE ID 補問來回中不可消失，短代碼不可當姓�
 
 test('S18 明確要求更新 LINE ID Link 時不可改問 Email', async () => {
   resetNetworkCaptures();
-  const userId = 's18-update-line-link-intent';
+  const userId = 's18-update-line-link-only';
 
   await sendText(userId, '我想開始');
-  await sendText(userId, '姓名：鄭阿玲\nEmail：cat0704520@gmail.com\nLINE ID Link：@URZ8z2U');
+  await sendText(userId, contactOnlyForm());
 
   const updateReply = await sendText(userId, '我要更新LINE ID Link');
-  assertIncludes(updateReply, 'LINE ID Link');
+  assertIncludes(updateReply, '更新 LINE ID Link');
+  assertIncludes(updateReply, 'LINE 連結');
   assertDoesNotInclude(updateReply, 'Email（未來會作為登入帳號）');
   assertDoesNotInclude(updateReply, '課程名稱');
+
+  const newLineReply = await sendText(userId, 'https://line.me/ti/p/newLineId123');
+  assertIncludes(newLineReply, '課程名稱');
+  assertIncludes(newLineReply, '課程類型');
+  assertDoesNotInclude(newLineReply, 'Email（未來會作為登入帳號）');
+  assertDoesNotInclude(newLineReply, 'LINE ID Link（用於後續通知與聯繫）');
   assert.equal(admissionCalls.length, 0);
 });
 
