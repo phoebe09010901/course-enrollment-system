@@ -640,7 +640,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>課程招生資料表單｜菲兔麥</title>
+  <title>課程資料表單｜菲兔麥 課程招生 - 系統 V.1</title>
   <link rel="stylesheet" href="public/assets/css/admin.css?v=2026052607">
   <style>
     body.form-body {
@@ -851,8 +851,8 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
   <main class="form-screen">
     <form class="form-card" method="post" id="courseIntakeForm" enctype="multipart/form-data" novalidate>
       <div class="form-heading">
-        <span>Course Intake</span>
-        <h1>課程招生資料表單</h1>
+        <span>Course Intake Form</span>
+        <h1>課程資料表單</h1>
         <p>請填寫課程與聯絡資料，我們會依據內容建立案件並安排後續招生頁製作流程。</p>
       </div>
 
@@ -962,6 +962,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
         <button class="button secondary form-reset" type="reset">清除重填</button>
       </div>
     </form>
+    <p class="login-footer-title">菲兔麥 課程招生 - 系統 V.1</p>
   </main>
 
   <script>
