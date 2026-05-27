@@ -29,6 +29,19 @@ Chat A / Canva 完成提案後，應回填到 `template_proposals`：
 - `canva_url`
 - `notes`
 
+## Canva ready 品質門檻
+
+`canva_url` 不能只代表「有建立 Canva 檔案」。該 Canva 檔案必須是真正完成客製化的課程招生頁視覺提案。
+
+不可標記為 ready 的情況：
+
+- Canva 裡只是嵌入原始模板 demo 頁。
+- 畫面仍出現原模板導覽選單、範本清單、demo 地址、demo 電話、英文室內設計文案等 placeholder。
+- 畫面是瀏覽器預設樣式、raw HTML、CSS 未載入或明顯破版。
+- 未使用表單送出的課程名稱、課程內容與圖片素材。
+
+若發生上述任一情況，Chat A 必須回報 `canva_generation_failed`，不得寫入 `proposal_ready`。
+
 ## 課程類型建議對應
 
 | course_type | A 款建議 | B 款建議 | C 款建議 |
