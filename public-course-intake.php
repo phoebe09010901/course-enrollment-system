@@ -952,6 +952,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
     }
 
     .form-card input,
+    .form-card select,
     .form-card textarea {
       margin-top: 8px;
       min-height: 46px;
@@ -974,6 +975,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
     }
 
     .form-card input:focus,
+    .form-card select:focus,
     .form-card textarea:focus {
       outline: 3px solid rgba(113, 190, 126, .24);
       border-color: rgba(77, 145, 91, .58);
@@ -1131,8 +1133,12 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
             <p class="form-hint">例如：水彩、壓克力、油畫、色鉛、色鉛筆、書法、手作、烘焙、瑜珈、舞蹈、音樂、語言、親子、營養宣導、企業內訓、講座等。</p>
           </label>
           <label class="form-field">課程形式
-            <input type="text" name="course_format" value="<?php echo h($values['course_format']); ?>" required placeholder="線上、實體、兩者都有">
-            <p class="form-hint">例如：線上、實體、兩者都有。</p>
+            <select name="course_format" required>
+              <option value="">請選擇課程形式</option>
+              <option value="線上" <?php echo $values['course_format'] === '線上' ? 'selected' : ''; ?>>線上</option>
+              <option value="實體" <?php echo $values['course_format'] === '實體' ? 'selected' : ''; ?>>實體</option>
+              <option value="兩者都有" <?php echo $values['course_format'] === '兩者都有' ? 'selected' : ''; ?>>兩者都有</option>
+            </select>
           </label>
           <label class="form-field">上課地點
             <input type="text" name="course_location" value="<?php echo h($values['course_location']); ?>" required>
