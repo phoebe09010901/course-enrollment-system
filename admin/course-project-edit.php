@@ -38,6 +38,40 @@ function course_project_edit_assets($payload)
     return array();
 }
 
+function course_project_edit_asset_label($field)
+{
+    $labels = array(
+        'topic_photo' => '課程主題照',
+        'teacher_photos' => '老師照片',
+        'work_photos' => '作品照片',
+        'classroom_photos' => '教室照片',
+    );
+
+    return isset($labels[$field]) ? $labels[$field] : $field;
+}
+
+function course_project_edit_asset_url($asset)
+{
+    foreach (array('url', 'public_url', 'publicUrl', 'source_url', 'sourceUrl') as $key) {
+        if (isset($asset[$key]) && trim((string) $asset[$key]) !== '') {
+            return trim((string) $asset[$key]);
+        }
+    }
+
+    return '';
+}
+
+function course_project_edit_asset_name($asset, $index)
+{
+    foreach (array('original_name', 'originalName', 'file_name', 'fileName') as $key) {
+        if (isset($asset[$key]) && trim((string) $asset[$key]) !== '') {
+            return trim((string) $asset[$key]);
+        }
+    }
+
+    return '圖片 ' . (string) $index;
+}
+
 $projectId = trim(get('project_id', ''));
 $project = $projectId !== '' ? chat_d_project_by_id($projectId) : null;
 if (!$project) {
@@ -117,17 +151,8 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   .proposal-table td,
   .proposal-table .muted,
   .proposal-table a { font-size: 14px; line-height: 1.45; }
-  .raw-box {
-    max-height: 360px;
-    overflow: auto;
-    padding: 14px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, .70);
-    color: #28323b;
-    font-size: 13px;
-    line-height: 1.55;
-    white-space: pre-wrap;
-  }
+  .asset-group { display: grid; gap: 6px; margin-bottom: 14px; }
+  .asset-group-title { color: rgba(21, 26, 36, .70); font-size: 14px; }
   @media (max-width: 760px) {
     .detail-grid { grid-template-columns: 1fr; }
     .detail-row { grid-template-columns: 1fr; gap: 2px; }
@@ -211,15 +236,25 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   <?php if (empty($assets)) { ?>
     <p class="muted">目前沒有圖片素材。</p>
   <?php } else { ?>
-    <ul class="asset-list">
-      <?php foreach ($assets as $asset) {
-        if (!is_array($asset)) { continue; }
-        $url = isset($asset['url']) ? $asset['url'] : (isset($asset['public_url']) ? $asset['public_url'] : '');
-        $label = isset($asset['field']) ? $asset['field'] : (isset($asset['type']) ? $asset['type'] : '圖片');
+    <?php foreach ($assets as $field => $items) {
+      if (!is_array($items)) { continue; }
+      $isSingleAsset = isset($items['url']) || isset($items['public_url']) || isset($items['publicUrl']);
+      $assetItems = $isSingleAsset ? array($items) : $items;
+      if (empty($assetItems)) { continue; }
       ?>
-        <li><?php echo h($label); ?>：<?php if ($url !== '') { ?><a target="_blank" href="<?php echo h($url); ?>"><?php echo h($url); ?></a><?php } else { ?><span class="muted">未取得網址</span><?php } ?></li>
-      <?php } ?>
-    </ul>
+      <div class="asset-group">
+        <div class="asset-group-title"><?php echo h(course_project_edit_asset_label($field)); ?></div>
+        <ul class="asset-list">
+          <?php $assetIndex = 1; foreach ($assetItems as $asset) {
+            if (!is_array($asset)) { continue; }
+            $url = course_project_edit_asset_url($asset);
+            $name = course_project_edit_asset_name($asset, $assetIndex);
+          ?>
+            <li><?php if ($url !== '') { ?><a target="_blank" href="<?php echo h($url); ?>"><?php echo h($name); ?></a><?php } else { ?><span class="muted"><?php echo h($name); ?>：未取得網址</span><?php } ?></li>
+          <?php $assetIndex++; } ?>
+        </ul>
+      </div>
+    <?php } ?>
   <?php } ?>
 </section>
 
@@ -241,10 +276,5 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
     <?php } ?>
     <?php if (empty($proposals)) { ?><tr><td colspan="5" class="muted">尚未有樣板提案。</td></tr><?php } ?>
   </table>
-</section>
-
-<section class="panel">
-  <h2>原始表單資料</h2>
-  <pre class="raw-box"><?php echo h(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)); ?></pre>
 </section>
 <?php include dirname(__FILE__) . '/../templates/admin-footer.php'; ?>
