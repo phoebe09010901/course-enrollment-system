@@ -74,6 +74,21 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 <style>
   .row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .inline-action { display: inline; margin: 0; }
+  .project-table th,
+  .project-table td,
+  .project-table .muted {
+    font-size: 14px;
+  }
+  .project-table .project-name,
+  .project-table .course-info {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .project-table .project-id,
+  .project-table .course-meta {
+    font-size: 14px;
+    line-height: 1.45;
+  }
   .action-pill {
     display: inline-flex;
     align-items: center;
@@ -110,15 +125,15 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   </div>
 </form>
 <div class="actions"><a class="button" href="project-edit.php">新增專案</a></div>
-<table>
+<table class="project-table">
   <tr><th>專案</th><th>客戶</th><th>課程</th><th>選定樣板</th><th>選版頁</th><th>操作</th></tr>
   <?php foreach ($projects as $project) { ?>
     <tr>
-      <td><?php echo h($project['course_name']); ?><br><span class="muted"><?php echo h($project['project_id']); ?></span></td>
+      <td><span class="project-name"><?php echo h($project['course_name']); ?></span><br><span class="muted project-id"><?php echo h($project['project_id']); ?></span></td>
       <td><?php echo h($project['client_name']); ?></td>
       <td>
-        <?php echo h($project['course_type']); ?><br>
-        <span class="muted"><?php echo h($project['course_format']); ?> / <?php echo h($project['course_location']); ?></span>
+        <span class="course-info"><?php echo h($project['course_type']); ?></span><br>
+        <span class="muted course-meta"><?php echo h($project['course_format']); ?> / <?php echo h($project['course_location']); ?></span>
       </td>
       <td>
         <?php echo h($project['selected_proposal_id']); ?><br>
