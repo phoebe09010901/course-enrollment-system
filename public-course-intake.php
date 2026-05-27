@@ -904,7 +904,6 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
     .form-heading span {
       color: #497b48;
       font-size: 12px;
-      font-weight: 700;
       text-transform: uppercase;
     }
 
@@ -948,7 +947,6 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       margin-top: 0;
       color: rgba(21, 32, 27, .78);
       font-size: 13px;
-      font-weight: 700;
     }
 
     .form-card input,
@@ -1006,7 +1004,6 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       border-color: rgba(255, 255, 255, .82);
       background: linear-gradient(135deg, rgba(118, 221, 167, .94), rgba(255, 198, 109, .86));
       color: #15201b;
-      font-weight: 700;
     }
 
     .form-reset {
