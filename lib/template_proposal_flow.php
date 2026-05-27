@@ -10,6 +10,16 @@ function chat_d_table_exists($tableName)
     return !empty($row);
 }
 
+function chat_d_column_exists($tableName, $columnName)
+{
+    $row = db_one(
+        'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1',
+        'ss',
+        array($tableName, $columnName)
+    );
+    return !empty($row);
+}
+
 function chat_d_json($value)
 {
     return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -18,6 +28,18 @@ function chat_d_json($value)
 function chat_d_project_id_for_intake($intakeId)
 {
     return 'CP-' . date('Ymd') . '-' . str_pad((string) (int) $intakeId, 5, '0', STR_PAD_LEFT);
+}
+
+function chat_d_random_token()
+{
+    if (function_exists('openssl_random_pseudo_bytes')) {
+        $bytes = openssl_random_pseudo_bytes(32);
+        if ($bytes !== false) {
+            return bin2hex($bytes);
+        }
+    }
+
+    return sha1(uniqid('', true) . mt_rand() . microtime(true)) . sha1(mt_rand() . uniqid('', true));
 }
 
 function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $values, $photoAssets)
@@ -104,6 +126,8 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
         );
     }
 
+    chat_d_project_selection_token($projectId);
+
     if (chat_d_table_exists('notification_logs')) {
         chat_d_log_notification($projectId, $clientId, 'data_confirmed', 'system', '', array(), '公開表單已送出，等待 Chat A / Canva 樣板提案。', 'recorded');
     }
@@ -117,6 +141,41 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
     return $projectId;
 }
 
+function chat_d_project_selection_token($projectId)
+{
+    if (!chat_d_column_exists('course_projects', 'selection_token')) {
+        return '';
+    }
+
+    $project = db_one('SELECT selection_token FROM course_projects WHERE project_id = ? LIMIT 1', 's', array($projectId));
+    if ($project && !empty($project['selection_token'])) {
+        return $project['selection_token'];
+    }
+
+    $token = chat_d_random_token();
+    db_exec('UPDATE course_projects SET selection_token = ?, updated_at = ? WHERE project_id = ?', 'sss', array($token, now(), $projectId));
+    return $token;
+}
+
+function chat_d_project_selection_url($projectId)
+{
+    $token = chat_d_project_selection_token($projectId);
+    if ($token === '') {
+        return '';
+    }
+
+    return app_url('course-template-proposals.php?t=' . rawurlencode($token));
+}
+
+function chat_d_project_by_selection_token($token)
+{
+    if ($token === '' || !chat_d_table_exists('course_projects') || !chat_d_column_exists('course_projects', 'selection_token')) {
+        return null;
+    }
+
+    return db_one('SELECT * FROM course_projects WHERE selection_token = ? LIMIT 1', 's', array($token));
+}
+
 function chat_d_project_by_id($projectId)
 {
     if (!chat_d_table_exists('course_projects')) {
@@ -124,6 +183,19 @@ function chat_d_project_by_id($projectId)
     }
 
     return db_one('SELECT * FROM course_projects WHERE project_id = ? LIMIT 1', 's', array($projectId));
+}
+
+function chat_d_project_proposals($projectId)
+{
+    if (!chat_d_table_exists('template_proposals')) {
+        return array();
+    }
+
+    return db_all(
+        'SELECT * FROM template_proposals WHERE project_id = ? ORDER BY proposal_code ASC, id ASC',
+        's',
+        array($projectId)
+    );
 }
 
 function chat_d_course_intakes_primary_key()

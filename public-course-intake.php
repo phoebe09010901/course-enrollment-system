@@ -42,6 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         $saveResult = save_course_intake_form($values);
         register_course_form_success();
+        $selectionUrl = chat_d_project_selection_url($saveResult['project_id']);
+        if ($selectionUrl !== '') {
+            header('Location: ' . $selectionUrl);
+            exit;
+        }
+
         $success = true;
         $recordId = $saveResult['record_id'];
         $security = reset_course_form_security_state();
