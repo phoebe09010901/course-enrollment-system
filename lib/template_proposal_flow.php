@@ -2,7 +2,11 @@
 
 function chat_d_table_exists($tableName)
 {
-    $row = db_one('SHOW TABLES LIKE ?', 's', array($tableName));
+    $row = db_one(
+        'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1',
+        's',
+        array($tableName)
+    );
     return !empty($row);
 }
 
