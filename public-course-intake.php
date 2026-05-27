@@ -1153,9 +1153,11 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
           </label>
           <label class="form-field full">適合對象
             <textarea name="target_audience" required><?php echo h($values['target_audience']); ?></textarea>
+            <p class="form-hint">請盡量詳細描述適合的年齡、程度、需求、學習目標或常見情境，越詳盡越好。</p>
           </label>
           <label class="form-field full">課程特色說明
             <textarea name="course_features" required><?php echo h($values['course_features']); ?></textarea>
+            <p class="form-hint">請盡量詳細說明課程亮點、教學方式、作品成果、材料特色或與其他課程不同之處，越詳盡越好。</p>
           </label>
           <label class="form-field full">課後支援
             <textarea name="post_course_support" required placeholder="是否有影片提供或是作品帶回"><?php echo h($values['post_course_support']); ?></textarea>
