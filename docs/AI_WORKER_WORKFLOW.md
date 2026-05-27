@@ -215,6 +215,20 @@ log 至少包含：
 
 任務命名應保持穩定，避免每次 chat 依照描述臨時發明新名稱。
 
+## Chat A / Canva Proposal Ready Gate
+
+`create_three_template_proposals` 完成前，必須通過以下 ready gate：
+
+1. proposal 數量必須剛好是 3。
+2. 三筆 `proposal_code` 必須剛好是 `A`、`B`、`C`。
+3. A / B / C 三款都必須有真實可開啟的 `canva_url`。
+4. 任一 proposal 缺 `canva_url` 時，整個 batch 不可 ready，只能維持 `pending` 或標記 `failed`。
+5. 三款都必須保存 `primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`。
+6. 不可只保存客戶顯示名稱、Canva 顯示名稱或 proposal 顯示名稱。
+7. 同一 `project_id` 若已有有效 proposal batch，除非有明確重產指令，不可自動建立第二批。
+
+未通過 ready gate 時，不可觸發 `publish_template_preview_urls`，也不可寄送 preview ready 通知。
+
 ## AI Worker 標準流程
 
 未來每個 AI worker 任務建議依照以下流程：

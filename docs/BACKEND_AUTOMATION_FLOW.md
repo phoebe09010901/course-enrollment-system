@@ -199,10 +199,10 @@ Future phase 可再加入：
 | `proposal_code` | text | 是 | `A`、`B`、`C` |
 | `proposal_name` | text | 是 | 樣板名稱 |
 | `primary_template_id` | text | 是 | 主樣板 id |
-| `secondary_template_id` | text | 否 | 輔助樣板 id |
-| `source_url` | text | 否 | 主樣板來源 |
-| `secondary_source_url` | text | 否 | 輔助樣板來源 |
-| `canva_url` | text | 否 | Canva 編輯或檢視連結 |
+| `secondary_template_id` | text | 是 | 輔助樣板 id，不可只存顯示名稱 |
+| `source_url` | text | 是 | 主樣板來源，不可只存顯示名稱 |
+| `secondary_source_url` | text | 是 | 輔助樣板來源，不可只存顯示名稱 |
+| `canva_url` | text | 是 | Canva 編輯或檢視連結，ready gate 必填 |
 | `preview_url` | text | 否 | 前端預覽網址 |
 | `preview_token` | text unique | 是 | 不可猜測的預覽 token |
 | `preview_status` | text | 是 | 預覽狀態 |
@@ -219,16 +219,19 @@ Future phase 可再加入：
 - index: `template_proposals.project_id`
 - index: `template_proposals.preview_status`
 - index: `template_proposals.expires_at`
+- 建議 partial unique index：同一 `project_id` 只能有一組有效 proposal batch；除非明確要求重產，不可自動建立第二批。
 
 `preview_status` 至少包含：
 
 - `draft`
+- `pending`
 - `preview_ready`
 - `sent`
 - `selected`
 - `not_selected`
 - `expired`
 - `cancelled`
+- `failed`
 
 規則：
 
@@ -236,6 +239,10 @@ Future phase 可再加入：
 - `proposal_code` 固定為 `A`、`B`、`C`。
 - 客戶選定其中一款後，該筆標記為 `selected`，其餘兩筆標記為 `not_selected` 或 `cancelled`。
 - 三天內未選擇時，三筆全部標記為 `expired`。
+- Chat A / Canva proposal ready 門檻必須嚴格遵守：同一批 proposal 數量必須剛好是 3，且 `proposal_code` 必須剛好為 A / B / C。
+- A / B / C 三款都必須有真實可開啟的 `canva_url`；任一 proposal 缺 `canva_url` 時，整個 batch 不可標記為 ready，只能維持 `draft` / `pending` 或標記 `failed`。
+- A / B / C 三款都必須保存 `primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`；不可只保存客戶顯示名稱或 proposal 顯示名稱。
+- 同一 `project_id` 若已有有效 proposal batch，除非後台或操作者明確要求重產，不可由排程自動建立第二批。
 
 ### `notification_logs`
 
@@ -486,6 +493,7 @@ Future phase tasks：
 - `needs_template_proposal = true`
 - `lock_expires_at is null or lock_expires_at < now()`
 - `next_retry_at is null or next_retry_at <= now()`
+- 同一 `project_id` 不存在有效 proposal batch；若已存在 A / B / C 有效批次，除非有明確 `force_regenerate = true` 或後台重產操作，不得建立第二批。
 
 流程：
 
@@ -503,15 +511,21 @@ Future phase tasks：
 7. 觸發 Chat A / Canva 樣板提案流程。
 8. 寫入 `notification_logs`，通知類型為 `template_proposal_started`。
 9. 根據 `course_type` 從 `docs/TEMPLATE_REFERENCE.md` 挑出 3 款 proposal。
-10. 為 A / B / C 各建立或更新一筆 `template_proposals`。
-11. 每筆記錄 `proposal_code`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、`canva_url`。
-12. 三筆 proposal 初始 `preview_status = draft`。
-13. 完成時清除鎖定欄位或讓狀態進入下一階段，並更新 `worker_runs.finished_at`、`result = completed`。
+10. 驗證 Chat A / Canva 回傳 proposal 數量剛好是 3，且 `proposal_code` 剛好是 A / B / C。
+11. 驗證三款 proposal 都有真實 `canva_url`。
+12. 驗證三款 proposal 都有 `primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`。
+13. 若第 10 到 12 步任一條件不成立，整批不可 ready；應標記為 `pending` 或 `failed`，寫入 `last_worker_error` 與 `worker_runs.failure_reason`。
+14. 為 A / B / C 各建立或更新一筆 `template_proposals`。
+15. 每筆記錄 `proposal_code`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、`canva_url`。
+16. 三筆 proposal 初始 `preview_status = draft` 或 `pending`；只有通過完整 ready gate 後，才可交給下一階段產生 preview URL。
+17. 完成時清除鎖定欄位或讓狀態進入下一階段，並更新 `worker_runs.finished_at`、`result = completed`。
 
 注意：
 
 - `docs/TEMPLATE_REFERENCE.md` 目前尚未建立，因此此步驟目前只能作為待串接規格。
 - 若找不到足夠 3 款樣板，worker 應標記任務需要人工處理，不應自行編造不存在的 template id。
+- 若任一 proposal 缺 `canva_url`，整批只能維持 `pending` 或改為 `failed`，不得進入 `preview_ready` 或通知客戶。
+- 不得只保存客戶顯示名稱、Canva 顯示名稱或 proposal 顯示名稱；template id 與 source URL 必須完整保存，方便後續追溯與重建。
 - 若 Chat A / Canva API timeout、rate limit 或寫回 API timeout，屬於可重試錯誤，應設定 `next_retry_at = now() + 30 到 60 分鐘`，並記錄 `worker_runs.result = retry_scheduled`。
 - 若 `樣板製作中` 超過 `lock_expires_at` 仍未完成，下一輪 worker 可回收並重新 claim，但必須保留前一次 `worker_run_id` 的失敗紀錄。
 
@@ -524,7 +538,10 @@ Future phase tasks：
 觸發條件：
 
 - Chat A 已完成三款 Canva 樣板。
-- A / B / C 三筆 `template_proposals` 已有 template id 與 Canva link。
+- A / B / C 三筆 `template_proposals` 已通過 Chat A / Canva proposal ready gate。
+- proposal 數量剛好為 3，且 proposal code 剛好是 A / B / C。
+- 三筆皆有真實 `canva_url`。
+- 三筆皆有 `primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`。
 
 流程：
 

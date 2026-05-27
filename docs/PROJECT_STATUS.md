@@ -59,6 +59,7 @@
 - 已更新 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 為新版「表單導向」流程。
 - 已更新 `docs/COLLABORATION_SETUP.md` 的 Chat C / Chat D / Chat E 分工。
 - 已補上 Chat F 提醒的排程 / Worker 安全規格：取件 atomic lock、processing 20 到 30 分鐘逾時回收、可重試 / 不可重試錯誤分類、30 到 60 分鐘 retry cooldown、`worker_run_id` 與 `worker_runs` log schema。
+- 已補上 Chat A / Canva proposal ready gate：proposal 必須剛好 3 筆且為 A / B / C，三筆都要有真實 `canva_url`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`，缺任一欄不可 ready，也不可在同一 project 自動建立第二批有效 proposal batch。
 
 ## 目前 FORM_URL 狀態
 
@@ -84,6 +85,7 @@ FORM_URL
 - 尚未確認三款預覽網址產生與通知流程。
 - 尚未確認三天選款期限與過期處理的自動化。
 - 尚未實作實際排程 worker、atomic claim SQL、`worker_runs` 資料表與 retry runner。
+- 尚未實作 Chat A / Canva proposal ready gate 的程式檢查與資料庫 unique / batch 約束。
 - 尚未建立完整前台、後台或 admin 管理介面。
 - 尚未建立 `styles/`、`skills/`、`templates/`、`public/` 等實作目錄。
 
