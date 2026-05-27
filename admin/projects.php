@@ -156,6 +156,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
       <td><?php if (!empty($project['selection_token'])) { ?><a class="action-pill" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
       <td>
         <div class="row-actions">
+          <a class="action-pill" href="course-project-edit.php?project_id=<?php echo h($project['project_id']); ?>">編輯</a>
           <?php if (!empty($project['selected_canva_url'])) { ?><a class="action-pill" target="_blank" href="<?php echo h($project['selected_canva_url']); ?>">Canva</a><?php } ?>
           <form class="inline-action" method="post" data-confirm="<?php echo h('確定要刪除專案「' . $project['course_name'] . '」嗎？此動作會同步刪除樣板提案與通知紀錄，且無法復原。'); ?>" onsubmit="return confirm(this.getAttribute('data-confirm'));">
             <?php echo csrf_field(); ?>

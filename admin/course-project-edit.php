@@ -1,0 +1,250 @@
+<?php
+require_once dirname(__FILE__) . '/../lib/bootstrap.php';
+require_once dirname(__FILE__) . '/../lib/template_proposal_flow.php';
+require_login();
+
+function course_project_edit_table_exists($tableName)
+{
+    $row = db_one(
+        'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? LIMIT 1',
+        's',
+        array($tableName)
+    );
+    return !empty($row);
+}
+
+function course_project_edit_json($value)
+{
+    $decoded = json_decode((string) $value, true);
+    return is_array($decoded) ? $decoded : array();
+}
+
+function course_project_edit_value($payload, $key, $default)
+{
+    if (isset($payload['course_project']) && is_array($payload['course_project']) && isset($payload['course_project'][$key])) {
+        return (string) $payload['course_project'][$key];
+    }
+    return $default;
+}
+
+function course_project_edit_assets($payload)
+{
+    if (isset($payload['course_assets']) && is_array($payload['course_assets'])) {
+        return $payload['course_assets'];
+    }
+    if (isset($payload['course_project']['course_assets']) && is_array($payload['course_project']['course_assets'])) {
+        return $payload['course_project']['course_assets'];
+    }
+    return array();
+}
+
+$projectId = trim(get('project_id', ''));
+$project = $projectId !== '' ? chat_d_project_by_id($projectId) : null;
+if (!$project) {
+    $_SESSION['flash'] = '找不到專案。';
+    redirect('projects.php');
+}
+
+$payload = course_project_edit_json(isset($project['raw_payload']) ? $project['raw_payload'] : '');
+$values = array(
+    'course_name' => isset($project['course_name']) ? $project['course_name'] : '',
+    'course_type' => isset($project['course_type']) ? $project['course_type'] : '',
+    'course_format' => isset($project['course_format']) ? $project['course_format'] : '',
+    'course_location' => isset($project['course_location']) ? $project['course_location'] : '',
+    'expected_launch_date' => course_project_edit_value($payload, 'expected_launch_date', ''),
+    'expected_start_date' => course_project_edit_value($payload, 'expected_start_date', ''),
+    'course_capacity' => course_project_edit_value($payload, 'course_capacity', ''),
+    'course_price' => course_project_edit_value($payload, 'course_price', ''),
+    'target_audience' => course_project_edit_value($payload, 'target_audience', ''),
+    'course_features' => course_project_edit_value($payload, 'course_features', ''),
+    'post_course_support' => course_project_edit_value($payload, 'post_course_support', ''),
+);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    foreach ($values as $key => $default) {
+        $values[$key] = post($key, $default);
+    }
+
+    if (!isset($payload['course_project']) || !is_array($payload['course_project'])) {
+        $payload['course_project'] = array();
+    }
+    foreach ($values as $key => $value) {
+        $payload['course_project'][$key] = $value;
+    }
+
+    db_exec(
+        'UPDATE course_projects
+         SET course_name = ?, course_type = ?, course_format = ?, course_location = ?, raw_payload = ?, updated_at = ?
+         WHERE project_id = ?',
+        'sssssss',
+        array(
+            $values['course_name'],
+            $values['course_type'],
+            $values['course_format'],
+            $values['course_location'],
+            chat_d_json($payload),
+            now(),
+            $projectId,
+        )
+    );
+
+    $_SESSION['flash'] = '專案資料已儲存。';
+    redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
+}
+
+$client = null;
+if (!empty($project['client_id']) && course_project_edit_table_exists('admission_clients')) {
+    $client = db_one('SELECT * FROM admission_clients WHERE id = ? LIMIT 1', 'i', array((int) $project['client_id']));
+}
+
+$proposals = chat_d_project_proposals($projectId);
+$assets = course_project_edit_assets($payload);
+
+include dirname(__FILE__) . '/../templates/admin-header.php';
+?>
+<h1>專案詳細資料</h1>
+<style>
+  .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .detail-list { display: grid; gap: 8px; margin: 0; }
+  .detail-row { display: grid; grid-template-columns: 130px 1fr; gap: 12px; font-size: 14px; line-height: 1.55; }
+  .detail-label { color: rgba(21, 26, 36, .56); }
+  .detail-value { color: #151a24; word-break: break-word; }
+  .form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .asset-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .asset-list li { font-size: 14px; line-height: 1.55; }
+  .proposal-table th,
+  .proposal-table td,
+  .proposal-table .muted,
+  .proposal-table a { font-size: 14px; line-height: 1.45; }
+  .raw-box {
+    max-height: 360px;
+    overflow: auto;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .70);
+    color: #28323b;
+    font-size: 13px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+  }
+  @media (max-width: 760px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .detail-row { grid-template-columns: 1fr; gap: 2px; }
+  }
+</style>
+
+<div class="actions">
+  <a class="button secondary" href="projects.php">返回專案列表</a>
+  <?php if (!empty($project['selection_token'])) { ?><a class="button secondary" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟選版頁</a><?php } ?>
+  <?php if (!empty($project['selected_canva_url'])) { ?><a class="button secondary" target="_blank" href="<?php echo h($project['selected_canva_url']); ?>">開啟 Canva</a><?php } ?>
+</div>
+
+<section class="panel">
+  <h2>專案狀態</h2>
+  <div class="detail-grid">
+    <dl class="detail-list">
+      <div class="detail-row"><dt class="detail-label">專案編號</dt><dd class="detail-value"><?php echo h($project['project_id']); ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">樣板狀態</dt><dd class="detail-value"><?php echo h(chat_d_template_status_label(isset($project['template_status']) ? $project['template_status'] : '')); ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">專案狀態</dt><dd class="detail-value"><?php echo h($project['project_status']); ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">批次</dt><dd class="detail-value"><?php echo h(isset($project['proposal_batch_id']) ? $project['proposal_batch_id'] : ''); ?></dd></div>
+    </dl>
+    <dl class="detail-list">
+      <div class="detail-row"><dt class="detail-label">Worker</dt><dd class="detail-value"><?php echo h(isset($project['worker_run_id']) ? $project['worker_run_id'] : ''); ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">開始處理</dt><dd class="detail-value"><?php echo h(isset($project['template_processing_started_at']) ? $project['template_processing_started_at'] : ''); ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">錯誤</dt><dd class="detail-value"><?php echo h(chat_d_template_error_label(isset($project['template_error_code']) ? $project['template_error_code'] : '')); ?><?php echo !empty($project['template_error_message']) ? '：' . h($project['template_error_message']) : ''; ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">更新時間</dt><dd class="detail-value"><?php echo h($project['updated_at']); ?></dd></div>
+    </dl>
+  </div>
+</section>
+
+<form class="panel" method="post">
+  <?php echo csrf_field(); ?>
+  <h2>課程資料</h2>
+  <div class="grid">
+    <div><label>課程名稱</label><input name="course_name" value="<?php echo h($values['course_name']); ?>" required></div>
+    <div><label>課程類型</label><input name="course_type" value="<?php echo h($values['course_type']); ?>"></div>
+    <div><label>課程形式</label>
+      <select name="course_format">
+        <?php foreach (array('', '實體', '線上', '混合', '到府', '企業內訓') as $option) { ?>
+          <option value="<?php echo h($option); ?>" <?php echo $values['course_format'] === $option ? 'selected' : ''; ?>><?php echo $option === '' ? '未設定' : h($option); ?></option>
+        <?php } ?>
+      </select>
+    </div>
+    <div><label>上課地點</label><input name="course_location" value="<?php echo h($values['course_location']); ?>"></div>
+    <div><label>預計招生日期</label><input type="date" name="expected_launch_date" value="<?php echo h($values['expected_launch_date']); ?>"></div>
+    <div><label>預計開課日期</label><input type="date" name="expected_start_date" value="<?php echo h($values['expected_start_date']); ?>"></div>
+    <div><label>課程名額</label><input name="course_capacity" value="<?php echo h($values['course_capacity']); ?>"></div>
+    <div><label>課程費用</label><input name="course_price" value="<?php echo h($values['course_price']); ?>"></div>
+  </div>
+  <label>適合對象</label><textarea name="target_audience"><?php echo h($values['target_audience']); ?></textarea>
+  <label>課程特色說明</label><textarea name="course_features"><?php echo h($values['course_features']); ?></textarea>
+  <label>課後支援</label><textarea name="post_course_support"><?php echo h($values['post_course_support']); ?></textarea>
+  <div class="form-actions">
+    <button type="submit">儲存</button>
+    <a class="button secondary" href="projects.php">返回</a>
+  </div>
+</form>
+
+<section class="panel">
+  <h2>客戶資料</h2>
+  <?php if ($client) { ?>
+    <div class="detail-grid">
+      <dl class="detail-list">
+        <div class="detail-row"><dt class="detail-label">客戶</dt><dd class="detail-value"><?php echo h($client['name']); ?></dd></div>
+        <div class="detail-row"><dt class="detail-label">聯絡人</dt><dd class="detail-value"><?php echo h($client['contact_name']); ?></dd></div>
+        <div class="detail-row"><dt class="detail-label">Email</dt><dd class="detail-value"><?php echo h($client['email']); ?></dd></div>
+      </dl>
+      <dl class="detail-list">
+        <div class="detail-row"><dt class="detail-label">電話</dt><dd class="detail-value"><?php echo h($client['phone']); ?></dd></div>
+        <div class="detail-row"><dt class="detail-label">LINE ID Link</dt><dd class="detail-value"><?php if (!empty($client['line_id_link'])) { ?><a target="_blank" href="<?php echo h($client['line_id_link']); ?>"><?php echo h($client['line_id_link']); ?></a><?php } ?></dd></div>
+        <div class="detail-row"><dt class="detail-label">客戶備註</dt><dd class="detail-value"><?php echo nl2br(h($client['note'])); ?></dd></div>
+      </dl>
+    </div>
+  <?php } else { ?>
+    <p class="muted">尚未連結客戶。</p>
+  <?php } ?>
+</section>
+
+<section class="panel">
+  <h2>圖片素材</h2>
+  <?php if (empty($assets)) { ?>
+    <p class="muted">目前沒有圖片素材。</p>
+  <?php } else { ?>
+    <ul class="asset-list">
+      <?php foreach ($assets as $asset) {
+        if (!is_array($asset)) { continue; }
+        $url = isset($asset['url']) ? $asset['url'] : (isset($asset['public_url']) ? $asset['public_url'] : '');
+        $label = isset($asset['field']) ? $asset['field'] : (isset($asset['type']) ? $asset['type'] : '圖片');
+      ?>
+        <li><?php echo h($label); ?>：<?php if ($url !== '') { ?><a target="_blank" href="<?php echo h($url); ?>"><?php echo h($url); ?></a><?php } else { ?><span class="muted">未取得網址</span><?php } ?></li>
+      <?php } ?>
+    </ul>
+  <?php } ?>
+</section>
+
+<section class="panel">
+  <h2>Canva 樣板提案</h2>
+  <table class="proposal-table">
+    <tr><th>款式</th><th>名稱</th><th>Template</th><th>Canva</th><th>狀態</th></tr>
+    <?php foreach ($proposals as $proposal) { ?>
+      <tr>
+        <td><?php echo h($proposal['proposal_code']); ?></td>
+        <td><?php echo h($proposal['proposal_name']); ?></td>
+        <td>
+          <?php echo h($proposal['primary_template_id']); ?><br>
+          <span class="muted"><?php echo h($proposal['secondary_template_id']); ?></span>
+        </td>
+        <td><?php if (!empty($proposal['canva_url'])) { ?><a target="_blank" href="<?php echo h($proposal['canva_url']); ?>">Canva</a><?php } else { ?><span class="muted">尚未提供</span><?php } ?></td>
+        <td><?php echo h($proposal['status']); ?></td>
+      </tr>
+    <?php } ?>
+    <?php if (empty($proposals)) { ?><tr><td colspan="5" class="muted">尚未有樣板提案。</td></tr><?php } ?>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>原始表單資料</h2>
+  <pre class="raw-box"><?php echo h(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)); ?></pre>
+</section>
+<?php include dirname(__FILE__) . '/../templates/admin-footer.php'; ?>
