@@ -64,6 +64,8 @@
 - 補充 Chat A / Chat B 合作規則：Chat B 產生招生頁前必須先指定 `template_id`。
 - 補充 Canva 樣板到 Chat B / Codex 前端實作的交接欄位與限制。
 - 正式停止新樣板直接前端改版流程，改為先 Canva 視覺確認，再進入 Chat B / Codex 前端實作。
+- 補充三款樣板提案與限時選版流程：待樣板提案、三款 Canva 核心區塊、三天選擇期限、一次小幅調整、不允許無限修改。
+- 補充 Chat A / B / C / D / E 分工。
 
 ## 尚未完成
 
@@ -74,6 +76,8 @@
 - 尚未將 `docs/CLIENT_SELECTION_FLOW.md` 轉成自動選版流程或表單化輸出。
 - 尚未選定任何正式 Canva 方向，尚無 `selected_template_id`、`selected_secondary_template_id` 或 `selected_canva_direction`。
 - 尚未建立第一版 Canva 視覺樣板草案。
+- 尚未建立 `clients`、`course_projects`、`template_proposals`、`notification_logs` 等資料表或後台。
+- 尚未建立三天選擇期限、逾期提醒或自動作廢 worker。
 - 尚未以真實課程案例替換模板示範文案。
 - 尚未建立正式圖片、攝影或生成圖資產流程。
 - 尚未建立任何測試、CI 或部署流程。

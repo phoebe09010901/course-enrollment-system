@@ -37,7 +37,7 @@ AI Agent 在開始任何工作前，應先閱讀：
 - 新增大型功能前，先建立 README 或規格文件，說明目錄責任。
 - 不要把美術風格、模板、skill、webhook、admin、worker 混在同一層未命名邏輯中。
 
-## Chat A / Chat B 合作方式
+## Chat A / Chat B / Chat C / Chat D / Chat E 合作方式
 
 ### Chat A：美術風格系統 / 設計規範維護
 
@@ -82,12 +82,47 @@ secondary_template_id: TPL-005 Interior Design
 
 如果使用者沒有指定 template，Chat B 應先根據課程類型、產業、品牌調性從 `docs/TEMPLATE_REFERENCE.md` 提出候選，而不是直接實作。
 
+### Chat C：LINE AI 客服 / 客戶通知
+
+Chat C 負責客戶溝通與通知流程：
+
+- LINE AI 客服資料收集。
+- LINE 通知客戶三款預覽網址。
+- 提醒三天選擇期限。
+- 處理客戶選款回覆。
+- 將客戶回覆同步回專案狀態或後台資料。
+
+### Chat D：資料庫與後台
+
+Chat D 負責資料結構、後台與案件狀態管理：
+
+- `clients`
+- `course_projects`
+- `template_proposals`
+- `notification_logs`
+- 後台查看案件、樣板狀態、選款狀態、逾期狀態。
+
+Chat D 不負責美術風格決策；樣板方向需依 Chat A 的 template reference 與 Canva 選版結果。
+
+### Chat E：自動化與 AI Worker
+
+Chat E 負責自動化與排程：
+
+- 客戶確認後自動建檔。
+- 觸發樣板提案流程。
+- 寄 Email 與 LINE 通知。
+- 三天後自動作廢。
+- 逾期前提醒。
+
+Chat E 不負責自由生成新樣板；只能觸發 Chat A 定義的選版流程。
+
 ### 三款樣板提案流程
 
 Chat A 為新課程產生三款樣板時，必須遵守 `docs/CLIENT_SELECTION_FLOW.md`：
 
 - 三款提案必須來自 `docs/TEMPLATE_REFERENCE.md` 的 10 套樣板資料或合理組合。
 - 每款提案都要保留 `proposal_id`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、適合原因與視覺方向。
+- 每款提案都要保留 Canva 樣板連結或截圖、是否入選、有效期限。
 - 客戶看到簡化後的方向名稱；內部紀錄必須保留 template id 與 source URL。
 - 若要新增第 11 套樣板，必須先更新 `docs/TEMPLATE_REFERENCE.md`。
 
