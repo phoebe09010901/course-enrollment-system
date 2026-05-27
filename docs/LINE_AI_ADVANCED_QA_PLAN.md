@@ -103,6 +103,7 @@
 | ADV-007 | 重新貼空白表單 | medium | 不清除已填 email/name/link。 |
 | ADV-008 | 舊狀態污染 | high | 清除狀態後結果應一致；未清除時要能查看目前 step。 |
 | ADV-009 | 空白 LINE ID Link label 污染 | high | `LINE ID Link：` 不可寫入 `line_id_link`，不可讓 LINE link gate 通過。 |
+| ADV-010 | contact gate 未完成時回答課程形式 | high | `實體`、`線上`、`混合` 不可在缺姓名 / LINE ID Link 時寫入 `course_format` 或推進到課程流程。 |
 
 ## 本輪新增檢測結果
 
@@ -112,13 +113,14 @@
 
 - `S14` pass：貼空白表單後，空白 `LINE ID Link：` / `3. LINE ID Link：` 不會污染 `line_id_link`。
 - `S15` pass：contact 完成後問「課程類型是什麼」可正確回覆欄位說明，且下一輪補 `課程類型：色鉛筆` 後才前進。
-- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S15 全部通過。
+- `node --test tests/line-ai-worker-scenarios.test.mjs`：S01 到 S15 通過，S16 失敗。
+- `S16` fail：contact gate 未完成時，客戶回 `實體` 會讓 `user_name` 被誤判已填，回覆只剩缺 LINE ID Link。
 
 判斷：
 
 - 原問題是 state machine / parser bug。
 - 問題不在 Email regex，而在空白 label 與 `extractLineLink()` / `cleanLabeledValue()` 的解析防護不足。
-- 目前已修正，但仍應保留 S14 作為 regression test。
+- 空白 label 污染目前已修正，但 S16 顯示 contact 階段仍會把課程形式詞誤猜成姓名，需交 Chat C 修正。
 
 ## 回報格式
 

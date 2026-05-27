@@ -4,7 +4,7 @@
 
 本文件整理 Chat E / QA 回歸測試後，需要交給 Chat C 修正的 LINE AI 客服流程與 worker 行為問題。
 
-請注意：Chat E 本次未修改 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`，也未修改 `cloudflare-workers/workers.js`。以下內容是修正請求，供 Chat C 直接執行。
+請注意：Chat E 本次未修改 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`，也未修改 `cloudflare-workers/workers.js`。以下內容保留修正歷史與目前回歸狀態，供 Chat C / Chat E 後續追蹤。
 
 ## 本輪測試狀態
 
@@ -12,13 +12,41 @@
 
 - `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 已存在。
 - `cloudflare-workers/workers.js` 已存在。
-- Worker 版本：`chat-c-qa-entry-contact-fix-2026-05-27-03`。
+- Worker 版本：`chat-c-blank-label-parser-fix-2026-05-27-06`。
 - `docs/TEMPLATE_REFERENCE.md` 尚未存在。
 - `docs/CLIENT_SELECTION_FLOW.md` 尚未存在。
 
-Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。上一輪 high 風險項目多數已修正，本清單只保留本輪仍需處理的問題。
+Chat E 已用 Node 模擬 LINE webhook 實測 worker 回覆。`node --test tests/line-ai-worker-scenarios.test.mjs` 目前 S01 到 S15 通過，S16 失敗。
+
+目前新的 Chat C blocker 是 C-FIX-009。以下 C-FIX 項目保留作為修正歷史與 regression 對照。
+
+## 目前回歸狀態
+
+| issue_id | 狀態 | 對應測試 |
+| --- | --- | --- |
+| C-FIX-001 | resolved | S04 / S08 / S09 |
+| C-FIX-002 | resolved | S07 |
+| C-FIX-003 | resolved | S06 |
+| C-FIX-004 | resolved | S15 |
+| C-FIX-005 | resolved | S09 confirmed payload gate |
+| C-FIX-006 | resolved | confirmed payload date status coverage |
+| C-FIX-007 | resolved | S11 |
+| C-FIX-008 | resolved | S14 / S16 |
+| C-FIX-009 | open | S16 |
 
 ## Chat C 修正項目
+
+### C-FIX-009
+
+- issue_id：C-FIX-009
+- 問題描述：contact gate 未完成時，客戶回「實體」會被誤存成 `user_name`。
+- 出現在哪個流程階段：必填聯絡資料 / 課程形式詞彙污染姓名
+- 目前錯誤行為：客戶貼空白表單、單獨提供 Email、詢問課程類型後，再回「實體」，worker 回覆只剩缺 LINE ID Link，代表 `user_name` 被誤填；很可能把「實體」當成姓名。
+- 期望行為：在 `collecting_required_contact` 階段，`實體`、`線上`、`混合`、`畫畫`、`色鉛筆`、`課程類型` 等課程欄位值或課程相關詞，不可被推測成 `user_name`。若 contact gate 未完成，應繼續要求補姓名與 LINE ID Link。
+- 建議修正話術或規則：擴充 `isClearlyInvalidContactReply()` 或 `looksLikeCourseFieldText()`，將課程形式 / 課程類型詞列為 contact 階段不可寫入姓名的值。保留 S16 作為 regression test。
+- 是否影響建檔：是
+- 是否影響客戶體驗：是
+- 優先級：high
 
 ### C-FIX-008
 

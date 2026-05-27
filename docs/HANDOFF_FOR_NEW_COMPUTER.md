@@ -86,7 +86,7 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 目前預期：
 
-- S01 到 S15 全部通過。
+- S01 到 S15 全部通過；S16 目前是新的 regression blocker。
 - 測試範圍包含入口分流、contact gate、欄位污染防護、欄位說明、照片階段、建檔 gate、confirmed payload。
 
 ## 目前已知狀態
@@ -98,6 +98,7 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 - 要貼到 Cloudflare 的檔案：`cloudflare-workers/worker.js`。
 - 線上 Worker GET health check 的 JSON `version` 應為：`chat-c-blank-label-parser-fix-2026-05-27-06`。
 - 最新重要測試：S14 真實 LINE 事故重放，確認空白 `LINE ID Link：` 不會污染 `line_id_link`。
+- S16 目前失敗：contact gate 未完成時，`實體` 會讓 `user_name` 被誤判已填，需交 Chat C 修正。
 
 ## 下一步建議
 
@@ -128,4 +129,4 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 ## 給下一位 Chat 的一句話
 
-這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試，確認本地 S01-S15 通過，再處理部署一致性或下一個產品模組。
+這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 S01-S15 通過、S16 失敗並等待 Chat C 修正。

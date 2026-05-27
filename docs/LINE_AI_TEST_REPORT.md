@@ -56,9 +56,9 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 最近一次執行結果：
 
-- tests：14
+- tests：15
 - pass：14
-- fail：0
+- fail：1
 
 本腳本專門測 LINE AI Worker 的 state machine、建檔 gate、欄位污染防護、照片階段與 confirmed payload。
 
@@ -68,6 +68,8 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 - 結果：pass
 - 已驗證：貼空白表單後，空白 `LINE ID Link：` 或 `3. LINE ID Link：` 不會污染 `line_id_link`。
 - Worker 版本：`chat-c-blank-label-parser-fix-2026-05-27-06`
+- 新增 `S16 contact gate 未完成時不可收課程形式`：fail
+- 發現：contact gate 未完成時，客戶回 `實體` 會讓 `user_name` 被誤判已填，回覆只剩缺 LINE ID Link。
 
 ## 測試結果摘要
 

@@ -269,6 +269,26 @@ test('S15 課程類型說明不污染 course_type，回答後才前進', async (
   assert.equal(admissionCalls.length, 0);
 });
 
+test('S16 contact gate 未完成時，「實體」不可被當成 course_format', async () => {
+  resetNetworkCaptures();
+  const userId = 's16-contact-gate-before-course-format';
+
+  await sendText(userId, '我想開始');
+  await sendText(userId, blankIntakeForm());
+  await sendText(userId, 'cat0704520@gmail.com');
+  await sendText(
+    userId,
+    '課程名稱 鄭阿貓色鉛筆一微笑的黃金獵犬\n課程類型 這是指什麼我看不懂？',
+  );
+
+  const reply = await sendText(userId, '實體');
+  assertIncludes(reply, '姓名');
+  assertIncludes(reply, 'LINE ID Link');
+  assertDoesNotInclude(reply, '上課地點大概在哪裡');
+  assertDoesNotInclude(reply, '預計什麼時候開始招生');
+  assert.equal(admissionCalls.length, 0);
+});
+
 async function driveToSummaryWithNoPhotos(userId) {
   await sendText(userId, '我想開始');
   await sendText(userId, fullIntakeForm());
