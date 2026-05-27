@@ -76,6 +76,15 @@ X-Admission-Api-Key: {ADMISSION_API_KEY}
 {"project_id":"CP-20260528-00011"}
 ```
 
+雲端 Chat A worker 可以用同一把 API key 讀取待處理專案：
+
+```text
+GET /api/chat-a-trigger/pending.php?limit=3
+X-Admission-Api-Key: {ADMISSION_API_KEY}
+```
+
+回傳的每筆 project payload 已包含課程資料、圖片 raw payload、客戶選版頁與 Chat D 回填端點。
+
 ## Canva 樣板提案 API
 
 Chat A 產出三款 Canva 樣板後，POST 到 `api/template-proposals/`，payload 保留 `primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、`canva_url`、`expires_at`：
