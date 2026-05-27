@@ -60,6 +60,47 @@ if (dashboard_table_exists('course_projects')) {
 
 include dirname(__FILE__) . '/../templates/admin-header.php';
 ?>
+<style>
+  .dashboard-table th,
+  .dashboard-table td,
+  .dashboard-table .muted,
+  .dashboard-table .status {
+    font-size: 14px;
+  }
+  .dashboard-table .project-name {
+    color: #151a24;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .dashboard-table .project-id,
+  .dashboard-table .status-note,
+  .dashboard-table .empty-note {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .action-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 3px 9px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .70);
+    color: #28323b;
+    box-shadow: none;
+    white-space: nowrap;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .action-pill:hover {
+    background: rgba(255, 255, 255, .90);
+    color: #151a24;
+  }
+</style>
 <section class="dashboard-hero">
   <div>
     <p class="dashboard-kicker">Admin Overview</p>
@@ -83,7 +124,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 <div class="grid">
   <div class="panel">
     <h2>最近報名</h2>
-    <table>
+    <table class="dashboard-table">
       <tr><th>時間</th><th>課程</th><th>姓名</th><th>電話</th><th>狀態</th></tr>
       <?php foreach ($recentRegistrations as $row) { ?>
         <tr>
@@ -94,22 +135,22 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
           <td><span class="status <?php echo h(registration_status_class($row['status'])); ?>"><?php echo h(registration_status_label($row['status'])); ?></span></td>
         </tr>
       <?php } ?>
-      <?php if (empty($recentRegistrations)) { ?><tr><td colspan="5" class="muted">目前尚無報名資料。</td></tr><?php } ?>
+      <?php if (empty($recentRegistrations)) { ?><tr><td colspan="5" class="muted empty-note">目前尚無報名資料。</td></tr><?php } ?>
     </table>
   </div>
   <div class="panel">
     <h2>最近專案</h2>
-    <table>
+    <table class="dashboard-table">
       <tr><th>專案</th><th>客戶</th><th>狀態</th><th>選版頁</th></tr>
       <?php foreach ($recentProjects as $project) { ?>
         <tr>
-          <td><?php echo h($project['course_name']); ?><br><span class="muted"><?php echo h($project['project_id']); ?></span></td>
+          <td><span class="project-name"><?php echo h($project['course_name']); ?></span><br><span class="muted project-id"><?php echo h($project['project_id']); ?></span></td>
           <td><?php echo h($project['client_name']); ?></td>
-          <td><span class="status"><?php echo h($project['template_status']); ?></span><br><span class="muted"><?php echo h($project['project_status']); ?></span></td>
-          <td><?php if (!empty($project['selection_token'])) { ?><a target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
+          <td><span class="status"><?php echo h($project['template_status']); ?></span><br><span class="muted status-note"><?php echo h($project['project_status']); ?></span></td>
+          <td><?php if (!empty($project['selection_token'])) { ?><a class="action-pill" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
         </tr>
       <?php } ?>
-      <?php if (empty($recentProjects)) { ?><tr><td colspan="4" class="muted">目前尚無專案。</td></tr><?php } ?>
+      <?php if (empty($recentProjects)) { ?><tr><td colspan="4" class="muted empty-note">目前尚無專案。</td></tr><?php } ?>
     </table>
   </div>
 </div>
