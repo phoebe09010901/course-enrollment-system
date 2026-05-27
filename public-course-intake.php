@@ -461,8 +461,8 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
             <input type="text" name="course_name" value="<?php echo h($values['course_name']); ?>" required>
           </label>
           <label class="form-field">課程類型
-            <input type="text" name="course_type" value="<?php echo h($values['course_type']); ?>" required placeholder="水彩、色鉛筆、營養宣導">
-            <p class="form-hint">例如：水彩、色鉛、色鉛筆、營養宣導等。</p>
+            <input type="text" name="course_type" value="<?php echo h($values['course_type']); ?>" required placeholder="水彩、色鉛筆、營養宣導、瑜珈、烘焙">
+            <p class="form-hint">例如：水彩、壓克力、油畫、色鉛、色鉛筆、書法、手作、烘焙、瑜珈、舞蹈、音樂、語言、親子、營養宣導、企業內訓、講座等。</p>
           </label>
           <label class="form-field">課程形式
             <input type="text" name="course_format" value="<?php echo h($values['course_format']); ?>" required placeholder="線上、實體、兩者都有">
