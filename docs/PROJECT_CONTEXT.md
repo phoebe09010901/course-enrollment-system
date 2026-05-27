@@ -2,7 +2,7 @@
 
 ## 專案定位
 
-本專案目前命名為「課程招生 - 系統」。依照目前 repo 內可見資訊，專案目標與產品功能尚未落地成程式碼或文件內容。
+本專案目前命名為「課程招生 - 系統」。目前 repo 已開始落地第一組課程品牌設計基礎與靜態招生頁模板，但尚未包含後端、資料庫、webhook、admin 或 worker 功能。
 
 目前可推定的工作方向是建立一套支援「課程招生」相關素材或系統的基礎架構，並逐步整理：
 
@@ -14,26 +14,38 @@
 - admin 管理介面
 - worker 背景工作
 
-以上項目目前都尚未在 repo 中出現實體檔案，因此本文件只記錄專案世界觀與待建立的邊界，不將它們描述為已完成功能。
+其中 `styles/` 與 `templates/course-brand-template-v1/` 已有第一版前端實作。其他系統性功能仍是規劃方向，不得描述為已完成。
 
 ## 目前 repo 實際狀態
 
-截至本文件建立時，repo 內只有 git 初始狀態與本次新增的 `docs/` 文件。以下目錄目前不存在：
+截至目前，repo 內已存在：
 
+- `docs/`
 - `styles/`
+- `templates/course-brand-template-v1/`
+
+以下目錄目前不存在：
+
 - `skills/`
-- `templates/`
 - `public/`
 - `line-webhook/`
 - `admin/`
 - `worker/`
 
-以下文件原先未在目前 worktree 中出現，本次已建立並填入初始內容：
+目前重要文件包含：
 
 - `docs/PROJECT_CONTEXT.md`
 - `docs/PROJECT_STATUS.md`
 - `docs/STYLE_SYSTEM.md`
 - `docs/COLLABORATION_SETUP.md`
+- `styles/course-brand-template-v1.json`
+- `styles/layout-rules/landing-page.md`
+- `styles/typography/course-brand.md`
+- `styles/motion/animation-style.md`
+- `styles/tokens/course-brand.css`
+- `templates/course-brand-template-v1/index.html`
+- `templates/course-brand-template-v1/css/page.css`
+- `templates/course-brand-template-v1/js/page.js`
 
 ## 專案世界觀
 
@@ -50,7 +62,7 @@
 
 預期用來定義課程品牌的視覺語言，例如色彩、字體、構圖、圖片風格、語氣與素材規範。
 
-目前尚未有 `styles/` 目錄或具體風格檔案。
+目前已有 `styles/` 目錄與 `course-brand-template-v1` 的第一版風格資料、版面規則、字體規則、動態規則與 CSS token。
 
 ### style-selector-skill
 
@@ -62,7 +74,7 @@
 
 預期是一個課程品牌模板重構方向，可能用來提供穩定的招生素材結構、品牌 token、版型規則與可重複產出的模板。
 
-目前尚未有 `templates/` 目錄或 `course-brand-template-v1` 實體檔案。
+目前已有 `templates/course-brand-template-v1/` 靜態前端模板，包含 HTML、CSS、JS 與本地 hero 視覺資產。此模板不包含後端、表單 schema、SQL 或 webhook。
 
 ## AI Agent 閱讀順序
 

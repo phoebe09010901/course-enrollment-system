@@ -6,7 +6,7 @@
 
 ## 目前協作基準
 
-目前 repo 是初始化狀態。除 `docs/` 以外，尚無應用程式碼或專案目錄。
+目前 repo 已有 `docs/`、`styles/` 與 `templates/course-brand-template-v1/`。前端模板已落地第一版；後端、SQL、webhook、admin、worker 與 form schema 仍未建立。
 
 AI Agent 在開始任何工作前，應先閱讀：
 
@@ -14,12 +14,20 @@ AI Agent 在開始任何工作前，應先閱讀：
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
+5. `styles/course-brand-template-v1.json`
+6. `styles/layout-rules/landing-page.md`
+7. `styles/typography/course-brand.md`
+8. `styles/motion/animation-style.md`
+9. `styles/tokens/course-brand.css`
 
 ## AI Agent 工作規則
 
 - 先讀 repo，再做判斷。
 - 不要根據檔名或使用者提到的方向，假設功能已存在。
 - 若目錄不存在，應明確寫「尚未建立」。
+- 對 `course-brand-template-v1` 的前端工作應優先沿用 `styles/` 中既有 foundation，不重新發明風格。
+- 本 front-end chat 範圍限於 HTML、CSS、JS、responsive、hero、section composition 與 animation。
+- 不得在本範圍內新增 SQL、webhook、backend 或 form schema。
 - 若功能只是規劃，應明確寫「預期」、「建議」、「待建立」。
 - 修改文件時要同步更新狀態與缺口。
 - 新增大型功能前，先建立 README 或規格文件，說明目錄責任。
@@ -95,16 +103,16 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 
 未來可以將 repo 拆成以下責任區：
 
-- `styles/`：美術風格、品牌 token、視覺規範。
+- `styles/`：美術風格、品牌 token、視覺規範。已建立第一版 course brand foundation。
 - `skills/`：AI Agent 使用的 skills。
-- `templates/`：可重複使用的課程品牌模板。
+- `templates/`：可重複使用的課程品牌模板。已建立 `course-brand-template-v1` 靜態前端模板。
 - `public/`：公開靜態資源。
 - `line-webhook/`：LINE webhook 接收與回應邏輯。
 - `admin/`：管理介面。
 - `worker/`：背景工作、排程、非同步任務。
 - `docs/`：長期記憶、規格、協作規則。
 
-以上目錄目前多數尚未建立。
+以上目錄目前僅 `styles/`、`templates/` 與 `docs/` 已建立。
 
 ## 提交前檢查
 
