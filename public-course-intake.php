@@ -1126,7 +1126,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
             <input type="text" name="course_name" value="<?php echo h($values['course_name']); ?>" required>
           </label>
           <label class="form-field">課程類型
-            <input type="text" name="course_type" value="<?php echo h($values['course_type']); ?>" required placeholder="水彩、色鉛筆、營養宣導、瑜珈、烘焙">
+            <input type="text" name="course_type" value="<?php echo h($values['course_type']); ?>" required>
             <p class="form-hint">例如：水彩、壓克力、油畫、色鉛、色鉛筆、書法、手作、烘焙、瑜珈、舞蹈、音樂、語言、親子、營養宣導、企業內訓、講座等。</p>
           </label>
           <label class="form-field">課程形式
@@ -1163,7 +1163,7 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
             <p class="form-hint">請盡量詳細說明課程亮點、教學方式、作品成果、材料特色或與其他課程不同之處，越詳盡越好。</p>
           </label>
           <label class="form-field full">課後支援
-            <textarea name="post_course_support" required placeholder="是否有影片提供或是作品帶回"><?php echo h($values['post_course_support']); ?></textarea>
+            <textarea name="post_course_support" required><?php echo h($values['post_course_support']); ?></textarea>
             <p class="form-hint">例如：是否有影片提供、作品帶回、課後問答等。</p>
           </label>
         </div>
