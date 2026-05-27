@@ -242,6 +242,25 @@ function chat_d_template_error_label($errorCode)
     return $errorCode === '' ? '' : $errorCode;
 }
 
+function chat_d_proposal_status_label($status)
+{
+    $labels = array(
+        'proposal_ready' => '提案已完成',
+        'sent_to_client' => '已送給客戶',
+        'selected' => '已選定',
+        'draft' => '草稿',
+        'pending' => '等待中',
+        'failed' => '提案失敗',
+        'expired' => '已逾期',
+    );
+
+    if (isset($labels[$status])) {
+        return $labels[$status];
+    }
+
+    return $status === '' ? '狀態未設定' : $status;
+}
+
 function chat_d_generate_worker_run_id()
 {
     return 'worker_' . date('YmdHis') . '_' . substr(chat_d_random_token(), 0, 12);

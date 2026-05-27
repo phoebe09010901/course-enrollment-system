@@ -261,17 +261,17 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 <section class="panel">
   <h2>Canva 樣板提案</h2>
   <table class="proposal-table">
-    <tr><th>款式</th><th>名稱</th><th>Template</th><th>Canva</th><th>狀態</th></tr>
+    <tr><th>款式</th><th>名稱</th><th>樣板編碼</th><th>Canva</th><th>狀態</th></tr>
     <?php foreach ($proposals as $proposal) { ?>
       <tr>
         <td><?php echo h($proposal['proposal_code']); ?></td>
         <td><?php echo h($proposal['proposal_name']); ?></td>
         <td>
-          <?php echo h($proposal['primary_template_id']); ?><br>
-          <span class="muted"><?php echo h($proposal['secondary_template_id']); ?></span>
+          主樣板：<?php echo h($proposal['primary_template_id']); ?><br>
+          <span class="muted">輔助樣板：<?php echo h($proposal['secondary_template_id']); ?></span>
         </td>
         <td><?php if (!empty($proposal['canva_url'])) { ?><a target="_blank" href="<?php echo h($proposal['canva_url']); ?>">Canva</a><?php } else { ?><span class="muted">尚未提供</span><?php } ?></td>
-        <td><?php echo h($proposal['status']); ?></td>
+        <td><?php echo h(chat_d_proposal_status_label(isset($proposal['status']) ? $proposal['status'] : '')); ?></td>
       </tr>
     <?php } ?>
     <?php if (empty($proposals)) { ?><tr><td colspan="5" class="muted">尚未有樣板提案。</td></tr><?php } ?>
