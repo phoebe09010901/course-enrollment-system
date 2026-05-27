@@ -232,6 +232,7 @@ function chat_d_template_error_label($errorCode)
         'api_writeback_failed' => 'API 回寫失敗',
         'worker_exception' => '自動流程失敗',
         'template_proposals_invalid' => '提案資料不完整',
+        'template_batch_locked' => '已有有效樣板批次',
     );
 
     if (isset($labels[$errorCode])) {
@@ -306,6 +307,10 @@ function chat_d_claim_template_projects($limit, $workerRunId, $workerName)
         foreach ($rows as $row) {
             $projectId = isset($row['project_id']) ? $row['project_id'] : '';
             if ($projectId === '') {
+                continue;
+            }
+
+            if (chat_d_project_has_ready_proposal_batch($projectId)) {
                 continue;
             }
 
@@ -431,6 +436,117 @@ function chat_d_project_proposals($projectId)
     );
 }
 
+function chat_d_project_has_ready_proposal_batch($projectId)
+{
+    if (!chat_d_table_exists('template_proposals')) {
+        return false;
+    }
+
+    $project = chat_d_project_by_id($projectId);
+    if (!$project) {
+        return false;
+    }
+
+    $proposalBatchId = isset($project['proposal_batch_id']) ? (string) $project['proposal_batch_id'] : '';
+    if ($proposalBatchId === '' || !chat_d_column_exists('template_proposals', 'proposal_batch_id')) {
+        $row = db_one(
+            "SELECT COUNT(*) AS total
+             FROM template_proposals
+             WHERE project_id = ?
+               AND status IN ('proposal_ready', 'sent_to_client', 'selected')",
+            's',
+            array($projectId)
+        );
+        return $row && (int) $row['total'] >= 3;
+    }
+
+    $row = db_one(
+        "SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN canva_url IS NOT NULL AND canva_url <> ''
+                 AND primary_template_id IS NOT NULL AND primary_template_id <> ''
+                 AND secondary_template_id IS NOT NULL AND secondary_template_id <> ''
+                 AND source_url IS NOT NULL AND source_url <> ''
+                 AND secondary_source_url IS NOT NULL AND secondary_source_url <> ''
+                THEN 1 ELSE 0 END) AS valid_total
+         FROM template_proposals
+         WHERE project_id = ?
+           AND proposal_batch_id = ?
+           AND proposal_code IN ('A', 'B', 'C')",
+        'ss',
+        array($projectId, $proposalBatchId)
+    );
+
+    return $row && (int) $row['total'] === 3 && (int) $row['valid_total'] === 3;
+}
+
+function chat_d_is_http_url($value)
+{
+    $value = trim((string) $value);
+    return preg_match('/^https?:\/\/[^\s]+$/i', $value) === 1;
+}
+
+function chat_d_is_canva_url($value)
+{
+    $value = trim((string) $value);
+    return chat_d_is_http_url($value) && preg_match('/(^https?:\/\/|\.)(canva\.com)\//i', $value) === 1;
+}
+
+function chat_d_validate_template_proposals_ready($projectId, $project, $proposals, $proposalBatchId, $allowRegenerate)
+{
+    if (count($proposals) !== 3) {
+        throw new Exception('template_proposals_invalid: proposal_count_must_be_exactly_3');
+    }
+
+    if (!$allowRegenerate && chat_d_project_has_ready_proposal_batch($projectId)) {
+        throw new Exception('template_batch_locked: project_already_has_valid_proposal_batch');
+    }
+
+    $requiredCodes = array('A' => false, 'B' => false, 'C' => false);
+    foreach ($proposals as $index => $proposal) {
+        if (!is_array($proposal)) {
+            throw new Exception('template_proposals_invalid: proposal_' . ($index + 1) . '_must_be_object');
+        }
+
+        $proposalCode = strtoupper(trim(chat_d_value($proposal, 'proposal_code', chr(65 + (int) $index))));
+        if (!isset($requiredCodes[$proposalCode])) {
+            throw new Exception('template_proposals_invalid: proposal_code_must_be_A_B_C');
+        }
+        if ($requiredCodes[$proposalCode]) {
+            throw new Exception('template_proposals_invalid: duplicate_proposal_code_' . $proposalCode);
+        }
+        $requiredCodes[$proposalCode] = true;
+
+        $missing = array();
+        foreach (array('primary_template_id', 'secondary_template_id', 'source_url', 'secondary_source_url', 'canva_url') as $field) {
+            if (trim(chat_d_value($proposal, $field, '')) === '') {
+                $missing[] = $field;
+            }
+        }
+        if (!empty($missing)) {
+            throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_missing_' . implode('_', $missing));
+        }
+
+        if (!chat_d_is_http_url(chat_d_value($proposal, 'source_url', ''))) {
+            throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_source_url_invalid');
+        }
+        if (!chat_d_is_http_url(chat_d_value($proposal, 'secondary_source_url', ''))) {
+            throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_secondary_source_url_invalid');
+        }
+        if (!chat_d_is_canva_url(chat_d_value($proposal, 'canva_url', ''))) {
+            throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_canva_url_required');
+        }
+    }
+
+    foreach ($requiredCodes as $code => $seen) {
+        if (!$seen) {
+            throw new Exception('template_proposals_invalid: missing_proposal_' . $code);
+        }
+    }
+
+    return true;
+}
+
 function chat_d_course_intakes_primary_key()
 {
     $rows = db_all('SHOW COLUMNS FROM course_intakes', '', array());
@@ -444,7 +560,7 @@ function chat_d_course_intakes_primary_key()
     return 'id';
 }
 
-function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt)
+function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt, $incomingProposalBatchId = '', $allowRegenerate = false)
 {
     if (!chat_d_table_exists('template_proposals') || !chat_d_table_exists('course_projects')) {
         throw new Exception('template_flow_tables_missing');
@@ -459,6 +575,14 @@ function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt)
     if (chat_d_column_exists('course_projects', 'proposal_batch_id')) {
         $proposalBatchId = !empty($project['proposal_batch_id']) ? $project['proposal_batch_id'] : chat_d_project_proposal_batch_id($projectId);
     }
+    $incomingProposalBatchId = trim((string) $incomingProposalBatchId);
+    if ($incomingProposalBatchId !== '' && $proposalBatchId !== '' && $incomingProposalBatchId !== $proposalBatchId) {
+        if (!$allowRegenerate) {
+            throw new Exception('template_batch_locked: incoming_batch_does_not_match_project_batch');
+        }
+    }
+
+    chat_d_validate_template_proposals_ready($projectId, $project, $proposals, $proposalBatchId, $allowRegenerate);
 
     $saved = array();
     $proposalExpires = array();

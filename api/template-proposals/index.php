@@ -27,9 +27,6 @@ try {
     }
 
     $proposals = isset($payload['proposals']) && is_array($payload['proposals']) ? $payload['proposals'] : array();
-    if (count($proposals) !== 3) {
-        chat_d_api_response(422, array('ok' => false, 'error' => 'three_canva_proposals_required'));
-    }
 
     $expiresAt = isset($payload['expires_at']) ? trim((string) $payload['expires_at']) : '';
     if ($expiresAt === '') {
@@ -37,7 +34,9 @@ try {
     }
 
     $workerRunId = isset($payload['worker_run_id']) ? trim((string) $payload['worker_run_id']) : '';
-    $saved = chat_d_sync_template_proposals($projectId, $proposals, $expiresAt);
+    $proposalBatchId = isset($payload['proposal_batch_id']) ? trim((string) $payload['proposal_batch_id']) : '';
+    $allowRegenerate = !empty($payload['regenerate']) || !empty($payload['force_regenerate']);
+    $saved = chat_d_sync_template_proposals($projectId, $proposals, $expiresAt, $proposalBatchId, $allowRegenerate);
 
     chat_d_api_response(200, array(
         'ok' => true,
@@ -48,11 +47,20 @@ try {
     ));
 } catch (Exception $error) {
     error_log('[template-proposals] ' . $error->getMessage());
+    $errorCode = 'api_writeback_failed';
+    $statusCode = 500;
+    if (strpos($error->getMessage(), 'template_proposals_invalid:') === 0) {
+        $errorCode = 'template_proposals_invalid';
+        $statusCode = 422;
+    } elseif (strpos($error->getMessage(), 'template_batch_locked:') === 0) {
+        $errorCode = 'template_batch_locked';
+        $statusCode = 409;
+    }
     if (isset($projectId) && $projectId !== '') {
         $workerRunId = isset($workerRunId) ? $workerRunId : '';
-        chat_d_mark_template_failed($projectId, $workerRunId, 'api_writeback_failed', $error->getMessage());
+        chat_d_mark_template_failed($projectId, $workerRunId, $errorCode, $error->getMessage());
     }
-    chat_d_api_response(500, array('ok' => false, 'error' => $error->getMessage()));
+    chat_d_api_response($statusCode, array('ok' => false, 'error' => $error->getMessage()));
 }
 
 function chat_d_api_assert_key()
