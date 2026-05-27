@@ -111,7 +111,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 </form>
 <div class="actions"><a class="button" href="project-edit.php">新增專案</a></div>
 <table>
-  <tr><th>專案</th><th>客戶</th><th>課程</th><th>樣板狀態</th><th>選定樣板</th><th>選版頁</th><th>操作</th></tr>
+  <tr><th>專案</th><th>客戶</th><th>課程</th><th>選定樣板</th><th>選版頁</th><th>操作</th></tr>
   <?php foreach ($projects as $project) { ?>
     <tr>
       <td><?php echo h($project['course_name']); ?><br><span class="muted"><?php echo h($project['project_id']); ?></span></td>
@@ -120,15 +120,13 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
         <?php echo h($project['course_type']); ?><br>
         <span class="muted"><?php echo h($project['course_format']); ?> / <?php echo h($project['course_location']); ?></span>
       </td>
-      <td><span class="status"><?php echo h($project['template_status']); ?></span><br><span class="muted"><?php echo h($project['project_status']); ?></span></td>
       <td>
         <?php echo h($project['selected_proposal_id']); ?><br>
         <span class="muted"><?php echo h($project['selected_template_id']); ?></span>
       </td>
-      <td><?php if (!empty($project['selection_token'])) { ?><a target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
+      <td><?php if (!empty($project['selection_token'])) { ?><a class="action-pill" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟</a><?php } else { ?><span class="muted">尚未建立</span><?php } ?></td>
       <td>
         <div class="row-actions">
-          <a class="action-pill" href="template-proposals.php">樣板狀態</a>
           <?php if (!empty($project['selected_canva_url'])) { ?><a class="action-pill" target="_blank" href="<?php echo h($project['selected_canva_url']); ?>">Canva</a><?php } ?>
           <form class="inline-action" method="post" data-confirm="<?php echo h('確定要刪除專案「' . $project['course_name'] . '」嗎？此動作會同步刪除樣板提案與通知紀錄，且無法復原。'); ?>" onsubmit="return confirm(this.getAttribute('data-confirm'));">
             <?php echo csrf_field(); ?>
@@ -140,6 +138,6 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
       </td>
     </tr>
   <?php } ?>
-  <?php if (empty($projects)) { ?><tr><td colspan="7" class="muted">目前沒有符合條件的專案。</td></tr><?php } ?>
+  <?php if (empty($projects)) { ?><tr><td colspan="6" class="muted">目前沒有符合條件的專案。</td></tr><?php } ?>
 </table>
 <?php include dirname(__FILE__) . '/../templates/admin-footer.php'; ?>
