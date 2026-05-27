@@ -12,6 +12,35 @@ function projects_table_exists($tableName)
     return !empty($row);
 }
 
+function course_project_delete($projectId)
+{
+    if ($projectId === '' || !projects_table_exists('course_projects')) {
+        return '找不到要刪除的專案。';
+    }
+
+    $project = db_one('SELECT project_id FROM course_projects WHERE project_id = ? LIMIT 1', 's', array($projectId));
+    if (!$project) {
+        return '找不到要刪除的專案。';
+    }
+
+    if (projects_table_exists('template_proposals')) {
+        db_exec('DELETE FROM template_proposals WHERE project_id = ?', 's', array($projectId));
+    }
+
+    if (projects_table_exists('notification_logs')) {
+        db_exec('DELETE FROM notification_logs WHERE project_id = ?', 's', array($projectId));
+    }
+
+    db_exec('DELETE FROM course_projects WHERE project_id = ?', 's', array($projectId));
+    return '專案已刪除。';
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && post('action', '') === 'delete') {
+    verify_csrf();
+    $_SESSION['flash'] = course_project_delete(post('project_id', ''));
+    redirect('projects.php');
+}
+
 $q = trim(get('q', ''));
 $projects = array();
 
@@ -44,6 +73,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 <h1>招生專案</h1>
 <style>
   .row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .inline-action { display: inline; margin: 0; }
   .action-pill {
     display: inline-flex;
     align-items: center;
@@ -63,6 +93,8 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
     cursor: pointer;
   }
   .action-pill:hover { background: rgba(255, 255, 255, .90); color: #151a24; }
+  .action-pill-danger { color: #b42318; }
+  .action-pill-danger:hover { color: #7a271a; }
 </style>
 
 <form class="panel filters" method="get">
@@ -98,6 +130,12 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
         <div class="row-actions">
           <a class="action-pill" href="template-proposals.php">樣板狀態</a>
           <?php if (!empty($project['selected_canva_url'])) { ?><a class="action-pill" target="_blank" href="<?php echo h($project['selected_canva_url']); ?>">Canva</a><?php } ?>
+          <form class="inline-action" method="post" data-confirm="<?php echo h('確定要刪除專案「' . $project['course_name'] . '」嗎？此動作會同步刪除樣板提案與通知紀錄，且無法復原。'); ?>" onsubmit="return confirm(this.getAttribute('data-confirm'));">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="project_id" value="<?php echo h($project['project_id']); ?>">
+            <button class="action-pill action-pill-danger" type="submit">刪除</button>
+          </form>
         </div>
       </td>
     </tr>
