@@ -266,6 +266,93 @@ function chat_d_generate_worker_run_id()
     return 'worker_' . date('YmdHis') . '_' . substr(chat_d_random_token(), 0, 12);
 }
 
+function chat_d_reset_template_generation($projectId)
+{
+    if (!chat_d_table_exists('course_projects')) {
+        throw new Exception('course_projects_table_missing');
+    }
+
+    $project = chat_d_project_by_id($projectId);
+    if (!$project) {
+        throw new Exception('project_not_found');
+    }
+
+    $newBatchId = 'batch_' . substr(chat_d_random_token(), 0, 24);
+
+    db()->autocommit(false);
+    try {
+        if (chat_d_table_exists('template_proposals')) {
+            db_exec('DELETE FROM template_proposals WHERE project_id = ?', 's', array($projectId));
+        }
+
+        $sql = 'UPDATE course_projects
+                SET project_status = ?, template_status = ?, needs_template_proposal = 1, updated_at = ?';
+        $types = 'sss';
+        $params = array('待樣板提案', 'pending_template', now());
+
+        $optionalNullColumns = array(
+            'template_processing_started_at',
+            'template_processing_by',
+            'worker_run_id',
+            'template_error_code',
+            'template_error_message',
+            'selected_proposal_id',
+            'selected_template_id',
+            'selected_secondary_template_id',
+            'selected_canva_direction',
+            'selected_canva_url',
+            'template_selected_at',
+            'preview_expires_at',
+        );
+
+        if (chat_d_column_exists('course_projects', 'proposal_batch_id')) {
+            $sql .= ', proposal_batch_id = ?';
+            $types .= 's';
+            $params[] = $newBatchId;
+        }
+
+        foreach ($optionalNullColumns as $columnName) {
+            if (chat_d_column_exists('course_projects', $columnName)) {
+                $sql .= ', ' . $columnName . ' = NULL';
+            }
+        }
+
+        $sql .= ' WHERE project_id = ?';
+        $types .= 's';
+        $params[] = $projectId;
+
+        db_exec($sql, $types, $params);
+
+        if (!empty($project['intake_id']) && chat_d_table_exists('course_intakes')) {
+            db_exec(
+                'UPDATE course_intakes SET intake_status = ?, updated_at = ? WHERE ' . chat_d_course_intakes_primary_key() . ' = ?',
+                'ssi',
+                array('待樣板提案', now(), (int) $project['intake_id'])
+            );
+        }
+
+        chat_d_log_notification(
+            $projectId,
+            isset($project['client_id']) ? (int) $project['client_id'] : null,
+            'canva_regeneration_requested',
+            'system',
+            '',
+            array(),
+            '後台已要求重新產生 Canva 樣板提案。',
+            'recorded'
+        );
+
+        db()->commit();
+        db()->autocommit(true);
+    } catch (Exception $error) {
+        db()->rollback();
+        db()->autocommit(true);
+        throw $error;
+    }
+
+    return $newBatchId;
+}
+
 function chat_d_claim_template_projects($limit, $workerRunId, $workerName)
 {
     if (!chat_d_table_exists('course_projects')) {

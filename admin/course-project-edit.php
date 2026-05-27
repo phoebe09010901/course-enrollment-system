@@ -96,6 +96,14 @@ $values = array(
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
+
+    $action = post('_action', 'save');
+    if ($action === 'regenerate_canva') {
+        chat_d_reset_template_generation($projectId);
+        $_SESSION['flash'] = '已送出重新產圖要求，專案狀態已改為待樣板提案。';
+        redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
+    }
+
     foreach ($values as $key => $default) {
         $values[$key] = post($key, $default);
     }
@@ -147,6 +155,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   .form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
   .asset-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .asset-list li { font-size: 14px; line-height: 1.55; }
+  .inline-action-form { display: inline-flex; margin: 0; }
   .proposal-table th,
   .proposal-table td,
   .proposal-table .muted,
@@ -163,6 +172,11 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   <a class="button secondary" href="projects.php">返回專案列表</a>
   <?php if (!empty($project['selection_token'])) { ?><a class="button secondary" target="_blank" href="../course-template-proposals.php?t=<?php echo h($project['selection_token']); ?>">開啟選版頁</a><?php } ?>
   <?php if (!empty($project['selected_canva_url'])) { ?><a class="button secondary" target="_blank" href="<?php echo h($project['selected_canva_url']); ?>">開啟 Canva</a><?php } ?>
+  <form class="inline-action-form" method="post" onsubmit="return confirm('確定要重新產圖嗎？舊的三款 Canva 提案會被移除，專案會回到待樣板提案。');">
+    <?php echo csrf_field(); ?>
+    <input type="hidden" name="_action" value="regenerate_canva">
+    <button type="submit" class="secondary">重新產圖</button>
+  </form>
 </div>
 
 <section class="panel">
