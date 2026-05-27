@@ -348,6 +348,12 @@ function validate_course_photo_uploads()
 function course_photo_upload_rules()
 {
     return array(
+        'topic_photo' => array(
+            'label' => '課程主題照',
+            'category' => 'topic',
+            'min' => 1,
+            'max' => 1,
+        ),
         'teacher_photos' => array(
             'label' => '老師的照片',
             'category' => 'teacher',
@@ -1161,6 +1167,11 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
       <section class="form-section" aria-labelledby="assetTitle">
         <h2 id="assetTitle">照片素材</h2>
         <div class="asset-grid">
+          <label class="asset-field">課程主題照
+            <strong>1 張</strong>
+            <input type="file" name="topic_photo[]" accept="image/*" required data-min-files="1" data-max-files="1" data-label="課程主題照">
+            <p class="form-hint">請上傳最能代表課程氛圍或主視覺的照片，每張 5MB 以內。</p>
+          </label>
           <label class="asset-field">老師的照片
             <strong>1-3 張</strong>
             <input type="file" name="teacher_photos[]" accept="image/*" multiple required data-min-files="1" data-max-files="3" data-label="老師的照片">
