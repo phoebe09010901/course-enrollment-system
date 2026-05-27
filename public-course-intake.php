@@ -26,42 +26,54 @@ $values = array(
 );
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verify_csrf();
-
     foreach ($values as $key => $default) {
         $values[$key] = post($key, $default);
     }
 
-    $errors = validate_course_form_security();
-    register_course_form_attempt();
-
-    if (empty($errors)) {
-        $errors = validate_course_intake_form($values);
-        $errors = array_merge($errors, validate_course_photo_uploads());
-    }
-
-    if (empty($errors)) {
-        $saveResult = save_course_intake_form($values);
-        try {
-            chat_a_trigger_for_project($saveResult['project_id']);
-        } catch (Exception $triggerError) {
-            error_log('[public-course-intake] chat_a_trigger_failed ' . $triggerError->getMessage());
-        }
-        register_course_form_success();
-        $selectionUrl = chat_d_project_selection_url($saveResult['project_id']);
-        if ($selectionUrl !== '') {
-            header('Location: ' . $selectionUrl);
-            exit;
-        }
-
-        $success = true;
-        $recordId = $saveResult['record_id'];
+    if (!course_public_csrf_is_valid()) {
+        $errors[] = '表單已逾時或頁面資料已更新，請重新整理頁面後再送出。';
         $security = reset_course_form_security_state();
+        $_SESSION['csrf_token'] = sha1(uniqid('', true) . mt_rand());
+    } else {
+        $errors = validate_course_form_security();
+        register_course_form_attempt();
 
-        foreach ($values as $key => $default) {
-            $values[$key] = '';
+        if (empty($errors)) {
+            $errors = validate_course_intake_form($values);
+            $errors = array_merge($errors, validate_course_photo_uploads());
+        }
+
+        if (empty($errors)) {
+            $saveResult = save_course_intake_form($values);
+            try {
+                chat_a_trigger_for_project($saveResult['project_id']);
+            } catch (Exception $triggerError) {
+                error_log('[public-course-intake] chat_a_trigger_failed ' . $triggerError->getMessage());
+            }
+            register_course_form_success();
+            $selectionUrl = chat_d_project_selection_url($saveResult['project_id']);
+            if ($selectionUrl !== '') {
+                header('Location: ' . $selectionUrl);
+                exit;
+            }
+
+            $success = true;
+            $recordId = $saveResult['record_id'];
+            $security = reset_course_form_security_state();
+
+            foreach ($values as $key => $default) {
+                $values[$key] = '';
+            }
         }
     }
+}
+
+function course_public_csrf_is_valid()
+{
+    $token = post('csrf_token', '');
+    return $token !== ''
+        && !empty($_SESSION['csrf_token'])
+        && safe_equals($_SESSION['csrf_token'], $token);
 }
 
 function course_form_security_state()
