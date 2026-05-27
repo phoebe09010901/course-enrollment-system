@@ -141,6 +141,14 @@ Upsert 規則：
 | `selected_primary_template_id` | text | 否 | 已選主樣板 id |
 | `selected_secondary_template_id` | text | 否 | 已選輔助樣板 id |
 | `preview_expires_at` | timestamp | 否 | 三款預覽最早到期時間 |
+| `worker_run_id` | text | 否 | 最近一次處理此 project 的 worker run id |
+| `locked_at` | timestamp | 否 | worker 取件鎖定時間 |
+| `locked_by` | text | 否 | worker instance / 排程名稱 |
+| `lock_expires_at` | timestamp | 否 | 鎖定逾時時間，用於中斷回收 |
+| `attempt_count` | integer | 是 | 樣板提案或目前自動化任務嘗試次數，預設 0 |
+| `next_retry_at` | timestamp | 否 | 暫時性錯誤後下次允許重試時間 |
+| `last_worker_error` | text | 否 | 最近一次 worker 失敗原因 |
+| `missing_required_fields` | json | 否 | 不可重試時缺少的必要資料 |
 | `final_preview_url` | text | 否 | 正式招生頁預覽網址 |
 | `live_url` | text | 否 | 試營運或正式上線網址 |
 | `final_confirmed_at` | timestamp | 否 | 客戶確認正式頁時間 |
@@ -169,6 +177,10 @@ Upsert 規則：
 - `試營運中`
 - `已上線`
 - `已取消`
+- `needs_data`
+- `template_failed`
+- `needs_human_review`
+- `retry_scheduled`
 
 Future phase 可再加入：
 
@@ -228,6 +240,44 @@ Future phase 可再加入：
 ### `notification_logs`
 
 記錄 Email 與 LINE 通知結果，避免通知是否成功只能靠外部服務查。
+
+### `worker_runs`
+
+記錄每次排程或 AI worker 執行結果，用來串接取件、Chat A / Canva、API POST 與錯誤追蹤。
+
+| 欄位 | 建議型別 | 必填 | 說明 |
+| --- | --- | --- | --- |
+| `worker_run_id` | text pk | 是 | 每次 worker 執行的唯一 id |
+| `project_id` | uuid / text fk | 否 | 對應處理的 project |
+| `task_type` | text | 是 | 例如 `create_three_template_proposals` |
+| `worker_id` | text | 是 | worker instance、cron 名稱或部署 id |
+| `claimed_at` | timestamp | 否 | 成功取件並鎖定時間 |
+| `started_at` | timestamp | 是 | run 開始時間 |
+| `finished_at` | timestamp | 否 | run 結束時間 |
+| `result` | text | 是 | `claimed`、`completed`、`needs_data`、`retry_scheduled`、`failed`、`lock_expired` |
+| `failure_reason` | text | 否 | 失敗或跳過原因 |
+| `retryable` | boolean | 是 | 是否屬於可重試錯誤 |
+| `attempt` | integer | 是 | 第幾次嘗試 |
+| `next_retry_at` | timestamp | 否 | 下一次可重試時間 |
+| `external_request_id` | text | 否 | Canva / API / queue request id |
+| `metadata` | json | 否 | 其他除錯資訊 |
+
+建議索引：
+
+- index: `worker_runs.project_id`
+- index: `worker_runs.task_type`
+- index: `worker_runs.result`
+- index: `worker_runs.started_at`
+
+### Worker 鎖定與重試欄位規則
+
+- `worker_run_id` 必須在每次排程啟動時產生，並寫入 `worker_runs`。
+- 取件時必須立刻鎖定 `course_projects`，不可只靠 `limit = 3` 查詢。
+- `locked_at`、`locked_by`、`lock_expires_at` 必須與 `project_status = 樣板製作中` 同步寫入。
+- 建議 `lock_expires_at = now + 20 至 30 分鐘`。
+- 若 `lock_expires_at < now()` 且任務未完成，下一輪 worker 可回收該案件。
+- 可重試錯誤需設定 `next_retry_at`，冷卻 30 分鐘到 1 小時。
+- 不可重試錯誤或缺資料需標記 `needs_data` / `template_failed`，不可每 10 分鐘重跑。
 
 | 欄位 | 建議型別 | 必填 | 說明 |
 | --- | --- | --- | --- |
@@ -434,21 +484,36 @@ Future phase tasks：
 
 - `course_projects.project_status = 待樣板提案`
 - `needs_template_proposal = true`
+- `lock_expires_at is null or lock_expires_at < now()`
+- `next_retry_at is null or next_retry_at <= now()`
 
 流程：
 
-1. 將 `project_status` 改為 `樣板製作中`。
-2. 觸發 Chat A / Canva 樣板提案流程。
-3. 寫入 `notification_logs`，通知類型為 `template_proposal_started`。
-4. 根據 `course_type` 從 `docs/TEMPLATE_REFERENCE.md` 挑出 3 款 proposal。
-5. 為 A / B / C 各建立或更新一筆 `template_proposals`。
-6. 每筆記錄 `proposal_code`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、`canva_url`。
-7. 三筆 proposal 初始 `preview_status = draft`。
+1. 產生 `worker_run_id`。
+2. 建立 `worker_runs`，記錄 `task_type = create_three_template_proposals`、`started_at`。
+3. 用 atomic claim 取件並立刻鎖定 project，不可先查 `limit = 3` 再逐筆處理。
+4. 鎖定成功時同步寫入：
+   - `project_status = 樣板製作中`
+   - `locked_at = now()`
+   - `locked_by = worker_id`
+   - `lock_expires_at = now() + 20 至 30 分鐘`
+   - `worker_run_id`
+5. 檢查必要資料，至少包含 `course_name`、可用於樣板提案的 `course_summary` / 課程描述、必要圖片或素材狀態。
+6. 若缺少不可替代資料，標記 `needs_data` 或 `template_failed`，寫入 `missing_required_fields` 與 `last_worker_error`，結束本次 run，不進入重試循環。
+7. 觸發 Chat A / Canva 樣板提案流程。
+8. 寫入 `notification_logs`，通知類型為 `template_proposal_started`。
+9. 根據 `course_type` 從 `docs/TEMPLATE_REFERENCE.md` 挑出 3 款 proposal。
+10. 為 A / B / C 各建立或更新一筆 `template_proposals`。
+11. 每筆記錄 `proposal_code`、`proposal_name`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`、`canva_url`。
+12. 三筆 proposal 初始 `preview_status = draft`。
+13. 完成時清除鎖定欄位或讓狀態進入下一階段，並更新 `worker_runs.finished_at`、`result = completed`。
 
 注意：
 
 - `docs/TEMPLATE_REFERENCE.md` 目前尚未建立，因此此步驟目前只能作為待串接規格。
 - 若找不到足夠 3 款樣板，worker 應標記任務需要人工處理，不應自行編造不存在的 template id。
+- 若 Chat A / Canva API timeout、rate limit 或寫回 API timeout，屬於可重試錯誤，應設定 `next_retry_at = now() + 30 到 60 分鐘`，並記錄 `worker_runs.result = retry_scheduled`。
+- 若 `樣板製作中` 超過 `lock_expires_at` 仍未完成，下一輪 worker 可回收並重新 claim，但必須保留前一次 `worker_run_id` 的失敗紀錄。
 
 建議 worker task 名稱：
 

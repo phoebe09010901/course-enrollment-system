@@ -58,6 +58,7 @@
   - 防護系統外指令。
 - 已更新 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 為新版「表單導向」流程。
 - 已更新 `docs/COLLABORATION_SETUP.md` 的 Chat C / Chat D / Chat E 分工。
+- 已補上 Chat F 提醒的排程 / Worker 安全規格：取件 atomic lock、processing 20 到 30 分鐘逾時回收、可重試 / 不可重試錯誤分類、30 到 60 分鐘 retry cooldown、`worker_run_id` 與 `worker_runs` log schema。
 
 ## 目前 FORM_URL 狀態
 
@@ -82,6 +83,7 @@ FORM_URL
 - 尚未確認 Email 通知流程。
 - 尚未確認三款預覽網址產生與通知流程。
 - 尚未確認三天選款期限與過期處理的自動化。
+- 尚未實作實際排程 worker、atomic claim SQL、`worker_runs` 資料表與 retry runner。
 - 尚未建立完整前台、後台或 admin 管理介面。
 - 尚未建立 `styles/`、`skills/`、`templates/`、`public/` 等實作目錄。
 
@@ -121,6 +123,8 @@ FORM_URL
 
 - 表單尚未接上正式資料庫前，LINE AI 導向表單後仍無法完成整體資料建檔閉環。
 - 舊測試若仍以「AI 逐步收資料」為期待，需由 Chat E 改成新版接待助理測試。
+- 樣板提案 worker 若未依規格實作鎖定，兩輪排程或兩台 worker 可能同時處理同一個 `project_id`。
+- 若缺資料仍被排程重試，可能造成每 10 分鐘重撞 Chat A / Canva；需用 `needs_data` / `template_failed` 停止自動重試。
 
 ## 下一步建議
 
@@ -133,3 +137,4 @@ FORM_URL
    - 回報網站 / 系統問題。
 4. Chat D 確認表單送出後能寫入資料庫。
 5. Chat E 測試表單送出後 Email 與三款預覽通知。
+6. Chat E / Chat D 實作排程 worker 前，先建立 `worker_runs` 與 `course_projects` 鎖定欄位 migration。

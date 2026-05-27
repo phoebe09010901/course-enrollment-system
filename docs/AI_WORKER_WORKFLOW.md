@@ -15,6 +15,7 @@
 | AI provider 串接 | 尚未建立 |
 | 儲存層 | 尚未建立 |
 | 重試與錯誤處理 | 尚未建立 |
+| 鎖定與 worker run log | 尚未建立，已補規格 |
 
 ## Worker 預期角色
 
@@ -51,6 +52,7 @@
 4. `completed`：任務完成並有可讀輸出。
 5. `failed`：任務失敗，需記錄原因。
 6. `cancelled`：任務被取消。
+7. `retry_scheduled`：暫時性錯誤後等待冷卻時間再重試。
 
 每個任務建議記錄：
 
@@ -63,7 +65,132 @@
 - `createdAt`
 - `updatedAt`
 - `attempts`
+- `worker_run_id`
+- `lockedAt`
+- `lockedBy`
+- `lockExpiresAt`
+- `lastRunStartedAt`
+- `lastRunFinishedAt`
+- `nextRetryAt`
 - `source`
+
+## 取件鎖定規則
+
+排程 worker 不可以只靠 `limit = 3` 或單純輪詢挑案件。任何會處理 project 的任務都必須支援「取到就立刻鎖定」。
+
+基本規則：
+
+- 每次 worker 啟動先產生唯一 `worker_run_id`。
+- 取件與鎖定必須是同一個 atomic operation。
+- 同一個 `project_id` 在鎖定期間只能被一個 `worker_run_id` 處理。
+- 鎖定欄位至少包含 `locked_at`、`locked_by`、`lock_expires_at`、`worker_run_id`。
+- `locked_by` 可使用部署名稱、instance id 或排程名稱。
+- `lock_expires_at` 建議設定為 `now + 20 至 30 分鐘`。
+
+建議 atomic claim 條件：
+
+```sql
+UPDATE course_projects
+SET
+  project_status = '樣板製作中',
+  locked_at = now(),
+  locked_by = :worker_id,
+  lock_expires_at = now() + interval '30 minutes',
+  worker_run_id = :worker_run_id,
+  updated_at = now()
+WHERE project_id IN (
+  SELECT project_id
+  FROM course_projects
+  WHERE project_status = '待樣板提案'
+    AND needs_template_proposal = true
+    AND (
+      lock_expires_at IS NULL
+      OR lock_expires_at < now()
+    )
+    AND (
+      next_retry_at IS NULL
+      OR next_retry_at <= now()
+    )
+  ORDER BY created_at ASC
+  LIMIT 3
+  FOR UPDATE SKIP LOCKED
+)
+RETURNING *;
+```
+
+若使用的資料庫不支援 `FOR UPDATE SKIP LOCKED`，必須用等效的 compare-and-set 條件實作，不能先 select 再慢慢 update。
+
+## 鎖定逾時回收
+
+Chat A / Canva 或外部 API 可能中斷，因此 `processing_template` / `樣板製作中` 不可永遠卡住。
+
+回收規則：
+
+- 若 `project_status = 樣板製作中` 且 `lock_expires_at < now()`，視為鎖定逾時。
+- 逾時後可重新排入 `待樣板提案` 或 `retry_scheduled`，但必須增加 attempts 並記錄上一個 `worker_run_id`。
+- 建議 processing 逾時為 20 到 30 分鐘。
+- 若同一 project 多次逾時，應升級為 `template_failed` 或 `needs_human_review`，不要無限重試。
+
+## 錯誤分類與冷卻
+
+錯誤需分成不可重試、可重試與需要補資料。
+
+不可重試或需要補資料：
+
+- 缺少 `course_name`。
+- 缺少 `course_summary` 或足以產生樣板文案的課程描述。
+- 缺少必要圖片集合，例如 `r2_images`，且該樣板流程要求圖片。
+- 找不到足夠三款樣板來源或 template id。
+
+處理方式：
+
+- 標記 `needs_data`、`template_failed` 或 `needs_human_review`。
+- 寫入缺少欄位與修正建議。
+- 不可每 10 分鐘重新重跑。
+
+可重試錯誤：
+
+- Canva API timeout / rate limit / 暫時性 5xx。
+- 寫回 API timeout。
+- 網路中斷。
+- 暫時性儲存服務錯誤。
+
+處理方式：
+
+- 狀態設為 `retry_scheduled` 或保留原任務狀態並設定 `next_retry_at`。
+- 建議冷卻時間 30 分鐘到 1 小時。
+- 重試時仍需重新 atomic claim。
+- 超過最大嘗試次數後改為 `template_failed`，並保留最後錯誤。
+
+## Worker Run Log
+
+每次 worker 執行都必須建立 `worker_run_id`，並把取件、Chat A / Canva 建稿、API POST 結果串起來。
+
+log 至少包含：
+
+- `worker_run_id`
+- `project_id`
+- `task_type`
+- `worker_id`
+- `claimed_at`
+- `started_at`
+- `finished_at`
+- `result`
+- `failure_reason`
+- `retryable`
+- `next_retry_at`
+- `attempt`
+- `external_request_id`
+
+建議 `result`：
+
+- `claimed`
+- `skipped`
+- `completed`
+- `needs_data`
+- `retry_scheduled`
+- `failed`
+- `lock_expired`
 
 ## 建議任務類型
 
@@ -106,6 +233,9 @@
 - 可重試錯誤應記錄原因與嘗試次數。
 - 不可重試錯誤應標記為 `failed`，並保留可讀錯誤訊息。
 - 缺少資料不應被視為系統錯誤，應標記為 `needs_input`。
+- 缺少必要資料時不得靠排程每 10 分鐘重撞，必須停止自動重試並等待補資料。
+- 暫時性錯誤必須有 `next_retry_at` 冷卻時間，建議 30 分鐘到 1 小時。
+- 每次嘗試都必須可用 `worker_run_id` 串查。
 - AI 輸出不符合格式時，應先嘗試修正或重新要求結構化輸出。
 - 不應靜默吞掉錯誤。
 
