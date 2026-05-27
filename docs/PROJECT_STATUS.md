@@ -18,6 +18,7 @@
 - `docs/TEMPLATE_REFERENCE.md`
 - `docs/CLIENT_SELECTION_FLOW.md`
 - `docs/BACKEND_AUTOMATION_FLOW.md`
+- `docs/REMOTE_COLLABORATION.md`
 - `docs/COLLABORATION_SETUP.md`
 - `README.md`
 - `api/line-intakes/index.php`
@@ -57,6 +58,7 @@
 - 建立 `ADMISSION_API_KEY` 驗證機制。
 - 建立 `clients` / `course_intakes` migration 與寫入流程。
 - 建立 `admin/clients.php`，可查看 API 寫入的客戶資料。
+- 建立遠端協作文件，讓另一台電腦可從 GitHub 接手。
 - 建立 AI 協作規則文件。
 
 ## 尚未完成

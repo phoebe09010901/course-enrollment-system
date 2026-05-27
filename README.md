@@ -1,5 +1,21 @@
 # 課程招生 - 系統
 
+## 協作接手
+
+另一台電腦接手請先看：
+
+```text
+docs/REMOTE_COLLABORATION.md
+docs/PROJECT_STATUS.md
+docs/COLLABORATION_SETUP.md
+```
+
+目前測試環境：
+
+```text
+https://ftm.com.tw/demo/admission-system
+```
+
 ## LINE Intake API
 
 Endpoint:

@@ -6,18 +6,19 @@
 
 ## 目前協作基準
 
-目前 repo 是初始化狀態。除 `docs/` 以外，尚無應用程式碼或專案目錄。
+目前 repo 已有第一批 PHP MVP 實作與規格文件，但遠端測試環境 `ftm.com.tw/demo/admission-system` 仍是主要驗證環境。接手時需要同時理解 GitHub repo 與遠端測試環境的差異。
 
 AI Agent 在開始任何工作前，應先閱讀：
 
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
-4. `docs/TEMPLATE_REFERENCE.md`
-5. `docs/CLIENT_SELECTION_FLOW.md`
-6. `docs/FORM_SCHEMA.md`
-7. `docs/BACKEND_AUTOMATION_FLOW.md`
-8. `docs/COLLABORATION_SETUP.md`
+4. `docs/REMOTE_COLLABORATION.md`
+5. `docs/TEMPLATE_REFERENCE.md`
+6. `docs/CLIENT_SELECTION_FLOW.md`
+7. `docs/FORM_SCHEMA.md`
+8. `docs/BACKEND_AUTOMATION_FLOW.md`
+9. `docs/COLLABORATION_SETUP.md`
 
 ## AI Agent 工作規則
 
@@ -47,6 +48,26 @@ find styles schemas skills templates public line-webhook admin worker -maxdepth 
 ```
 
 如果目錄不存在，這是重要狀態，不是錯誤。
+
+## Git 協作口令
+
+使用者說「開啟專案」時，預設代表：
+
+```bash
+git fetch origin
+git pull --ff-only
+```
+
+使用者說「結束專案」時，預設代表：
+
+```bash
+git status --short --branch
+git add <changed-files>
+git commit
+git push
+```
+
+若目前在 detached HEAD，需先建立 `codex/` 開頭的工作分支再 push。
 
 ## 文件更新規則
 
@@ -91,6 +112,12 @@ find styles schemas skills templates public line-webhook admin worker -maxdepth 
 用來記錄資料庫、後台畫面、AI Worker、自動通知與三天作廢流程。
 
 每次新增資料表、migration、worker、notification 或 admin 狀態欄位後應更新。
+
+### `REMOTE_COLLABORATION.md`
+
+用來記錄另一台電腦如何 clone、pull、設定本機敏感資料、使用測試環境與推回 git。
+
+每次改變 GitHub 分支策略、測試環境、部署流程或協作口令後應更新。
 
 ### `COLLABORATION_SETUP.md`
 
