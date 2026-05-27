@@ -12,8 +12,14 @@ AI Agent 在開始任何工作前，應先閱讀：
 
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/PROJECT_STATUS.md`
-3. `docs/STYLE_SYSTEM.md`
-4. `docs/COLLABORATION_SETUP.md`
+3. `docs/ARCHITECTURE.md`
+4. `docs/STYLE_SYSTEM.md`
+5. `docs/TEMPLATE_REFERENCE.md`
+6. `docs/CLIENT_SELECTION_FLOW.md`
+7. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+8. `docs/LINE_AI_TEST_REPORT.md`
+9. `docs/CHAT_C_FIX_REQUEST.md`
+10. `docs/COLLABORATION_SETUP.md`
 
 ## AI Agent 工作規則
 
@@ -58,11 +64,37 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 
 每次新增主要目錄、功能、模板或 skill 後應更新。
 
+### `ARCHITECTURE.md`
+
+用來記錄世界觀、workflow、Router 架構與目錄責任邊界。
+
+當系統分層、Router 行為、workflow 或模組責任改變時更新。
+
 ### `STYLE_SYSTEM.md`
 
 用來記錄美術風格系統、style-selector-skill 與 course-brand-template-v1 的規則。
 
 每次新增 style token、模板、品牌案例或風格選擇邏輯後應更新。
+
+### `TEMPLATE_REFERENCE.md`
+
+用來記錄三款招生頁預覽提案的命名、定位與預覽資料欄位。
+
+當模板名稱、proposal id 或預覽資料格式改變時更新。
+
+### `CLIENT_SELECTION_FLOW.md`
+
+用來記錄客戶收到三款預覽後的選版、提醒、逾期與 selected_proposal_id 紀錄流程。
+
+當選版狀態、到期規則或通知話術改變時更新。
+
+### `LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+
+用來記錄 LINE AI 客服接待流程、免費試營運說明、表單導向、流程問題、網站 / 系統問題與安全邊界。
+
+2026-05-27 起，LINE AI 不再負責資料收集、填表、照片收集、確認摘要、JSON 建檔或 `clients` / `course_projects` 建立。這些責任改由網頁表單與後端流程處理。
+
+當 LINE AI 入口選項、表單連結、免費試營運說明、流程說明或系統問題處理方式改變時更新。
 
 ### `COLLABORATION_SETUP.md`
 
@@ -84,6 +116,44 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 - `docs/`：長期記憶、規格、協作規則。
 
 以上目錄目前多數尚未建立。
+
+## Chat 分工補充
+
+### Chat C：LINE AI 客服
+
+Chat C 負責 LINE AI 接待助理與 Cloudflare Worker 回覆邏輯。
+
+目前 LINE AI 只做：
+
+- 打招呼。
+- 說明免費試營運。
+- 說明製作流程。
+- 提供課程資料表連結。
+- 回答表單、Email、三款預覽、三天期限與網站 / 系統問題。
+- 防護系統外指令。
+
+LINE AI 不再收集姓名、Email、LINE ID Link、課程資料或照片素材。
+
+### Chat D / Chat B：表單與資料庫
+
+Chat D / Chat B 需要提供：
+
+- 確認正式課程資料表頁面與欄位。
+- 如果表單網址變更，提供 Cloudflare Worker 環境變數 `FORM_URL` 的新值。
+- 表單必填欄位檢查。
+- 表單送出後寫入資料庫。
+- 後台查看客戶與課程資料。
+
+### Chat E：自動化與 QA
+
+Chat E 需要接續：
+
+- 新版 LINE AI 接待助理流程測試。
+- 表單送出後自動化。
+- Email 通知。
+- 三款預覽網址通知。
+- 三天選款期限與過期處理。
+- 線上 Cloudflare Worker / LINE App 實測。
 
 ## 提交前檢查
 

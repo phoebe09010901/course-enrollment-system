@@ -32,7 +32,13 @@
 
 - `docs/PROJECT_CONTEXT.md`
 - `docs/PROJECT_STATUS.md`
+- `docs/ARCHITECTURE.md`
 - `docs/STYLE_SYSTEM.md`
+- `docs/TEMPLATE_REFERENCE.md`
+- `docs/CLIENT_SELECTION_FLOW.md`
+- `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+- `docs/LINE_AI_TEST_REPORT.md`
+- `docs/CHAT_C_FIX_REQUEST.md`
 - `docs/COLLABORATION_SETUP.md`
 
 ## 專案世界觀
@@ -70,8 +76,14 @@
 
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/PROJECT_STATUS.md`
-3. `docs/STYLE_SYSTEM.md`
-4. `docs/COLLABORATION_SETUP.md`
+3. `docs/ARCHITECTURE.md`
+4. `docs/STYLE_SYSTEM.md`
+5. `docs/TEMPLATE_REFERENCE.md`
+6. `docs/CLIENT_SELECTION_FLOW.md`
+7. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+8. `docs/LINE_AI_TEST_REPORT.md`
+9. `docs/CHAT_C_FIX_REQUEST.md`
+10. `docs/COLLABORATION_SETUP.md`
 
 若未來新增實作目錄，接著再讀：
 
