@@ -2,9 +2,9 @@
 
 ## 狀態摘要
 
-目前專案處於初始化階段。repo 尚未包含實際應用程式碼、風格資料、skill 實作、模板、公開資源或後端服務。
+目前專案處於初始化與流程重構階段。已建立主要文件與 Cloudflare Worker 參考實作。
 
-目前已建立基礎文件、AI worker workflow 規格、後端自動化流程規格與 `worker/` 入口 README，作為後續 AI 協作與專案記憶的起點。
+2026-05-27 最新決策：LINE AI 客服正式取消「AI 幫客戶填表 / 逐步收欄位」流程，改為「課程招生頁系統接待助理」。資料收集改由網頁表單處理。
 
 ## 已確認存在
 
@@ -13,24 +13,24 @@
 - `docs/PROJECT_STATUS.md`
 - `docs/STYLE_SYSTEM.md`
 - `docs/COLLABORATION_SETUP.md`
+- `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+- `docs/LINE_AI_TEST_REPORT.md`
+- `docs/CHAT_C_FIX_REQUEST.md`
 - `docs/AI_WORKER_WORKFLOW.md`
 - `docs/BACKEND_AUTOMATION_FLOW.md`
-- `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+- `docs/LINE_AI_ADVANCED_QA_PLAN.md`
+- `docs/LINE_AI_WORKER_TEST_SCENARIOS.md`
+- `docs/HANDOFF_FOR_NEW_COMPUTER.md`
+- `cloudflare-workers/workers.js`
 - `cloudflare-workers/worker.js`
-- `worker/README.md`
+- `cloudflare-workers/line-webhook-worker.js`
+- `tests/line-ai-worker-scenarios.test.mjs`
 
-## 尚未存在的目錄與狀態
+## 尚未建立但曾被規劃的文件
 
-| 目錄 | 目前狀態 | 備註 |
-| --- | --- | --- |
-| `styles/` | 尚未建立 | 尚無色彩、字體、構圖、品牌 token 或風格定義 |
-| `skills/` | 尚未建立 | 尚無 style-selector-skill 或其他 AI skill |
-| `templates/` | 尚未建立 | 尚無 course-brand-template-v1 |
-| `public/` | 尚未建立 | 尚無公開素材、圖片、靜態資源 |
-| `line-webhook/` | 尚未建立 | 尚無 LINE webhook 程式碼或設定 |
-| `cloudflare-workers/` | 已建立 | 包含 Chat C LINE AI 客服 Worker 可部署版本 |
-| `admin/` | 尚未建立 | 尚無管理介面 |
-| `worker/` | 已建立初始 README | 尚無背景工作程式碼、排程或任務佇列 |
+- `docs/ARCHITECTURE.md`
+- `docs/TEMPLATE_REFERENCE.md`
+- `docs/CLIENT_SELECTION_FLOW.md`
 
 ## 已完成
 
@@ -38,53 +38,98 @@
 - 建立專案狀態文件。
 - 建立美術風格系統初始文件。
 - 建立 AI 協作規則文件。
-- 建立 AI worker workflow 初始規格。
-- 建立後端自動化流程規格，涵蓋資料庫、後台、AI Worker、通知與三天作廢邏輯。
-- 建立 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`，作為 Chat E 驗證 LINE AI 客服流程的核心依據。
-- 同步 Chat C 可部署 Worker：`cloudflare-workers/workers.js`、`cloudflare-workers/worker.js`、`cloudflare-workers/line-webhook-worker.js`。
-- Worker 版本：`chat-c-course-type-help-fix-2026-05-27-12`。
-- 已依 Chat E 實測修正 C-FIX-001～C-FIX-005、C-FIX-007 的主要 Worker 行為：入口 2 / 3 先分流、初次非明確 intent 顯示開場、單獨姓名可寫入 `user_name`、Email-only 不誤判 LINE ID Link、課程形式「還沒確定」可暫存為 `未定`、付款問題明確由 service price guard 處理。
-- 已在 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 補上 `line_id_link_status = need_review` 通過 gate 的決策、Email-only 解析限制、單獨姓名規則、課程 unknown 處理與付款 guard 例外說明。
-- 已依 Chat E 最新回歸修正 C-FIX-001～C-FIX-007：`ready_for_confirmation` 前確認詞不可污染欄位；contact fallback 改為聯絡資料導向；unknown-like 欄位成功寫入後不再混 fallback；泛稱課程名稱會追問是否作為暫定課名；Email 拒答會標記 `email_status = declined` 與 `needs_human_contact_review = true`；模糊日期會標記 `expected_launch_date_status` / `expected_start_date_status = tentative`；圖片素材因無法自動辨識內容先標 `need_review`。
-- 已修正欄位說明情境：客戶問「課程類型是什麼 / 怎麼填 / 看不懂」時，Worker 會先解釋課程類型是主題分類，並提供例子；不會把問題句寫入 `course_type`，也不會跳到下一步。
-- 已修正 C-FIX-008 / S14：空白 `LINE ID Link：` 或 `3. LINE ID Link：` 不會污染 `line_id_link`；聯絡資料未補齊時，課程欄位文字不會被推測成 `user_name`。
-- 已修正 C-FIX-009 / S16：聯絡資料未補齊時，`實體`、`線上`、`混合`、`畫畫`、`色鉛筆` 等課程形式 / 類型詞不會被推測成 `user_name`。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S16。
-- 已修正 C-FIX-010 / S17：聯絡資料未補齊時，短 LINE 代碼如 `URZ8z2U` 不會被推測成 `user_name`；有效 Email 在 LINE ID 補問重試中不會消失。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S17。
-- 已修正 S18：客戶明確要求「我要更新 LINE ID Link」時，Worker 只補問新的 LINE 連結，不會改問 Email，也不會污染課程欄位。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S18。
-- 已修正 S24：`Link ID Link` / `link id link` 也會映射為 `line_id_link`，不會因拼法錯誤改問 Email。
-- 已修正 C-FIX-012～C-FIX-015 / contact update matrix：更新 Email 格式錯誤會明確提示、`我要改姓名` 會進入姓名更新、摘要確認前更新 LINE Link 後會回到摘要、連續更新 Email / 姓名 / LINE Link 後 confirmed payload 會使用最新值。`node --test tests/line-ai-worker-scenarios.test.mjs` 已通過 S01 到 S24。
-- 已補強課程類型說明：範例改為水彩、色鉛、色鉛筆、營養宣導等，並讓 Worker 可辨識 `色鉛` 與 `營養宣導`。
-- 將 MVP 流程定位為免費試營運階段，報價、付款、訂閱與續約先列為 future phase。
-- 建立 `worker/README.md`，定義 worker 預期責任與目前缺口。
-- 明確記錄目前 repo 仍沒有實體系統功能。
+- 建立 LINE AI 客服流程文件。
+- 建立 Cloudflare Worker 可部署版本。
+- 已同步三份 Worker 檔案：
+  - `cloudflare-workers/workers.js`
+  - `cloudflare-workers/worker.js`
+  - `cloudflare-workers/line-webhook-worker.js`
+- Worker 版本：`chat-c-receptionist-form-link-2026-05-27-20`。
+- 已取消 LINE AI 複雜資料收集狀態機。
+- 已取消 LINE AI 詢問姓名、Email、LINE ID Link、課程資料與照片素材。
+- 已取消 LINE AI `client_intake_confirmed` JSON 輸出。
+- 已取消 LINE AI 對 `clients` / `course_projects` 的建檔責任。
+- LINE AI 現在只負責：
+  - 打招呼。
+  - 說明免費試營運。
+  - 說明完整流程。
+  - 提供課程資料表連結。
+  - 回答流程、免費、三款預覽、三天期限與網站 / 系統問題。
+  - 防護系統外指令。
+- 已更新 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 為新版「表單導向」流程。
+- 已更新 `docs/COLLABORATION_SETUP.md` 的 Chat C / Chat D / Chat E 分工。
+
+## 目前 FORM_URL 狀態
+
+正式報名表網址已確認：
+
+```text
+https://ftm.com.tw/demo/admission-system/public-course-intake.php
+```
+
+Cloudflare Worker 目前若未設定環境變數 `FORM_URL`，會預設回覆此正式報名表網址。
+
+若未來要改表單網址，可設定 Cloudflare Worker 環境變數：
+
+```text
+FORM_URL
+```
 
 ## 尚未完成
 
-- 已建立 LINE AI 客服流程規格；其他產品需求與實際使用者流程仍待補完整。
-- 尚未建立應用架構。
-- 尚未選定前端、後端、資料庫或部署技術。
-- 尚未建立 style-selector-skill 的 skill 目錄與規格。
-- 尚未建立 course-brand-template-v1 的模板結構。
-- 尚未建立任何測試、CI 或部署流程。
-- 已有 Cloudflare Worker 參考實作；LINE webhook 與 admin 的正式責任分工仍待補完整。
-- 尚未建立 worker 的任務 schema、執行環境、佇列、儲存或 AI 串接。
-- 尚未建立 `docs/TEMPLATE_REFERENCE.md`，因此三款樣板提案的實際 template id 來源仍待補。
-- 尚未建立 `docs/CLIENT_SELECTION_FLOW.md`，因此客戶選款的前台互動細節仍待補。
-- Chat E 需使用 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 與 `cloudflare-workers/worker.js` 重新進行下一輪 LINE AI 客服流程測試，優先回歸確認詞 guard、contact fallback、課程形式 unknown、泛稱課名、欄位說明 guard、Email 拒答、模糊日期 status、圖片 `need_review`。
+- 尚未確認表單頁面欄位與必填驗證。
+- 尚未確認表單送出後寫入資料庫的 API / 後端流程。
+- 尚未確認 Email 通知流程。
+- 尚未確認三款預覽網址產生與通知流程。
+- 尚未確認三天選款期限與過期處理的自動化。
+- 尚未建立完整前台、後台或 admin 管理介面。
+- 尚未建立 `styles/`、`skills/`、`templates/`、`public/` 等實作目錄。
+
+## Chat 分工
+
+### Chat C
+
+負責 LINE AI 接待流程與 Cloudflare Worker 回覆邏輯。
+
+目前 Chat C 已完成：
+
+- LINE AI 改為接待助理。
+- LINE AI 導向網頁表單。
+- Worker 取消逐步填表與建檔。
+
+### Chat D / Chat B
+
+需要接續：
+
+- 確認正式課程資料表頁面欄位與送出行為。
+- 如未來表單網址變更，提供新的 `FORM_URL`。
+- 表單必填欄位檢查。
+- 表單送出後資料寫入 `clients`、`course_projects` 與素材資料。
+- 後台可查看客戶資料與課程資料。
+
+### Chat E
+
+需要接續：
+
+- 表單送出後自動化測試。
+- Email 通知流程。
+- 三款預覽網址通知。
+- 三天選款期限與過期處理。
+- Cloudflare Worker 線上版本與 LINE App 實測。
 
 ## 目前風險
 
-- 專案意圖已有關鍵名詞，但 repo 尚無實作，容易在不同 chat 中被誤判為已有系統。
-- 如果後續先寫程式碼而不補規格，AI Agent 可能會各自發明不一致的目錄結構。
-- 美術風格系統與模板系統若沒有資料格式約定，之後會難以自動選擇、套用或重構。
+- 表單尚未接上正式資料庫前，LINE AI 導向表單後仍無法完成整體資料建檔閉環。
+- 舊測試若仍以「AI 逐步收資料」為期待，需由 Chat E 改成新版接待助理測試。
 
 ## 下一步建議
 
-1. 建立 `styles/README.md`，定義風格資料格式。
-2. 建立 `skills/style-selector-skill/README.md`，描述 skill 輸入、輸出與選擇邏輯。
-3. 建立 `templates/course-brand-template-v1/README.md`，定義模板目標與資料結構。
-4. 決定 `public/`、`line-webhook/`、`admin/`、`worker/` 是否屬於同一 repo 的 monorepo 架構。
-5. 新增 `docs/ARCHITECTURE.md` 與 `docs/ROADMAP.md`，補上系統架構與短期里程碑。
-6. 為第一個 AI worker 任務定義 JSON schema 與輸入輸出範例。
-7. 建立 `docs/TEMPLATE_REFERENCE.md` 與 `docs/CLIENT_SELECTION_FLOW.md`。
-8. 將 `docs/BACKEND_AUTOMATION_FLOW.md` 轉成資料庫 migration、API contract 與後台 wireframe。
+1. Chat D / Chat B 確認課程資料表欄位、必填驗證與送出流程。
+2. 如需改網址，將新的 `FORM_URL` 設定到 Cloudflare Worker。
+3. Chat E 重新測 LINE AI 四大入口：
+   - 填寫課程資料表。
+   - 了解製作流程。
+   - 了解免費試營運。
+   - 回報網站 / 系統問題。
+4. Chat D 確認表單送出後能寫入資料庫。
+5. Chat E 測試表單送出後 Email 與三款預覽通知。

@@ -4,7 +4,7 @@
 
 本文件讓另一台電腦或另一位協作者可以快速接手「課程招生 - 系統」專案。
 
-目前專案重點是 LINE AI 客服 / AI Worker 的資料收集流程、狀態機測試與後續後台 / 自動化規格。尚未建立正式前端、後台、資料庫 migration 或部署流水線。
+目前專案重點是 LINE AI 客服 / AI Worker 已改為「課程招生頁系統接待助理」，資料收集改由網頁表單處理。尚未建立正式前台、後台、資料庫 migration 或完整部署流水線。
 
 ## Repository
 
@@ -29,11 +29,20 @@ git fetch --all
 git switch codex/collaboration-handoff
 ```
 
-若要以 `main` 為基準重新開工作分支：
+若新電腦沒有設定 GitHub SSH key，可先用 HTTPS：
 
 ```bash
-git switch main
-git pull origin main
+git clone https://github.com/phoebe09010901/course-enrollment-system.git
+cd course-enrollment-system
+git fetch --all
+git switch codex/collaboration-handoff
+```
+
+若要以目前協作分支為基準重新開工作分支：
+
+```bash
+git switch codex/collaboration-handoff
+git pull origin codex/collaboration-handoff
 git switch -c codex/<your-task-name>
 ```
 
@@ -56,6 +65,7 @@ git switch -c codex/<your-task-name>
 
 - `docs/TEMPLATE_REFERENCE.md`
 - `docs/CLIENT_SELECTION_FLOW.md`
+- `docs/ARCHITECTURE.md`
 
 ## 目前重要檔案
 
@@ -86,22 +96,20 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 目前預期：
 
-- S01 到 S24 全部通過，目前 23 個 test blocks 預期 pass 23 / fail 0。
-- 測試範圍包含入口分流、contact gate、欄位污染防護、欄位說明、照片階段、建檔 gate、confirmed payload。
+- 新版接待助理測試共 11 個 test blocks，預期 pass 11 / fail 0。
+- 測試範圍包含 health check、四個入口選項、表單連結、免費試營運說明、流程說明、三天預覽說明、網站 / 系統問題、安全防護、客戶資料文字不觸發建檔、非文字訊息不進照片收集。
 
 ## 目前已知狀態
 
 - MVP 階段是免費試營運。
 - 報價、付款、訂閱、續約都先列為 future phase，不放入目前主流程。
-- Worker 目前已修正多個 QA issue，包括確認詞 guard、Email-only、contact fallback、unknown-like input、日期 status、圖片 `need_review`、欄位說明、空白 label 污染、短 LINE 代碼污染與 contact update matrix。
-- 目前 Worker 版本：`chat-c-course-type-help-fix-2026-05-27-12`。
+- LINE AI 已取消逐步填表、照片收集、摘要確認與建檔狀態機。
+- LINE AI 目前只做接待、說明、導向表單與系統外指令防護。
+- 目前 Worker 版本：`chat-c-receptionist-form-link-2026-05-27-20`。
 - 要貼到 Cloudflare 的檔案：`cloudflare-workers/worker.js`。
-- 線上 Worker GET health check 的 JSON `version` 應為：`chat-c-course-type-help-fix-2026-05-27-12`。
-- 最新重要測試：S14 真實 LINE 事故重放，確認空白 `LINE ID Link：` 不會污染 `line_id_link`。
-- S16 已通過：contact gate 未完成時，`實體` 不會被當成姓名。
-- S17 已通過：短 LINE 代碼 `URZ8z2U` 不會被當成姓名，Email 在 LINE ID 補問來回中不會消失。
-- S18 已通過：客戶說「我要更新 LINE ID Link」時，系統會要求貼新的 LINE 連結，不會改問 Email。
-- 新增嚴格 contact update matrix：S19 / S20 / S21 / S22 / S23 / S24 皆已通過，詳見 `docs/CHAT_C_FIX_REQUEST.md`。
+- 線上 Worker GET health check 的 JSON `version` 應為：`chat-c-receptionist-form-link-2026-05-27-20`。
+- 正式表單網址：`https://ftm.com.tw/demo/admission-system/public-course-intake.php`。
+- 若 Cloudflare 未設定 `FORM_URL`，Worker 會使用上述預設表單網址。
 
 ## 下一步建議
 
@@ -110,10 +118,10 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 3. 若 LINE App 實測仍與本地測試不同，優先檢查：
    - LINE webhook URL 是否指向最新 Worker。
    - Cloudflare 是否已部署最新檔案。
-   - KV 是否殘留舊 user state。
-   - 測試 LINE userId 是否需要清除狀態。
-4. 補 `docs/TEMPLATE_REFERENCE.md` 與 `docs/CLIENT_SELECTION_FLOW.md`。
-5. 將 `docs/BACKEND_AUTOMATION_FLOW.md` 拆成 API contract、database schema 與 admin wireframe。
+   - `FORM_URL` 是否設定正確。
+   - LINE 官方帳號是否仍接到舊 Worker。
+4. Chat D / Chat B 確認表單欄位、必填驗證與送出後資料庫寫入。
+5. Chat E 測試表單送出後 Email、三款預覽通知、三天選款期限與過期處理。
 
 ## 協作規則
 
@@ -132,4 +140,4 @@ node --test tests/line-ai-worker-scenarios.test.mjs
 
 ## 給下一位 Chat 的一句話
 
-這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 S01 到 S24 全部通過，若 LINE App 實測不同，優先檢查 Cloudflare 部署版本與測試 user state。
+這個 repo 目前最有價值的可執行資產是 `cloudflare-workers/workers.js` 與 `tests/line-ai-worker-scenarios.test.mjs`。接手時先跑測試；目前預期是 11 個新版接待助理測試全部通過，若 LINE App 實測不同，優先檢查 Cloudflare 部署版本、`FORM_URL` 與 LINE webhook 指向。

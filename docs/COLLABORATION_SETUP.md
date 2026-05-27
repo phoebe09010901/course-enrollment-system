@@ -6,20 +6,21 @@
 
 ## 目前協作基準
 
-目前 repo 仍屬早期 MVP 規格與 Worker 驗證階段，但已包含 Cloudflare Worker 參考實作與可重跑 Node 測試。尚未建立正式資料庫、後台、前端預覽頁或完整部署流水線。
+目前 repo 是初始化與 LINE AI 接待助理重構階段。已包含文件、Cloudflare Worker 參考實作與可重跑 Node 測試；尚未建立正式前台、後台、資料庫 migration 或完整部署流水線。
 
 AI Agent 在開始任何工作前，應先閱讀：
 
 1. `docs/PROJECT_CONTEXT.md`
 2. `docs/PROJECT_STATUS.md`
-3. `docs/STYLE_SYSTEM.md`
-4. `docs/COLLABORATION_SETUP.md`
-5. `docs/AI_WORKER_WORKFLOW.md`
-6. `docs/BACKEND_AUTOMATION_FLOW.md`
-7. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+3. `docs/COLLABORATION_SETUP.md`
+4. `docs/HANDOFF_FOR_NEW_COMPUTER.md`
+5. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+6. `docs/LINE_AI_TEST_REPORT.md`
+7. `docs/CHAT_C_FIX_REQUEST.md`
 8. `docs/LINE_AI_WORKER_TEST_SCENARIOS.md`
-9. `docs/LINE_AI_ADVANCED_QA_PLAN.md`
-10. `docs/HANDOFF_FOR_NEW_COMPUTER.md`
+9. `docs/AI_WORKER_WORKFLOW.md`
+10. `docs/BACKEND_AUTOMATION_FLOW.md`
+11. `docs/STYLE_SYSTEM.md`
 
 ## AI Agent 工作規則
 
@@ -62,15 +63,25 @@ git switch codex/collaboration-handoff
 node --test tests/line-ai-worker-scenarios.test.mjs
 ```
 
-若要開始新任務，從最新基準開分支：
+如果新電腦沒有設定 GitHub SSH key，可先用 HTTPS：
 
 ```bash
-git switch main
-git pull origin main
+git clone https://github.com/phoebe09010901/course-enrollment-system.git
+cd course-enrollment-system
+git fetch --all
+git switch codex/collaboration-handoff
+node --test tests/line-ai-worker-scenarios.test.mjs
+```
+
+若要開始新任務，從最新協作基準開分支：
+
+```bash
+git switch codex/collaboration-handoff
+git pull origin codex/collaboration-handoff
 git switch -c codex/<task-name>
 ```
 
-目前若要接續本輪交接內容，請先閱讀 `docs/HANDOFF_FOR_NEW_COMPUTER.md`。
+目前接手內容請先閱讀 `docs/HANDOFF_FOR_NEW_COMPUTER.md`。
 
 ## 文件更新規則
 
@@ -91,6 +102,14 @@ git switch -c codex/<task-name>
 用來記錄美術風格系統、style-selector-skill 與 course-brand-template-v1 的規則。
 
 每次新增 style token、模板、品牌案例或風格選擇邏輯後應更新。
+
+### `LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+
+用來記錄 LINE AI 客服接待流程、免費試營運說明、表單導向、流程問題、網站 / 系統問題與安全邊界。
+
+2026-05-27 起，LINE AI 不再負責資料收集、填表、照片收集、確認摘要、JSON 建檔或 `clients` / `course_projects` 建立。這些責任改由網頁表單與後端流程處理。
+
+當 LINE AI 入口選項、表單連結、免費試營運說明、流程說明或系統問題處理方式改變時更新。
 
 ### `COLLABORATION_SETUP.md`
 
@@ -113,6 +132,44 @@ git switch -c codex/<task-name>
 
 以上目錄目前多數尚未建立。
 
+## Chat 分工補充
+
+### Chat C：LINE AI 客服
+
+Chat C 負責 LINE AI 接待助理與 Cloudflare Worker 回覆邏輯。
+
+目前 LINE AI 只做：
+
+- 打招呼。
+- 說明免費試營運。
+- 說明製作流程。
+- 提供課程資料表連結。
+- 回答表單、Email、三款預覽、三天期限與網站 / 系統問題。
+- 防護系統外指令。
+
+LINE AI 不再收集姓名、Email、LINE ID Link、課程資料或照片素材。
+
+### Chat D / Chat B：表單與資料庫
+
+Chat D / Chat B 需要提供：
+
+- 確認正式課程資料表頁面與欄位。
+- 如果表單網址變更，提供 Cloudflare Worker 環境變數 `FORM_URL` 的新值。
+- 表單必填欄位檢查。
+- 表單送出後寫入資料庫。
+- 後台查看客戶與課程資料。
+
+### Chat E：自動化與 QA
+
+Chat E 需要接續：
+
+- 新版 LINE AI 接待助理流程測試。
+- 表單送出後自動化。
+- Email 通知。
+- 三款預覽網址通知。
+- 三天選款期限與過期處理。
+- 線上 Cloudflare Worker / LINE App 實測。
+
 ## 提交前檢查
 
 在完成一次修改前，AI Agent 應確認：
@@ -125,8 +182,6 @@ git switch -c codex/<task-name>
 
 ## 待建立協作規則
 
-- branch 命名規則。
-- commit message 格式。
 - 測試與驗證標準。
 - 文件審查流程。
 - style/template/skill 的版本管理規則。
@@ -134,6 +189,7 @@ git switch -c codex/<task-name>
 ## 目前已採用的臨時規則
 
 - 分支使用 `codex/<task-name>`。
+- 本輪協作基準分支是 `codex/collaboration-handoff`。
 - LINE AI Worker 修改後必跑：
 
 ```bash
