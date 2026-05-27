@@ -25,6 +25,27 @@ AI Agent 在開始任何工作前，應先閱讀：
 - 新增大型功能前，先建立 README 或規格文件，說明目錄責任。
 - 不要把美術風格、模板、skill、webhook、admin、worker 混在同一層未命名邏輯中。
 
+## 專案開啟與結束口令
+
+當使用者說「開啟專案」時，AI Agent 應先同步遠端狀態：
+
+```bash
+git pull
+```
+
+完成後回報目前 branch、最新 commit，以及是否有衝突或本機未提交變更。
+
+當使用者說「結束專案」時，AI Agent 應協助把目前工作保存到 git：
+
+```bash
+git status --short --branch
+git add <相關檔案>
+git commit -m "<本次修改摘要>"
+git push
+```
+
+如果沒有任何變更，應回報「目前沒有需要提交的變更」。如果有未確認的變更範圍，應先列出檔案並確認 commit 訊息或自行使用清楚、保守的訊息。
+
 ## Repo 探查規則
 
 接手工作時建議先執行：
