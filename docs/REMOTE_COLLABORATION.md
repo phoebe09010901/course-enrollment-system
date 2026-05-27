@@ -69,8 +69,43 @@ cp config/local.example.php config/local.php
 - DB user
 - DB password
 - API key
+- Cloudflare R2 account ID
+- Cloudflare R2 access key ID
+- Cloudflare R2 secret access key
+- Cloudflare R2 bucket
+- Cloudflare R2 public base URL
 
 `config/local.php` 已被 `.gitignore` 排除。
+
+## Cloudflare R2 圖片素材
+
+公開課程資料表單支援把老師照片、作品照片與教室照片上傳到 Cloudflare R2。
+
+啟用條件是以下設定皆存在：
+
+```text
+CLOUDFLARE_R2_ACCOUNT_ID
+CLOUDFLARE_R2_ACCESS_KEY_ID
+CLOUDFLARE_R2_SECRET_ACCESS_KEY
+CLOUDFLARE_R2_BUCKET
+CLOUDFLARE_R2_PUBLIC_BASE_URL
+```
+
+R2 物件 key 規則：
+
+```text
+admission-system/course-intakes/{record_id}/{intake_id}/{teacher|works|classroom}/{file_name}
+```
+
+MySQL 只存圖片瀏覽網址與素材資訊，主要在：
+
+```text
+course_intakes.course_assets_json
+course_intakes.image_fields_json
+course_intakes.photo_asset_statuses_json
+```
+
+若 R2 尚未設定，表單會退回使用本機 `public/uploads/course-intakes/`，避免測試環境中斷。
 
 ## LINE Intake API 合約
 

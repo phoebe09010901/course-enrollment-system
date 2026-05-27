@@ -18,6 +18,11 @@ function admission_config(): array
         'db_pass' => getenv('ADMISSION_DB_PASS') ?: '',
         'db_charset' => getenv('ADMISSION_DB_CHARSET') ?: 'utf8mb4',
         'api_key' => getenv('ADMISSION_API_KEY') ?: '',
+        'cloudflare_r2_account_id' => getenv('CLOUDFLARE_R2_ACCOUNT_ID') ?: '',
+        'cloudflare_r2_access_key_id' => getenv('CLOUDFLARE_R2_ACCESS_KEY_ID') ?: '',
+        'cloudflare_r2_secret_access_key' => getenv('CLOUDFLARE_R2_SECRET_ACCESS_KEY') ?: '',
+        'cloudflare_r2_bucket' => getenv('CLOUDFLARE_R2_BUCKET') ?: '',
+        'cloudflare_r2_public_base_url' => getenv('CLOUDFLARE_R2_PUBLIC_BASE_URL') ?: '',
     ];
 
     $localConfigPath = __DIR__ . '/local.php';

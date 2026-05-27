@@ -388,16 +388,23 @@ function store_course_photo_uploads($recordId, $intakeId)
 
             $extension = image_extension_from_upload($_FILES[$field]['tmp_name'][$i], $_FILES[$field]['name'][$i]);
             $fileName = $rule['category'] . '-' . str_pad((string) $photoIndex, 2, '0', STR_PAD_LEFT) . '-' . date('His') . '.' . $extension;
-            $targetPath = $targetDir . '/' . $fileName;
-
-            if (!move_uploaded_file($_FILES[$field]['tmp_name'][$i], $targetPath)) {
-                throw new Exception('photo_upload_failed');
-            }
+            $storage = store_course_photo_file(
+                $_FILES[$field]['tmp_name'][$i],
+                $targetDir,
+                $baseUrl,
+                $recordId,
+                (int) $intakeId,
+                $rule['category'],
+                $fileName,
+                photo_content_type($extension)
+            );
 
             $items[] = array(
                 'original_name' => $_FILES[$field]['name'][$i],
                 'file_name' => $fileName,
-                'url' => $baseUrl . '/' . rawurlencode($rule['category']) . '/' . rawurlencode($fileName),
+                'url' => $storage['url'],
+                'storage' => $storage['storage'],
+                'object_key' => $storage['object_key'],
                 'size' => (int) $_FILES[$field]['size'][$i],
                 'status' => 'provided',
             );
@@ -408,6 +415,153 @@ function store_course_photo_uploads($recordId, $intakeId)
     }
 
     return $assets;
+}
+
+function store_course_photo_file($tmpName, $targetDir, $baseUrl, $recordId, $intakeId, $category, $fileName, $contentType)
+{
+    if (course_r2_is_configured()) {
+        $objectKey = course_r2_object_key($recordId, $intakeId, $category, $fileName);
+        course_r2_put_object($objectKey, $tmpName, $contentType);
+
+        return array(
+            'storage' => 'cloudflare_r2',
+            'object_key' => $objectKey,
+            'url' => course_r2_public_url($objectKey),
+        );
+    }
+
+    ensure_upload_dir($targetDir);
+    $targetPath = $targetDir . '/' . $fileName;
+
+    if (!move_uploaded_file($tmpName, $targetPath)) {
+        throw new Exception('photo_upload_failed');
+    }
+
+    return array(
+        'storage' => 'local',
+        'object_key' => '',
+        'url' => $baseUrl . '/' . rawurlencode($category) . '/' . rawurlencode($fileName),
+    );
+}
+
+function course_r2_is_configured()
+{
+    return course_config_value('CLOUDFLARE_R2_ACCOUNT_ID') !== ''
+        && course_config_value('CLOUDFLARE_R2_ACCESS_KEY_ID') !== ''
+        && course_config_value('CLOUDFLARE_R2_SECRET_ACCESS_KEY') !== ''
+        && course_config_value('CLOUDFLARE_R2_BUCKET') !== ''
+        && course_config_value('CLOUDFLARE_R2_PUBLIC_BASE_URL') !== '';
+}
+
+function course_config_value($name)
+{
+    if (defined($name)) {
+        return trim((string) constant($name));
+    }
+
+    $value = getenv($name);
+    if ($value !== false && trim((string) $value) !== '') {
+        return trim((string) $value);
+    }
+
+    if (function_exists('admission_config')) {
+        $config = admission_config();
+        $key = strtolower($name);
+        if (isset($config[$key])) {
+            return trim((string) $config[$key]);
+        }
+    }
+
+    return '';
+}
+
+function course_r2_object_key($recordId, $intakeId, $category, $fileName)
+{
+    return 'admission-system/course-intakes/'
+        . safe_path_segment($recordId) . '/'
+        . (int) $intakeId . '/'
+        . safe_path_segment($category) . '/'
+        . $fileName;
+}
+
+function course_r2_public_url($objectKey)
+{
+    return rtrim(course_config_value('CLOUDFLARE_R2_PUBLIC_BASE_URL'), '/') . '/' . str_replace('%2F', '/', rawurlencode($objectKey));
+}
+
+function course_r2_put_object($objectKey, $filePath, $contentType)
+{
+    $accountId = course_config_value('CLOUDFLARE_R2_ACCOUNT_ID');
+    $accessKey = course_config_value('CLOUDFLARE_R2_ACCESS_KEY_ID');
+    $secretKey = course_config_value('CLOUDFLARE_R2_SECRET_ACCESS_KEY');
+    $bucket = course_config_value('CLOUDFLARE_R2_BUCKET');
+    $host = $accountId . '.r2.cloudflarestorage.com';
+    $encodedPath = '/' . rawurlencode($bucket) . '/' . str_replace('%2F', '/', rawurlencode($objectKey));
+    $url = 'https://' . $host . $encodedPath;
+    $amzDate = gmdate('Ymd\THis\Z');
+    $dateStamp = gmdate('Ymd');
+    $payloadHash = hash_file('sha256', $filePath);
+    $canonicalHeaders = 'content-type:' . $contentType . "\n"
+        . 'host:' . $host . "\n"
+        . 'x-amz-content-sha256:' . $payloadHash . "\n"
+        . 'x-amz-date:' . $amzDate . "\n";
+    $signedHeaders = 'content-type;host;x-amz-content-sha256;x-amz-date';
+    $canonicalRequest = "PUT\n"
+        . $encodedPath . "\n\n"
+        . $canonicalHeaders . "\n"
+        . $signedHeaders . "\n"
+        . $payloadHash;
+    $credentialScope = $dateStamp . '/auto/s3/aws4_request';
+    $stringToSign = "AWS4-HMAC-SHA256\n"
+        . $amzDate . "\n"
+        . $credentialScope . "\n"
+        . hash('sha256', $canonicalRequest);
+    $signingKey = course_r2_signature_key($secretKey, $dateStamp);
+    $signature = hash_hmac('sha256', $stringToSign, $signingKey);
+    $authorization = 'AWS4-HMAC-SHA256 Credential=' . $accessKey . '/' . $credentialScope
+        . ', SignedHeaders=' . $signedHeaders
+        . ', Signature=' . $signature;
+
+    $ch = curl_init($url);
+    $fileHandle = fopen($filePath, 'rb');
+
+    if (!$ch || !$fileHandle) {
+        throw new Exception('r2_upload_init_failed');
+    }
+
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+    curl_setopt($ch, CURLOPT_UPLOAD, true);
+    curl_setopt($ch, CURLOPT_INFILE, $fileHandle);
+    curl_setopt($ch, CURLOPT_INFILESIZE, filesize($filePath));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Authorization: ' . $authorization,
+        'Content-Type: ' . $contentType,
+        'Host: ' . $host,
+        'x-amz-content-sha256: ' . $payloadHash,
+        'x-amz-date: ' . $amzDate,
+    ));
+
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    fclose($fileHandle);
+
+    if ($response === false || $status < 200 || $status >= 300) {
+        error_log('[course-form-r2] upload failed status=' . $status . ' error=' . $error . ' key=' . $objectKey);
+        throw new Exception('r2_upload_failed');
+    }
+}
+
+function course_r2_signature_key($secretKey, $dateStamp)
+{
+    $dateKey = hash_hmac('sha256', $dateStamp, 'AWS4' . $secretKey, true);
+    $dateRegionKey = hash_hmac('sha256', 'auto', $dateKey, true);
+    $dateRegionServiceKey = hash_hmac('sha256', 's3', $dateRegionKey, true);
+
+    return hash_hmac('sha256', 'aws4_request', $dateRegionServiceKey, true);
 }
 
 function ensure_upload_dir($dir)
@@ -449,6 +603,19 @@ function image_extension_from_upload($tmpName, $originalName)
 
     $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
     return preg_match('/^(jpg|jpeg|png|gif|webp)$/', $extension) ? ($extension === 'jpeg' ? 'jpg' : $extension) : 'jpg';
+}
+
+function photo_content_type($extension)
+{
+    $types = array(
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+    );
+
+    return isset($types[$extension]) ? $types[$extension] : 'image/jpeg';
 }
 
 function update_form_course_intake_assets($intakeId, $values, $photoAssets)

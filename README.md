@@ -22,6 +22,8 @@ https://ftm.com.tw/demo/admission-system
 https://ftm.com.tw/demo/admission-system/public-course-intake.php
 ```
 
+照片素材可設定 Cloudflare R2 儲存。啟用後 MySQL 只保留圖片瀏覽網址；未設定 R2 時會使用本機 `public/uploads/course-intakes/` 作為測試備援。
+
 ## LINE Intake API
 
 Endpoint:
