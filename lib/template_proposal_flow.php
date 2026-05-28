@@ -1190,6 +1190,38 @@ function chat_d_is_canva_url($value)
     return chat_d_is_http_url($value) && preg_match('/(^https?:\/\/|\.)(canva\.com)\//i', $value) === 1;
 }
 
+function chat_d_is_placeholder_source_url($value)
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return true;
+    }
+
+    $host = parse_url($value, PHP_URL_HOST);
+    $host = strtolower((string) $host);
+    if ($host === '') {
+        return true;
+    }
+
+    $placeholderHosts = array(
+        'example.com',
+        'www.example.com',
+        'example.org',
+        'www.example.org',
+        'example.net',
+        'www.example.net',
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0',
+    );
+
+    if (in_array($host, $placeholderHosts, true)) {
+        return true;
+    }
+
+    return preg_match('/(^|\.)example\.(com|org|net)$/i', $host) === 1;
+}
+
 function chat_d_validate_template_proposals_ready($projectId, $project, $proposals, $proposalBatchId, $allowRegenerate)
 {
     if (count($proposals) !== 3) {
@@ -1230,6 +1262,12 @@ function chat_d_validate_template_proposals_ready($projectId, $project, $proposa
         }
         if (!chat_d_is_http_url(chat_d_value($proposal, 'secondary_source_url', ''))) {
             throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_secondary_source_url_invalid');
+        }
+        if (chat_d_is_placeholder_source_url(chat_d_value($proposal, 'source_url', ''))) {
+            throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_source_url_placeholder');
+        }
+        if (chat_d_is_placeholder_source_url(chat_d_value($proposal, 'secondary_source_url', ''))) {
+            throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_secondary_source_url_placeholder');
         }
         if (!chat_d_is_canva_url(chat_d_value($proposal, 'canva_url', ''))) {
             throw new Exception('template_proposals_invalid: proposal_' . $proposalCode . '_canva_url_required');

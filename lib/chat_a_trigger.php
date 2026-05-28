@@ -189,6 +189,8 @@ function chat_a_trigger_prompt($project, $rawPayload, $expiresAt)
     return implode("\n", array(
         '你是本專案的 Chat A。',
         '請依照 course-canva-template-proposal skill 與 repo docs/TEMPLATE_REFERENCE.md、docs/STYLE_SYSTEM.md，針對目前待處理專案產生三款 Canva-first 單頁招生樣板提案。',
+        '每款提案必須從 docs/TEMPLATE_REFERENCE.md 登錄的 TPL-001 到 TPL-010 中挑選 primary_template_id 與 secondary_template_id，並使用文件中的真實 source_url / secondary_source_url。',
+        '嚴禁使用 example.com、localhost、空白網址、臨時假網址或未登錄的 template_id；若無法取得真實來源網址，請回報 template_reference_missing，不要回填 proposal_ready。',
         '專案：' . $projectId . '（' . $courseName . '，' . $courseType . $courseFormat . '課，' . $courseLocation . '）',
         '課程資料與 R2 圖片 URLs 已放在 payload.raw_payload，請優先使用課程主題照、作品照與教室照。',
         '若 Canva 工具可用，請建立或準備三個 Canva 設計並回傳 canva_url；若工具無法建立實際 Canva，請明確說明阻礙，不要捏造連結。',
