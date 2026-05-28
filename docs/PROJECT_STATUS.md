@@ -127,6 +127,8 @@ FORM_URL
 - 舊測試若仍以「AI 逐步收資料」為期待，需由 Chat E 改成新版接待助理測試。
 - 樣板提案 worker 若未依規格實作鎖定，兩輪排程或兩台 worker 可能同時處理同一個 `project_id`。
 - 若缺資料仍被排程重試，可能造成每 10 分鐘重撞 Chat A / Canva；需用 `needs_data` / `template_failed` 停止自動重試。
+- Chat G：Canva 三案提案自動化曾遇到 `ftm.com.tw` 間歇性 DNS / host resolution 失敗；目前 direct API POST 應針對 `curl: (6) Could not resolve host` 做最多 3 次 bounded retry，仍失敗時標記 infra blocker。
+- 若排程 run context 指向不存在 worktree，例如 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，需檢查 scheduler cache / session / 殘留 automation，避免 stale worktree drift。
 
 ## 下一步建議
 
@@ -140,3 +142,4 @@ FORM_URL
 4. Chat D 確認表單送出後能寫入資料庫。
 5. Chat E 測試表單送出後 Email 與三款預覽通知。
 6. Chat E / Chat D 實作排程 worker 前，先建立 `worker_runs` 與 `course_projects` 鎖定欄位 migration。
+7. 每日巡檢 Chat G automation 的 `cwds` 是否仍指向存在的 worktree，並檢查 direct claim DNS 失敗是否重複發生。
