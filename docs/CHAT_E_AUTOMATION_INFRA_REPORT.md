@@ -73,12 +73,14 @@ curl: (6) Could not resolve host: ftm.com.tw
 Chat E 已新增 `scripts/chat-g-network-preflight.sh`，並將 Chat G automation 改為 claim 前固定執行：
 
 ```text
-WORKER_RUN_ID=<worker_run_id> ADMISSION_API_KEY=admission-api-20260528-chat-a-trigger scripts/chat-g-network-preflight.sh
+CHAT_G_RUNTIME_CONTEXT=automation_runtime WORKER_RUN_ID=<worker_run_id> ADMISSION_API_KEY=admission-api-20260528-chat-a-trigger scripts/chat-g-network-preflight.sh
 ```
 
 此 preflight gate 會固定寫入 automation memory：
 
 - `pwd` / actual cwd / expected cwd。
+- `runtime_context`，用來比對 `manual_shell` 與 `automation_runtime`。
+- 第一層 DNS gate：Python `socket.gethostbyname_ex("ftm.com.tw")`。
 - macOS DNS resolver sample。
 - system DNS probe：`dscacheutil` 與 system `dig`。
 - public DNS probe：`dig @1.1.1.1`。
@@ -88,12 +90,13 @@ WORKER_RUN_ID=<worker_run_id> ADMISSION_API_KEY=admission-api-20260528-chat-a-tr
 
 本機 runtime 檢查結果：
 
+- manual shell socket DNS probe 成功：`socket.gethostbyname_ex("ftm.com.tw") -> 60.249.109.44`。
 - macOS resolver 目前來自 Wi-Fi / hotspot，包含 link-local IPv6 resolver 與 `172.20.10.1`。
 - `dscacheutil`、system `dig`、`dig @1.1.1.1`、`dig @8.8.8.8` 皆可解析 `ftm.com.tw` 到 `60.249.109.44`。
 - health curl 可回 `HTTP 200`，`remote_ip=60.249.109.44`。
 - `curl --resolve ftm.com.tw:443:60.249.109.44` 也可回 `HTTP 200`，表示後端 HTTPS endpoint 可達。
 
-目前判斷：latest automation run 的 `curl (6)` 比較像 automation runtime 當下 DNS resolver 抖動，而不是 API endpoint 永久失效。後續若三次 bounded retry 仍失敗，必須標記 `dns_resolution_failed` 並停止，不進 claim。
+目前判斷：latest automation run 的 `curl (6)` 比較像 automation runtime 當下 DNS resolver 抖動，而不是 API endpoint 永久失效。後續若 manual shell socket DNS 成功、但 automation runtime socket DNS 失敗，優先查 scheduler/runtime network context，不要先查 backend/API/Canva。
 
 ## 剩餘風險
 
@@ -106,6 +109,7 @@ WORKER_RUN_ID=<worker_run_id> ADMISSION_API_KEY=admission-api-20260528-chat-a-tr
 
 - actual cwd 是否等於 `/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統`
 - 若相等，必須先執行 `scripts/chat-g-network-preflight.sh`。
+- preflight 必須先通過 `socket.gethostbyname_ex("ftm.com.tw")`，再做 health endpoint probe。
 - preflight script exit 0 後才可 claim。
 - preflight script exit 6 或記錄 `dns_resolution_failed` 時，必須停止且不可 claim。
 - 若不相等，直接停止並記錄 `stale_worktree_context`，不得做任何 proposal 工作。

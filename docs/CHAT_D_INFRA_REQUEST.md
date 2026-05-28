@@ -34,8 +34,9 @@
 - Chat G automation 已補強：
   - 啟動時檢查 cwd 是否等於 configured cwd `e89a`。
   - cwd 不一致時，在 DNS / health / claim / callback / Canva generation 前停止並記錄 `stale_worktree_context`。
-  - claim 前固定執行 `scripts/chat-g-network-preflight.sh`，記錄 pwd / DNS probe / health probe。
-  - DNS / host resolution 失敗最多 3 次 bounded retry。
+  - claim 前固定執行 `scripts/chat-g-network-preflight.sh`，記錄 pwd / `socket.gethostbyname_ex("ftm.com.tw")` DNS probe / health probe。
+  - DNS / host resolution 失敗最多 3 次 bounded retry，每次間隔 2 到 5 秒。
+  - 若 manual shell socket DNS 成功但 automation runtime socket DNS 失敗，優先查 scheduler/runtime network context。
   - DNS 無法解析時不嘗試 POST fail callback，改記錄 infra blocker。
 
 ## 請 Chat D 檢查
