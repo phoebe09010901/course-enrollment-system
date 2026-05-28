@@ -26,9 +26,15 @@
 - 2026-05-28 11:07 左右，本機連續 5 次 preflight 都可解析 `ftm.com.tw` 到 `60.249.109.44`。
 - `claim.php` route 有回應；以非 POST 測試時回 `405`，代表 host / route 目前可達。
 - 2026-05-28 11:18，本機 health endpoint 回 `ok=true`、`authenticated=true`、`db_ok=true`；該檢查未呼叫 claim。
+- 2026-05-28 11:31，本機 DNS / health 檢查正常：
+  - system DNS 可解析 `ftm.com.tw` 到 `60.249.109.44`。
+  - `dig @1.1.1.1` 與 `dig @8.8.8.8` 也可解析。
+  - health endpoint 回 `HTTP 200`。
+  - `curl --resolve ftm.com.tw:443:60.249.109.44` 也回 `HTTP 200`。
 - Chat G automation 已補強：
   - 啟動時檢查 cwd 是否等於 configured cwd `e89a`。
   - cwd 不一致時，在 DNS / health / claim / callback / Canva generation 前停止並記錄 `stale_worktree_context`。
+  - claim 前固定執行 `scripts/chat-g-network-preflight.sh`，記錄 pwd / DNS probe / health probe。
   - DNS / host resolution 失敗最多 3 次 bounded retry。
   - DNS 無法解析時不嘗試 POST fail callback，改記錄 infra blocker。
 

@@ -62,6 +62,39 @@
 
 最新一次 local-mode 修復只做 cwd 與設定檔驗證，沒有做 DNS / health / claim / callback / Canva。
 
+## Network Preflight Update
+
+2026-05-28 後續 run 已確認 cwd 正確，但在 health preflight 前連續 3 次出現：
+
+```text
+curl: (6) Could not resolve host: ftm.com.tw
+```
+
+Chat E 已新增 `scripts/chat-g-network-preflight.sh`，並將 Chat G automation 改為 claim 前固定執行：
+
+```text
+WORKER_RUN_ID=<worker_run_id> ADMISSION_API_KEY=admission-api-20260528-chat-a-trigger scripts/chat-g-network-preflight.sh
+```
+
+此 preflight gate 會固定寫入 automation memory：
+
+- `pwd` / actual cwd / expected cwd。
+- macOS DNS resolver sample。
+- system DNS probe：`dscacheutil` 與 system `dig`。
+- public DNS probe：`dig @1.1.1.1`。
+- health curl exit code、HTTP status、remote IP、DNS lookup time、connect time、TLS time、total time。
+- health response body 前段。
+- 最終 `preflight_passed`、`dns_resolution_failed` 或 `health_preflight_failed`。
+
+本機 runtime 檢查結果：
+
+- macOS resolver 目前來自 Wi-Fi / hotspot，包含 link-local IPv6 resolver 與 `172.20.10.1`。
+- `dscacheutil`、system `dig`、`dig @1.1.1.1`、`dig @8.8.8.8` 皆可解析 `ftm.com.tw` 到 `60.249.109.44`。
+- health curl 可回 `HTTP 200`，`remote_ip=60.249.109.44`。
+- `curl --resolve ftm.com.tw:443:60.249.109.44` 也可回 `HTTP 200`，表示後端 HTTPS endpoint 可達。
+
+目前判斷：latest automation run 的 `curl (6)` 比較像 automation runtime 當下 DNS resolver 抖動，而不是 API endpoint 永久失效。後續若三次 bounded retry 仍失敗，必須標記 `dns_resolution_failed` 並停止，不進 claim。
+
 ## 剩餘風險
 
 - 若下一輪 automation 在 `local` mode 下仍從 `4938`、`4d27`、`1210`、`945c` 或其他非 `e89a` cwd 啟動，代表問題不在 repo 或 `automation.toml` 內容，而是 scheduler / run session cache 層仍有舊上下文。
@@ -72,5 +105,7 @@
 下一輪 Chat G automation 必須先回報：
 
 - actual cwd 是否等於 `/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統`
-- 若相等，才可進行 DNS / health / claim。
+- 若相等，必須先執行 `scripts/chat-g-network-preflight.sh`。
+- preflight script exit 0 後才可 claim。
+- preflight script exit 6 或記錄 `dns_resolution_failed` 時，必須停止且不可 claim。
 - 若不相等，直接停止並記錄 `stale_worktree_context`，不得做任何 proposal 工作。

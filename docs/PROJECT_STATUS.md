@@ -131,6 +131,7 @@ FORM_URL
 - 若缺資料仍被排程重試，可能造成每 10 分鐘重撞 Chat A / Canva；需用 `needs_data` / `template_failed` 停止自動重試。
 - Chat G：Canva 三案提案自動化曾遇到 `ftm.com.tw` 間歇性 DNS / host resolution 失敗；目前 direct API POST 應針對 `curl: (6) Could not resolve host` 做最多 3 次 bounded retry，仍失敗時標記 infra blocker。
 - Chat G automation 已由 `worktree` execution environment 改為 `local`，避免 scheduler 每輪產生 `4938` 這類 generated worktree 而觸發 stale cwd。
+- Chat G automation 已新增 `scripts/chat-g-network-preflight.sh`；每輪 claim 前固定記錄 pwd / DNS probe / health probe，三次 DNS 解析失敗時標記 `dns_resolution_failed` 並停止，不進 claim。
 - 若排程 run context 指向不存在或非 configured cwd 的 worktree，例如 `/Users/phoebe/.codex/worktrees/4938/課程招生 - 系統`、`/Users/phoebe/.codex/worktrees/4d27/課程招生 - 系統` 或 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，必須在 DNS / claim / Canva generation 前停止，並記錄 `stale_worktree_context`。
 
 ## 下一步建議
