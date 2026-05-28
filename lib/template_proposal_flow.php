@@ -1495,7 +1495,7 @@ function chat_d_select_template_proposal($projectId, $proposalId)
             $proposal['canva_url'],
             now(),
             '已選定 Canva 樣板',
-            'canva_template_selected',
+            'template_ready',
             now(),
             $projectId,
         )
@@ -1513,70 +1513,6 @@ function chat_d_select_template_proposal($projectId, $proposalId)
     );
 
     return $proposal;
-}
-
-function chat_d_return_to_template_selection_stage($projectId)
-{
-    if (!chat_d_table_exists('template_proposals') || !chat_d_table_exists('course_projects')) {
-        throw new Exception('template_flow_tables_missing');
-    }
-
-    $project = chat_d_project_by_id($projectId);
-    if (!$project) {
-        throw new Exception('project_not_found');
-    }
-
-    if (!chat_d_project_has_ready_proposal_batch($projectId)) {
-        throw new Exception('ready_proposals_required');
-    }
-
-    db()->autocommit(false);
-    try {
-        db_exec(
-            "UPDATE template_proposals
-             SET is_selected = 0, status = 'proposal_ready', selected_at = NULL, updated_at = ?
-             WHERE project_id = ?",
-            'ss',
-            array(now(), $projectId)
-        );
-
-        db_exec(
-            'UPDATE course_projects
-             SET selected_proposal_id = NULL,
-                 selected_template_id = NULL,
-                 selected_secondary_template_id = NULL,
-                 selected_canva_direction = NULL,
-                 selected_canva_url = NULL,
-                 template_selected_at = NULL,
-                 project_status = ?,
-                 template_status = ?,
-                 needs_template_proposal = 0,
-                 updated_at = ?
-             WHERE project_id = ?',
-            'ssss',
-            array('樣板已完成，等待重新選擇', 'template_ready', now(), $projectId)
-        );
-
-        chat_d_log_notification(
-            $projectId,
-            isset($project['client_id']) ? (int) $project['client_id'] : null,
-            'returned_to_template_selection',
-            'system',
-            '',
-            array(),
-            '後台已將案件退回選樣板階段。',
-            'recorded'
-        );
-
-        db()->commit();
-        db()->autocommit(true);
-    } catch (Exception $error) {
-        db()->rollback();
-        db()->autocommit(true);
-        throw $error;
-    }
-
-    return true;
 }
 
 function chat_d_value($array, $key, $default)

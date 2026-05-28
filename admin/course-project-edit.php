@@ -132,16 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
     }
 
-    if ($action === 'return_to_selection') {
-        try {
-            chat_d_return_to_template_selection_stage($projectId);
-            $_SESSION['flash'] = '已回到選樣板階段，三款提案仍保留，可重新開啟選版頁。';
-        } catch (Exception $error) {
-            $_SESSION['flash'] = '無法回到選樣板階段：請確認已有完整三款樣板提案。';
-        }
-        redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
-    }
-
     foreach ($values as $key => $default) {
         $values[$key] = post($key, $default);
     }
@@ -230,13 +220,6 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
     <input type="hidden" name="_action" value="send_action_email">
     <button type="submit" class="secondary">寄送操作 Email</button>
   </form>
-  <?php if (!empty($project['selected_proposal_id'])) { ?>
-    <form class="inline-action-form" method="post" onsubmit="return confirm('確定要回到選樣板階段嗎？目前選定紀錄會清除，但三款提案會保留。');">
-      <?php echo csrf_field(); ?>
-      <input type="hidden" name="_action" value="return_to_selection">
-      <button type="submit" class="secondary">回到選樣板階段</button>
-    </form>
-  <?php } ?>
 </div>
 
 <section class="panel">
@@ -252,23 +235,6 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
 <?php if (!empty($formErrors)) { ?>
   <div class="alert error"><?php echo h(implode(' ', $formErrors)); ?></div>
 <?php } ?>
-
-<section class="panel">
-  <h2>流程節點</h2>
-  <div class="detail-grid">
-    <dl class="detail-list">
-      <div class="detail-row"><dt class="detail-label">目前節點</dt><dd class="detail-value"><?php echo h(chat_d_template_status_label(isset($project['template_status']) ? $project['template_status'] : '')); ?></dd></div>
-      <div class="detail-row"><dt class="detail-label">選定款式</dt><dd class="detail-value"><?php echo h(isset($project['selected_proposal_id']) ? $project['selected_proposal_id'] : ''); ?></dd></div>
-      <div class="detail-row"><dt class="detail-label">選定時間</dt><dd class="detail-value"><?php echo h(isset($project['template_selected_at']) ? $project['template_selected_at'] : ''); ?></dd></div>
-    </dl>
-    <dl class="detail-list">
-      <div class="detail-row"><dt class="detail-label">主樣板</dt><dd class="detail-value"><?php echo h(isset($project['selected_template_id']) ? $project['selected_template_id'] : ''); ?></dd></div>
-      <div class="detail-row"><dt class="detail-label">輔助樣板</dt><dd class="detail-value"><?php echo h(isset($project['selected_secondary_template_id']) ? $project['selected_secondary_template_id'] : ''); ?></dd></div>
-      <div class="detail-row"><dt class="detail-label">選定 Canva</dt><dd class="detail-value"><?php if (!empty($project['selected_canva_url'])) { ?><a target="_blank" href="<?php echo h($project['selected_canva_url']); ?>"><?php echo h($project['selected_canva_url']); ?></a><?php } ?></dd></div>
-    </dl>
-  </div>
-  <p class="muted">若要回到此階段前一步，請按上方「回到選樣板階段」。系統會保留三款提案，清除選定欄位，狀態回到「樣板已完成」。</p>
-</section>
 
 <section class="panel">
   <h2>專案狀態</h2>
