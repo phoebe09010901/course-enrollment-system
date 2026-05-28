@@ -112,6 +112,28 @@ Dry run:
 CHAT_G_LOCAL_DRY_RUN=1 scripts/chat-g-local-runner.sh
 ```
 
+## Local Control App
+
+A small local control app is available for manual runs and diagnosis:
+
+```bash
+scripts/chat-g-control-app.sh
+```
+
+Open:
+
+```text
+http://127.0.0.1:8789
+```
+
+The app can run a dry network test, start a confirmed full run, kickstart the installed `launchd` worker, and show the latest logs and automation memory.
+
+Full details:
+
+```text
+docs/CHAT_G_CONTROL_APP.md
+```
+
 ## Important Notes
 
 - The Mac must be awake, logged in, and online.

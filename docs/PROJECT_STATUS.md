@@ -62,6 +62,7 @@
 - 已補上 Chat A / Canva proposal ready gate：proposal 必須剛好 3 筆且為 A / B / C，三筆都要有真實 `canva_url`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`，缺任一欄不可 ready，也不可在同一 project 自動建立第二批有效 proposal batch。
 - 已建立 `docs/CHAT_D_INFRA_REQUEST.md`，整理 Chat G direct claim 前 DNS / host resolution 失敗與後端健康檢查需求。
 - 已建立 `docs/CHAT_E_AUTOMATION_INFRA_REPORT.md`，整理 Chat G stale worktree context 事件；Chat G automation configured cwd 已由舊的 `945c` 改為目前最新且存在的 `e89a`。
+- 已建立 Chat G 本機控制台：`local-control/` 與 `scripts/chat-g-control-app.sh`，可在 `http://127.0.0.1:8789` 手動執行 DNS / health dry run、正式執行、觸發 launchd，並查看 latest logs / automation memory。詳見 `docs/CHAT_G_CONTROL_APP.md`。
 
 ## 目前 FORM_URL 狀態
 
@@ -135,6 +136,7 @@ FORM_URL
 - 若 manual shell socket DNS 成功但 automation runtime socket DNS 失敗，需優先檢查 scheduler/runtime network context。
 - 已建立 `docs/CHAT_G_RUNTIME_NETWORK_BLOCKER.md`：最新證據顯示 automation archived session 權限為 `Network access is restricted`，因此 Chat G cron 需要可用 DNS / outbound network 的 runtime，否則會持續停在 preflight。
 - 已建立本機 macOS `launchd` 排程替代方案：`/Users/phoebe/Library/LaunchAgents/com.phoebe.chat-g-canva-worker.plist`，每小時執行 `scripts/chat-g-local-runner.sh`；原 Codex automation cron 已暫停。詳見 `docs/CHAT_G_LOCAL_SCHEDULER.md`。
+- Chat G 本機控制台只綁定 `127.0.0.1`，不接收任意 shell command；`測試網路` 不會 claim project，`正式執行` 與 `觸發排程` 會先顯示確認。
 - 若排程 run context 指向不存在或非 configured cwd 的 worktree，例如 `/Users/phoebe/.codex/worktrees/4938/課程招生 - 系統`、`/Users/phoebe/.codex/worktrees/4d27/課程招生 - 系統` 或 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，必須在 DNS / claim / Canva generation 前停止，並記錄 `stale_worktree_context`。
 
 ## 下一步建議

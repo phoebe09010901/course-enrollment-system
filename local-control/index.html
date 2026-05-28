@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat G 控制台</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">課程招生系統</p>
+          <h1>Chat G 樣板排程控制台</h1>
+        </div>
+        <div id="statusPill" class="pill">讀取中</div>
+      </section>
+
+      <section class="actions">
+        <button id="dryRunBtn" class="button secondary">
+          <span>測試網路</span>
+          <small>只跑 DNS / health，不 claim</small>
+        </button>
+        <button id="fullRunBtn" class="button primary">
+          <span>正式執行</span>
+          <small>通過 preflight 後啟動 Chat G</small>
+        </button>
+        <button id="kickstartBtn" class="button">
+          <span>觸發排程</span>
+          <small>用 launchd 立刻跑一次</small>
+        </button>
+        <button id="refreshBtn" class="button">
+          <span>重新整理</span>
+          <small>讀取最新 log</small>
+        </button>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>目前狀態</h2>
+          <dl id="summary"></dl>
+        </article>
+
+        <article class="panel">
+          <h2>最近 Log</h2>
+          <ul id="logList" class="log-list"></ul>
+        </article>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="panel-head">
+          <h2>最新執行輸出</h2>
+          <button id="copyLogBtn" class="mini">Copy</button>
+        </div>
+        <pre id="latestLog"></pre>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="panel-head">
+          <h2>Automation Memory</h2>
+          <button id="copyMemoryBtn" class="mini">Copy</button>
+        </div>
+        <pre id="memoryLog"></pre>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
