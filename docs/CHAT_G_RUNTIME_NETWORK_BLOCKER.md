@@ -52,6 +52,14 @@ The automation worker is running in a scheduler/runtime sandbox that does not ex
 
 Chat G automation must run in a runtime with outbound network / DNS enabled, or Codex app automation needs a setting that grants network access to this cron.
 
+Current workaround:
+
+```text
+macOS launchd local scheduler
+```
+
+The local scheduler is documented in `docs/CHAT_G_LOCAL_SCHEDULER.md`.
+
 Until the runtime has network access, the correct behavior is:
 
 - stop at preflight,
