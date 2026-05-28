@@ -400,9 +400,10 @@ function chat_d_claim_template_projects($limit, $workerRunId, $workerName)
                AND (
                     p.template_status = 'pending_template'
                     OR p.template_status IS NULL
-                    OR p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued')
+                    OR p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued', 'template_failed')
                     " . $processingCondition . "
                )
+               AND (p.template_status IS NULL OR p.template_status NOT IN ('template_ready', 'waiting_client_selection', 'template_selected', 'selected', 'canva_template_selected', 'canva_proposals_ready'))
              ORDER BY p.updated_at ASC, p.id ASC
              LIMIT " . $limit . " FOR UPDATE",
             '',
@@ -416,7 +417,7 @@ function chat_d_claim_template_projects($limit, $workerRunId, $workerName)
                 continue;
             }
 
-            if (chat_d_project_has_ready_proposal_batch($projectId)) {
+            if (!chat_d_project_is_claimable($row)) {
                 continue;
             }
 
@@ -584,6 +585,70 @@ function chat_d_project_has_ready_proposal_batch($projectId)
     );
 
     return $row && (int) $row['total'] === 3 && (int) $row['valid_total'] === 3;
+}
+
+function chat_d_project_has_active_proposal_batch($project)
+{
+    if (!$project || !is_array($project)) {
+        return false;
+    }
+
+    $status = isset($project['template_status']) ? (string) $project['template_status'] : '';
+    if (in_array($status, array('template_ready', 'waiting_client_selection', 'template_selected', 'selected', 'canva_template_selected', 'canva_proposals_ready'), true)) {
+        return true;
+    }
+
+    if (in_array($status, array('processing_template', 'chat_a_triggered'), true)) {
+        $startedAt = isset($project['template_processing_started_at']) ? trim((string) $project['template_processing_started_at']) : '';
+        if ($startedAt === '') {
+            return true;
+        }
+
+        $startedTime = strtotime($startedAt);
+        if ($startedTime === false) {
+            return true;
+        }
+
+        return $startedTime >= strtotime('-60 minutes');
+    }
+
+    $projectId = isset($project['project_id']) ? (string) $project['project_id'] : '';
+    if ($projectId === '') {
+        return false;
+    }
+
+    return chat_d_project_has_ready_proposal_batch($projectId);
+}
+
+function chat_d_project_is_claimable($project)
+{
+    if (!$project || !is_array($project)) {
+        return false;
+    }
+
+    if (isset($project['needs_template_proposal']) && (int) $project['needs_template_proposal'] !== 1) {
+        return false;
+    }
+
+    if (chat_d_project_has_active_proposal_batch($project)) {
+        return false;
+    }
+
+    $status = isset($project['template_status']) ? (string) $project['template_status'] : '';
+    if ($status === '' || $status === 'pending_template' || $status === 'pending_canva_proposals' || $status === 'chat_a_trigger_queued') {
+        return true;
+    }
+
+    if ($status === 'template_failed') {
+        return true;
+    }
+
+    if ($status === 'processing_template' || $status === 'chat_a_triggered') {
+        $startedAt = isset($project['template_processing_started_at']) ? trim((string) $project['template_processing_started_at']) : '';
+        return $startedAt !== '' && strtotime($startedAt) !== false && strtotime($startedAt) < strtotime('-60 minutes');
+    }
+
+    return false;
 }
 
 function chat_d_is_http_url($value)

@@ -38,9 +38,10 @@ try {
            AND (
                 p.template_status = 'pending_template'
                 OR p.template_status IS NULL
-                OR p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued')
+                OR p.template_status IN ('pending_canva_proposals', 'chat_a_trigger_queued', 'template_failed')
                 " . $processingCondition . "
            )
+           AND (p.template_status IS NULL OR p.template_status NOT IN ('template_ready', 'waiting_client_selection', 'template_selected', 'selected', 'canva_template_selected', 'canva_proposals_ready'))
          ORDER BY p.updated_at ASC, p.id ASC
          LIMIT " . $limit,
         '',
@@ -49,6 +50,9 @@ try {
 
     $projects = array();
     foreach ($rows as $row) {
+        if (!chat_d_project_is_claimable($row)) {
+            continue;
+        }
         $projects[] = chat_a_trigger_project_payload($row);
     }
 
