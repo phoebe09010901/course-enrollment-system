@@ -29,6 +29,14 @@ Source plist in repo:
 launchd/com.phoebe.chat-g-canva-worker.plist
 ```
 
+For another computer, do not manually copy the absolute-path plist. Install it with:
+
+```bash
+scripts/install-chat-g-launchagent.sh
+```
+
+The installer generates a machine-local plist using that computer's current repo path and `$HOME`.
+
 Current schedule:
 
 ```text
@@ -117,6 +125,12 @@ Reload:
 
 ```bash
 launchctl bootstrap gui/$(id -u) /Users/phoebe/Library/LaunchAgents/com.phoebe.chat-g-canva-worker.plist
+```
+
+Fresh install on a new computer:
+
+```bash
+scripts/install-chat-g-launchagent.sh
 ```
 
 Dry run:

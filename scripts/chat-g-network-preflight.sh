@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -u
 
-EXPECTED_CWD="/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統"
-AUTOMATION_MEMORY="/Users/phoebe/.codex/automations/chat-g-canva-proposals-automation/memory.md"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+EXPECTED_CWD="$(cd "${SCRIPT_DIR}/.." && pwd)"
+AUTOMATION_DIR="${CHAT_G_AUTOMATION_DIR:-$HOME/.codex/automations/chat-g-canva-proposals-automation}"
+AUTOMATION_MEMORY="${AUTOMATION_DIR}/memory.md"
 HEALTH_URL="https://ftm.com.tw/demo/admission-system/api/chat-a-trigger/health.php"
 HOSTNAME_TO_CHECK="ftm.com.tw"
 API_KEY="${ADMISSION_API_KEY:-admission-api-20260528-chat-a-trigger}"
@@ -10,6 +12,9 @@ WORKER_RUN_ID="${WORKER_RUN_ID:-chat-g-$(date +%Y%m%d%H%M%S)}"
 RUNTIME_CONTEXT="${CHAT_G_RUNTIME_CONTEXT:-manual_shell}"
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-3}"
 SLEEP_SECONDS="${SLEEP_SECONDS:-3}"
+
+mkdir -p "$AUTOMATION_DIR"
+touch "$AUTOMATION_MEMORY"
 
 log() {
   printf '%s\n' "$*"

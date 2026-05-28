@@ -149,7 +149,28 @@ Chat G 的正式自動執行路徑目前不是 Codex automation cron，而是本
 /Users/phoebe/Library/LaunchAgents/com.phoebe.chat-g-canva-worker.plist
 ```
 
-如果要在另一台電腦也接手同樣模式，需複製並重新安裝對應 LaunchAgent，或明確改成該機器自己的本機排程。
+如果要在另一台電腦也接手同樣模式，請直接在 clone 完 repo 後執行：
+
+```bash
+chmod +x scripts/install-chat-g-launchagent.sh
+scripts/install-chat-g-launchagent.sh
+```
+
+這個安裝腳本會依照「該台電腦目前的 repo 路徑」自動產生並安裝：
+
+```text
+~/Library/LaunchAgents/com.phoebe.chat-g-canva-worker.plist
+```
+
+不需要手改 `/Users/phoebe/...` 這類舊路徑。
+
+安裝完可直接驗證：
+
+```bash
+launchctl print gui/$(id -u)/com.phoebe.chat-g-canva-worker
+launchctl kickstart -k gui/$(id -u)/com.phoebe.chat-g-canva-worker
+scripts/chat-g-control-app.sh
+```
 
 ### 目前最重要的限制
 
@@ -186,6 +207,7 @@ Chat G 的正式自動執行路徑目前不是 Codex automation cron，而是本
 4. Chat D / Chat B 確認表單欄位、必填驗證與送出後資料庫寫入。
 5. Chat E 測試表單送出後 Email、三款預覽通知、三天選款期限與過期處理。
 6. 若新電腦要接手 Canva 階段，先確認這台機器能實際打開並完成 Canva 三案，而不是只驗證本地 repo。
+7. 若新電腦也要接手 Chat G 排程，請先執行 `scripts/install-chat-g-launchagent.sh` 再驗證 `launchctl` 狀態。
 
 ## 協作規則
 

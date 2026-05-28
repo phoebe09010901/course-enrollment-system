@@ -7,10 +7,12 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
-const automationDir = "/Users/phoebe/.codex/automations/chat-g-canva-proposals-automation";
+const automationDir =
+  process.env.CHAT_G_AUTOMATION_DIR ||
+  path.join(process.env.HOME || "", ".codex", "automations", "chat-g-canva-proposals-automation");
 const logsDir = path.join(automationDir, "local-logs");
 const runner = path.join(repoRoot, "scripts/chat-g-local-runner.sh");
-const launchAgent = "/Users/phoebe/Library/LaunchAgents/com.phoebe.chat-g-canva-worker.plist";
+const launchAgent = path.join(process.env.HOME || "", "Library", "LaunchAgents", "com.phoebe.chat-g-canva-worker.plist");
 const label = `gui/${process.getuid()}/com.phoebe.chat-g-canva-worker`;
 const port = Number(process.env.CHAT_G_CONTROL_PORT || 8789);
 

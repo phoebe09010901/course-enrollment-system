@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -u
 
-PROJECT_DIR="/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PORT="${CHAT_G_CONTROL_PORT:-8789}"
 
 cd "$PROJECT_DIR" || exit 20

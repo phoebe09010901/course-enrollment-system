@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -u
 
-PROJECT_DIR="/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統"
-AUTOMATION_DIR="/Users/phoebe/.codex/automations/chat-g-canva-proposals-automation"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+AUTOMATION_DIR="${CHAT_G_AUTOMATION_DIR:-$HOME/.codex/automations/chat-g-canva-proposals-automation}"
 LOG_DIR="${AUTOMATION_DIR}/local-logs"
 LOCK_DIR="${AUTOMATION_DIR}/local-runner.lock"
-CODEX_BIN="/Applications/Codex.app/Contents/Resources/codex"
+CODEX_BIN="${CODEX_BIN:-/Applications/Codex.app/Contents/Resources/codex}"
 PROMPT_FILE="${PROJECT_DIR}/scripts/chat-g-local-worker-prompt.md"
 PREFLIGHT_SCRIPT="${PROJECT_DIR}/scripts/chat-g-network-preflight.sh"
 RUN_ID="${WORKER_RUN_ID:-chat-g-local-$(date +%Y%m%d%H%M%S)}"
@@ -37,6 +38,8 @@ cd "$PROJECT_DIR" || {
 log "run_id=${RUN_ID}"
 log "cwd=$(pwd)"
 log "dry_run=${DRY_RUN}"
+log "project_dir=${PROJECT_DIR}"
+log "automation_dir=${AUTOMATION_DIR}"
 
 CHAT_G_RUNTIME_CONTEXT=local_launchd \
 WORKER_RUN_ID="$RUN_ID" \
