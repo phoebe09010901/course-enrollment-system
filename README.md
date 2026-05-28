@@ -54,6 +54,7 @@ Authorization: Bearer {ADMISSION_API_KEY}
 4. Cloudflare Worker 將 LINE intake JSON POST 到 `/api/line-intakes`。
 5. 後台 `admin/clients.php` 會讀取 `clients` 與 `course_intakes` 顯示客戶資料。
 6. Chat D 的 Canva 樣板資料流使用 `course_projects`、`template_proposals`、`notification_logs`，migration 在 `database/migrations/002_create_chat_d_template_flow.sql`；既有環境請再套用 `database/migrations/004_harden_chat_a_template_queue.sql`。公開課程表單送出後會建立 `course_projects`，狀態會進入 `pending_template`，等待雲端 Chat A worker 原子化領取。
+7. 網站工廠資料模型使用獨立 `factory_*` 資料表，migration 在 `database/migrations/005_create_website_factory_tables.sql`。正式環境以 PHP 5.6 / MySQL 5.7.44 / cPanel shared hosting 為準。
 
 ## Chat A 自動觸發
 
@@ -66,6 +67,30 @@ CHAT_A_TRIGGER_TIMEOUT=3
 ```
 
 Webhook 會收到 `project_id`、客戶選版頁、課程資料、圖片資產 raw payload，以及 Chat D 回填端點 `api/template-proposals/`。Chat A 完成 Canva 三款樣板後，仍需依照下方 API 寫回 `template_proposals`。
+
+## Website Factory Inquiry API
+
+網站工廠諮詢 / 預約表單寫入 `factory_inquiries`：
+
+```text
+POST /api/factory-inquiries
+```
+
+可送一般 form POST 或 JSON：
+
+```json
+{
+  "factory_project_id": "WF-20260528-00001",
+  "name": "王小明",
+  "phone": "0912345678",
+  "email": "client@example.com",
+  "type": "品牌形象網站",
+  "budget": "3-8萬",
+  "note": "想做一頁式網站"
+}
+```
+
+`name` 與 `phone` 必填。若電話或 Email 已存在於 `clients`，系統會把 `client_id` 帶入 inquiry；否則只保存 inquiry，不自動建立客戶。
 
 需要補觸發既有專案時，可 POST 到：
 

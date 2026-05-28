@@ -1,2 +1,3 @@
 RewriteEngine On
 RewriteRule ^line-intakes/?$ line-intakes/index.php [L]
+RewriteRule ^factory-inquiries/?$ factory-inquiries/index.php [L]
