@@ -60,6 +60,7 @@
 - 已更新 `docs/COLLABORATION_SETUP.md` 的 Chat C / Chat D / Chat E 分工。
 - 已補上 Chat F 提醒的排程 / Worker 安全規格：取件 atomic lock、processing 20 到 30 分鐘逾時回收、可重試 / 不可重試錯誤分類、30 到 60 分鐘 retry cooldown、`worker_run_id` 與 `worker_runs` log schema。
 - 已補上 Chat A / Canva proposal ready gate：proposal 必須剛好 3 筆且為 A / B / C，三筆都要有真實 `canva_url`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`，缺任一欄不可 ready，也不可在同一 project 自動建立第二批有效 proposal batch。
+- 已建立 `docs/CHAT_D_INFRA_REQUEST.md`，整理 Chat G direct claim 前 DNS / host resolution 失敗與後端健康檢查需求。
 
 ## 目前 FORM_URL 狀態
 
@@ -143,3 +144,4 @@ FORM_URL
 5. Chat E 測試表單送出後 Email 與三款預覽通知。
 6. Chat E / Chat D 實作排程 worker 前，先建立 `worker_runs` 與 `course_projects` 鎖定欄位 migration。
 7. 每日巡檢 Chat G automation 的 `cwds` 是否仍指向存在的 worktree，並檢查 direct claim DNS 失敗是否重複發生。
+8. Chat D 檢查 `ftm.com.tw` API access log、DNS 穩定性與 health endpoint，詳見 `docs/CHAT_D_INFRA_REQUEST.md`。
