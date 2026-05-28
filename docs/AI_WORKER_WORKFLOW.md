@@ -196,7 +196,7 @@ log 至少包含：
 
 初期可先規劃以下任務類型，但尚不建立程式碼：
 
-- `intake_confirmed_line_payload`：處理 LINE AI 已確認的標準 JSON，建立或更新客戶與課程專案。
+- `course_intake_form_submitted`：處理網頁表單送出 payload，建立或更新客戶與課程專案。
 - `generate_course_copy`：產生招生文案草稿。
 - `select_style`：根據課程與受眾選擇 style。
 - `render_template_payload`：將課程資料轉成模板可用資料。
@@ -264,7 +264,7 @@ log 至少包含：
 
 ## 相關流程文件
 
-- `docs/BACKEND_AUTOMATION_FLOW.md`：規劃 LINE AI 收件、資料庫建檔、後台、三款樣板預覽、通知與三天作廢流程。
+- `docs/BACKEND_AUTOMATION_FLOW.md`：規劃網頁表單送出、資料庫建檔、後台、三款樣板預覽、通知與三天作廢流程。
 
 ## 實作前檢查
 
