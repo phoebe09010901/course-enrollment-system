@@ -17,6 +17,7 @@
 - `docs/TEMPLATE_REFERENCE.md`
 - `docs/CLIENT_SELECTION_FLOW.md`
 - `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
+- `docs/CHAT_A_PROPOSAL_HANDOFF_SPEC.md`
 - `docs/LINE_AI_TEST_REPORT.md`
 - `docs/CHAT_C_FIX_REQUEST.md`
 - `cloudflare-workers/workers.js`
@@ -49,6 +50,7 @@
   - 回答流程、免費、三款預覽、三天期限與網站 / 系統問題。
   - 防護系統外指令。
 - 已更新 `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md` 為新版「表單導向」流程。
+- 已新增 `docs/CHAT_A_PROPOSAL_HANDOFF_SPEC.md`，定義案件送進「待樣板提案」前提供給 Chat A 的最小 payload。
 - 已更新 `docs/COLLABORATION_SETUP.md` 的 Chat C / Chat D / Chat E 分工。
 
 ## 目前 FORM_URL 狀態
@@ -71,6 +73,8 @@ FORM_URL
 
 - 尚未確認表單頁面欄位與必填驗證。
 - 尚未確認表單送出後寫入資料庫的 API / 後端流程。
+- 尚未確認表單送出後是否能整理 Chat A proposal handoff payload。
+- 尚未確認圖片上傳後是否能產生可直接存取的 R2 URL。
 - 尚未確認 Email 通知流程。
 - 尚未確認三款預覽網址產生與通知流程。
 - 尚未確認三天選款期限與過期處理的自動化。
@@ -95,6 +99,9 @@ FORM_URL
 
 - 確認正式課程資料表頁面欄位與送出行為。
 - 如未來表單網址變更，提供新的 `FORM_URL`。
+- 確認表單欄位可產出 Chat A proposal handoff payload。
+- 確認圖片素材可上傳到 R2 並產生可直接存取 URL。
+- 確認 `image_rights_confirmed` 可由表單明確收集。
 - 表單必填欄位檢查。
 - 表單送出後資料寫入 `clients`、`course_projects` 與素材資料。
 - 後台可查看客戶資料與課程資料。
@@ -104,6 +111,8 @@ FORM_URL
 需要接續：
 
 - 表單送出後自動化測試。
+- Chat A proposal handoff payload 驗證。
+- 缺少 `r2_images`、`image_rights_confirmed` 或 Canva URL 時，proposal 必須維持 pending 的自動化測試。
 - Email 通知流程。
 - 三款預覽網址通知。
 - 三天選款期限與過期處理。
@@ -124,4 +133,5 @@ FORM_URL
    - 了解免費試營運。
    - 回報網站 / 系統問題。
 4. Chat D 確認表單送出後能寫入資料庫。
-5. Chat E 測試表單送出後 Email 與三款預覽通知。
+5. Chat D / Chat E 依 `docs/CHAT_A_PROPOSAL_HANDOFF_SPEC.md` 補齊 Chat A 交接 payload。
+6. Chat E 測試表單送出後 Email 與三款預覽通知。

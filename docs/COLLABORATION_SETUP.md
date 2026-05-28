@@ -17,9 +17,10 @@ AI Agent 在開始任何工作前，應先閱讀：
 5. `docs/TEMPLATE_REFERENCE.md`
 6. `docs/CLIENT_SELECTION_FLOW.md`
 7. `docs/LINE_AI_CUSTOMER_SERVICE_FLOW.md`
-8. `docs/LINE_AI_TEST_REPORT.md`
-9. `docs/CHAT_C_FIX_REQUEST.md`
-10. `docs/COLLABORATION_SETUP.md`
+8. `docs/CHAT_A_PROPOSAL_HANDOFF_SPEC.md`
+9. `docs/LINE_AI_TEST_REPORT.md`
+10. `docs/CHAT_C_FIX_REQUEST.md`
+11. `docs/COLLABORATION_SETUP.md`
 
 ## AI Agent 工作規則
 
@@ -96,6 +97,12 @@ find styles skills templates public line-webhook admin worker -maxdepth 3 -type 
 
 當 LINE AI 入口選項、表單連結、免費試營運說明、流程說明或系統問題處理方式改變時更新。
 
+### `CHAT_A_PROPOSAL_HANDOFF_SPEC.md`
+
+用來記錄案件送進「待樣板提案」前，必須提供給 Chat A 的最小 payload。
+
+當表單欄位、R2 圖片規格、proposal ready / pending 規則、Chat A 交接格式改變時更新。
+
 ### `COLLABORATION_SETUP.md`
 
 用來記錄 AI 協作流程、repo 探查規則與文件維護規則。
@@ -142,6 +149,8 @@ Chat D / Chat B 需要提供：
 - 如果表單網址變更，提供 Cloudflare Worker 環境變數 `FORM_URL` 的新值。
 - 表單必填欄位檢查。
 - 表單送出後寫入資料庫。
+- 表單送出後可整理 Chat A proposal handoff payload。
+- 圖片上傳後產生可直接存取的 R2 URL。
 - 後台查看客戶與課程資料。
 
 ### Chat E：自動化與 QA
@@ -150,6 +159,7 @@ Chat E 需要接續：
 
 - 新版 LINE AI 接待助理流程測試。
 - 表單送出後自動化。
+- Chat A proposal handoff payload 驗證。
 - Email 通知。
 - 三款預覽網址通知。
 - 三天選款期限與過期處理。
