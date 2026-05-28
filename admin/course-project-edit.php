@@ -171,6 +171,7 @@ if (!empty($project['client_id']) && course_project_edit_table_exists('admission
 
 $proposals = chat_d_project_proposals($projectId);
 $assets = course_project_edit_assets($payload);
+$adminActionLinks = chat_d_admin_action_create_links($projectId, 24);
 
 include dirname(__FILE__) . '/../templates/admin-header.php';
 ?>
@@ -185,6 +186,8 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   .asset-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .asset-list li { font-size: 14px; line-height: 1.55; }
   .inline-action-form { display: inline-flex; margin: 0; }
+  .quick-action-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .quick-action-links .button { text-decoration: none; }
   .proposal-table th,
   .proposal-table td,
   .proposal-table .muted,
@@ -207,6 +210,16 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
     <button type="submit" class="secondary">重新產圖</button>
   </form>
 </div>
+
+<section class="panel">
+  <h2>免登入通知操作連結</h2>
+  <p class="muted">這三個連結可放進 LINE / Email 通知；每個連結只對應此專案，24 小時有效，使用後會失效。</p>
+  <div class="quick-action-links">
+    <?php foreach ($adminActionLinks as $actionName => $actionLink) { ?>
+      <a class="button secondary" target="_blank" href="<?php echo h($actionLink['url']); ?>"><?php echo h($actionLink['label']); ?></a>
+    <?php } ?>
+  </div>
+</section>
 
 <?php if (!empty($formErrors)) { ?>
   <div class="alert error"><?php echo h(implode(' ', $formErrors)); ?></div>
