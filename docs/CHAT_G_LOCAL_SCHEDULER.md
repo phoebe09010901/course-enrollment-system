@@ -6,6 +6,17 @@ Chat G Canva proposal automation is now scheduled by macOS `launchd` on Phoebe's
 
 This local scheduler uses the Mac's normal network context, so it can resolve `ftm.com.tw` and call the backend API.
 
+Current operating model: `semi_automated_canva_proposals`.
+
+That means the local scheduler is the official runtime for:
+
+- cwd validation
+- DNS / health preflight
+- atomic claim
+- project-level success / failure callbacks
+
+It does not promise that every run can finish the Canva generation step without manual help. If headless Canva capability or required template docs are missing, the worker should claim safely, then route the project into a documented manual / interactive Canva handoff path rather than pretending full automation exists.
+
 ## Installed LaunchAgent
 
 ```text
@@ -39,6 +50,8 @@ The runner:
 - runs `scripts/chat-g-network-preflight.sh` with `CHAT_G_RUNTIME_CONTEXT=local_launchd`,
 - stops if DNS / health preflight fails,
 - starts local Codex CLI only after preflight passes.
+
+In semi-automated mode, successful preflight does not imply that the whole proposal batch can be completed unattended. The worker prompt owns the post-claim capability decision.
 
 ## Preflight
 
@@ -140,3 +153,4 @@ docs/CHAT_G_CONTROL_APP.md
 - If the Mac sleeps or disconnects, that run is skipped or fails safely.
 - The old Codex automation cron is paused because its runtime has `Network access is restricted`.
 - If Cloudflare Worker Cron or another cloud worker is introduced later, this local scheduler can be disabled.
+- Missing `docs/TEMPLATE_REFERENCE.md` or unavailable headless Canva persistence should be treated as project-level/manual-handoff blockers, not as reasons to bypass claim forever.

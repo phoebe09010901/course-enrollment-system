@@ -21,6 +21,8 @@
 - `docs/LINE_AI_ADVANCED_QA_PLAN.md`
 - `docs/LINE_AI_WORKER_TEST_SCENARIOS.md`
 - `docs/HANDOFF_FOR_NEW_COMPUTER.md`
+- `docs/TEMPLATE_REFERENCE.md`
+- `docs/CLIENT_SELECTION_FLOW.md`
 - `cloudflare-workers/workers.js`
 - `cloudflare-workers/worker.js`
 - `cloudflare-workers/line-webhook-worker.js`
@@ -29,8 +31,6 @@
 ## 尚未建立但曾被規劃的文件
 
 - `docs/ARCHITECTURE.md`
-- `docs/TEMPLATE_REFERENCE.md`
-- `docs/CLIENT_SELECTION_FLOW.md`
 
 ## 已完成
 
@@ -63,6 +63,8 @@
 - 已建立 `docs/CHAT_D_INFRA_REQUEST.md`，整理 Chat G direct claim 前 DNS / host resolution 失敗與後端健康檢查需求。
 - 已建立 `docs/CHAT_E_AUTOMATION_INFRA_REPORT.md`，整理 Chat G stale worktree context 事件；Chat G automation configured cwd 已由舊的 `945c` 改為目前最新且存在的 `e89a`。
 - 已建立 Chat G 本機控制台：`local-control/` 與 `scripts/chat-g-control-app.sh`，可在 `http://127.0.0.1:8789` 手動執行 DNS / health dry run、正式執行、觸發 launchd，並查看 latest logs / automation memory。詳見 `docs/CHAT_G_CONTROL_APP.md`。
+- 已建立 `docs/TEMPLATE_REFERENCE.md` 第一版，提供 Chat G 半自動 proposal worker 可用的 template pairing、template id 與 source URL 依據。
+- 已建立 `docs/CLIENT_SELECTION_FLOW.md` 第一版，提供 A / B / C proposal batch 的最小欄位與 ready gate 規格。
 
 ## 目前 FORM_URL 狀態
 
@@ -89,6 +91,7 @@ FORM_URL
 - 尚未確認三天選款期限與過期處理的自動化。
 - 尚未實作實際排程 worker、atomic claim SQL、`worker_runs` 資料表與 retry runner。
 - 尚未實作 Chat A / Canva proposal ready gate 的程式檢查與資料庫 unique / batch 約束。
+- 尚未補齊更完整、可商用的 template library；目前 `docs/TEMPLATE_REFERENCE.md` 仍為第一版可用規格，不代表完整設計資料庫。
 - 尚未建立完整前台、後台或 admin 管理介面。
 - 尚未建立 `styles/`、`skills/`、`templates/`、`public/` 等實作目錄。
 
@@ -138,6 +141,7 @@ FORM_URL
 - 已建立本機 macOS `launchd` 排程替代方案：`/Users/phoebe/Library/LaunchAgents/com.phoebe.chat-g-canva-worker.plist`，每小時執行 `scripts/chat-g-local-runner.sh`；原 Codex automation cron 已暫停。詳見 `docs/CHAT_G_LOCAL_SCHEDULER.md`。
 - Chat G 本機控制台只綁定 `127.0.0.1`，不接收任意 shell command；`測試網路` 不會 claim project，`正式執行` 與 `觸發排程` 會先顯示確認。
 - 若排程 run context 指向不存在或非 configured cwd 的 worktree，例如 `/Users/phoebe/.codex/worktrees/4938/課程招生 - 系統`、`/Users/phoebe/.codex/worktrees/4d27/課程招生 - 系統` 或 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，必須在 DNS / claim / Canva generation 前停止，並記錄 `stale_worktree_context`。
+- Chat G 目前採 `semi_automated_canva_proposals` 模式；即使 preflight、claim 與 callback plumbing 可自動化，Canva 產案若無法 unattended 完成，仍需轉人工 / 互動式處理。
 
 ## 下一步建議
 
