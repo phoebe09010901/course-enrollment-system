@@ -98,6 +98,23 @@ CHAT_G_RUNTIME_CONTEXT=automation_runtime WORKER_RUN_ID=<worker_run_id> ADMISSIO
 
 目前判斷：latest automation run 的 `curl (6)` 比較像 automation runtime 當下 DNS resolver 抖動，而不是 API endpoint 永久失效。後續若 manual shell socket DNS 成功、但 automation runtime socket DNS 失敗，優先查 scheduler/runtime network context，不要先查 backend/API/Canva。
 
+## Runtime Network Blocker
+
+2026-05-28 `chat-g-20260528113920` 已確認不是單純 DNS 抖動，而是 automation runtime network context 被限制。
+
+已確認：
+
+- automation runtime cwd 正確：`/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統`。
+- automation runtime `socket.gethostbyname_ex("ftm.com.tw")` 連續 3 次失敗。
+- automation runtime `dns_config_sample` 顯示 `No DNS configuration available`。
+- automation runtime `dig` 顯示 `bind: Operation not permitted`。
+- manual shell 從同一 cwd 可解析 `ftm.com.tw -> 60.249.109.44`。
+- 最新 automation archived session 的 developer permissions 顯示 `Network access is restricted`。
+
+結論：scheduler / automation runtime 目前沒有正常 DNS / outbound network capability。這不是 stale worktree、backend API 或 Canva 產圖邏輯問題。
+
+詳見 `docs/CHAT_G_RUNTIME_NETWORK_BLOCKER.md`。
+
 ## 剩餘風險
 
 - 若下一輪 automation 在 `local` mode 下仍從 `4938`、`4d27`、`1210`、`945c` 或其他非 `e89a` cwd 啟動，代表問題不在 repo 或 `automation.toml` 內容，而是 scheduler / run session cache 層仍有舊上下文。

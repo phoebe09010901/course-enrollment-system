@@ -133,6 +133,7 @@ FORM_URL
 - Chat G automation 已由 `worktree` execution environment 改為 `local`，避免 scheduler 每輪產生 `4938` 這類 generated worktree 而觸發 stale cwd。
 - Chat G automation 已新增 `scripts/chat-g-network-preflight.sh`；每輪 claim 前固定記錄 pwd / `socket.gethostbyname_ex("ftm.com.tw")` DNS probe / health probe，三次 socket DNS 解析失敗時標記 `dns_resolution_failed` 並停止，不進 health 或 claim。
 - 若 manual shell socket DNS 成功但 automation runtime socket DNS 失敗，需優先檢查 scheduler/runtime network context。
+- 已建立 `docs/CHAT_G_RUNTIME_NETWORK_BLOCKER.md`：最新證據顯示 automation archived session 權限為 `Network access is restricted`，因此 Chat G cron 需要可用 DNS / outbound network 的 runtime，否則會持續停在 preflight。
 - 若排程 run context 指向不存在或非 configured cwd 的 worktree，例如 `/Users/phoebe/.codex/worktrees/4938/課程招生 - 系統`、`/Users/phoebe/.codex/worktrees/4d27/課程招生 - 系統` 或 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，必須在 DNS / claim / Canva generation 前停止，並記錄 `stale_worktree_context`。
 
 ## 下一步建議
