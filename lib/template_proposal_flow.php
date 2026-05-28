@@ -156,6 +156,8 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
         chat_d_log_notification($projectId, $clientId, 'data_confirmed', 'system', '', array(), '公開表單已送出，等待 Chat A / Canva 樣板提案。', 'recorded');
     }
 
+    chat_d_send_new_project_admin_email($projectId);
+
     db_exec(
         'UPDATE course_intakes SET intake_status = ?, updated_at = ? WHERE ' . chat_d_course_intakes_primary_key() . ' = ?',
         'ssi',
@@ -783,6 +785,92 @@ function chat_d_admin_action_execute($projectId, $action, $token)
     }
 
     throw new Exception('unsupported_action');
+}
+
+function chat_d_admin_notification_email()
+{
+    $email = '';
+    if (defined('ADMIN_NOTIFICATION_EMAIL')) {
+        $email = trim((string) constant('ADMIN_NOTIFICATION_EMAIL'));
+    }
+
+    if ($email === '' && function_exists('admission_config')) {
+        $config = admission_config();
+        if (isset($config['admin_notification_email'])) {
+            $email = trim((string) $config['admin_notification_email']);
+        }
+    }
+
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return '';
+    }
+
+    return $email;
+}
+
+function chat_d_mail_headers($html)
+{
+    $headers = array();
+    $headers[] = 'MIME-Version: 1.0';
+    $headers[] = $html ? 'Content-Type: text/html; charset=UTF-8' : 'Content-Type: text/plain; charset=UTF-8';
+    $headers[] = 'From: 菲兔麥課程招生 <no-reply@ftm.com.tw>';
+    return implode("\r\n", $headers);
+}
+
+function chat_d_email_h($value)
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function chat_d_send_new_project_admin_email($projectId)
+{
+    $recipient = chat_d_admin_notification_email();
+    if ($recipient === '' || !function_exists('mail')) {
+        return false;
+    }
+
+    $project = chat_d_project_by_id($projectId);
+    if (!$project) {
+        return false;
+    }
+
+    $links = chat_d_admin_action_create_links($projectId, 24);
+    $subject = '新案件通知：' . $projectId;
+    $courseName = isset($project['course_name']) ? $project['course_name'] : '';
+    $courseType = isset($project['course_type']) ? $project['course_type'] : '';
+    $courseFormat = isset($project['course_format']) ? $project['course_format'] : '';
+    $courseLocation = isset($project['course_location']) ? $project['course_location'] : '';
+
+    $rows = '';
+    foreach ($links as $link) {
+        $rows .= '<p style="margin:14px 0;"><a href="' . chat_d_email_h($link['url']) . '" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#111827;color:#ffffff;text-decoration:none;">' . chat_d_email_h($link['label']) . '</a></p>';
+    }
+
+    $body = '<!doctype html><html lang="zh-Hant"><body style="margin:0;padding:28px;background:#f7f8fb;color:#151a24;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;">'
+        . '<div style="max-width:640px;margin:0 auto;padding:28px;border-radius:24px;background:#ffffff;">'
+        . '<p style="margin:0 0 10px;color:#6b7280;font-size:13px;letter-spacing:.08em;text-transform:uppercase;">New course project</p>'
+        . '<h1 style="margin:0 0 16px;font-size:28px;line-height:1.25;">新案件：' . chat_d_email_h($projectId) . '</h1>'
+        . '<p style="margin:0 0 6px;font-size:17px;line-height:1.6;">課程：' . chat_d_email_h($courseName) . '</p>'
+        . '<p style="margin:0 0 6px;color:#4b5563;line-height:1.6;">類型 / 形式：' . chat_d_email_h(trim($courseType . ' ' . $courseFormat)) . '</p>'
+        . '<p style="margin:0 0 18px;color:#4b5563;line-height:1.6;">地點：' . chat_d_email_h($courseLocation) . '</p>'
+        . '<p style="margin:18px 0;color:#4b5563;line-height:1.7;">以下連結只對應這個案件，24 小時有效，點過後會失效。</p>'
+        . $rows
+        . '<p style="margin:22px 0 0;color:#6b7280;font-size:13px;line-height:1.7;">如果你沒有要立即處理，可以等 Chat G 排程自動領取。</p>'
+        . '</div></body></html>';
+
+    $sent = mail($recipient, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, chat_d_mail_headers(true));
+    chat_d_log_notification(
+        $projectId,
+        isset($project['client_id']) ? (int) $project['client_id'] : null,
+        'new_project_admin_email',
+        'email',
+        $recipient,
+        array(),
+        $sent ? '新案件通知 Email 已送出。' : '新案件通知 Email 送出失敗。',
+        $sent ? 'sent' : 'failed'
+    );
+
+    return $sent;
 }
 
 function chat_d_claim_template_projects($limit, $workerRunId, $workerName)

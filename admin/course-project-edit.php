@@ -126,6 +126,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
     }
 
+    if ($action === 'send_action_email') {
+        $sent = chat_d_send_new_project_admin_email($projectId);
+        $_SESSION['flash'] = $sent ? '已寄出操作 Email。' : '操作 Email 未寄出，請確認後台通知 Email 設定或主機 mail() 功能。';
+        redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
+    }
+
     foreach ($values as $key => $default) {
         $values[$key] = post($key, $default);
     }
@@ -208,6 +214,11 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
     <?php echo csrf_field(); ?>
     <input type="hidden" name="_action" value="regenerate_canva">
     <button type="submit" class="secondary">重新產圖</button>
+  </form>
+  <form class="inline-action-form" method="post">
+    <?php echo csrf_field(); ?>
+    <input type="hidden" name="_action" value="send_action_email">
+    <button type="submit" class="secondary">寄送操作 Email</button>
   </form>
 </div>
 

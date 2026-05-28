@@ -11,6 +11,7 @@ return [
     'session_name' => 'admission_system_session',
     'install_key' => 'replace-with-install-key',
     'api_key' => 'replace-with-a-long-random-api-key',
+    'admin_notification_email' => 'owner@example.com',
     'cloudflare_r2_account_id' => 'your_cloudflare_account_id',
     'cloudflare_r2_access_key_id' => 'your_r2_access_key_id',
     'cloudflare_r2_secret_access_key' => 'your_r2_secret_access_key',

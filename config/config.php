@@ -21,6 +21,7 @@ function admission_config()
         'session_name' => getenv('SESSION_NAME') ?: 'admission_system_session',
         'install_key' => getenv('INSTALL_KEY') ?: '',
         'api_key' => getenv('ADMISSION_API_KEY') ?: '',
+        'admin_notification_email' => getenv('ADMIN_NOTIFICATION_EMAIL') ?: 'phy4175@gmail.com',
         'cloudflare_r2_account_id' => getenv('CLOUDFLARE_R2_ACCOUNT_ID') ?: '',
         'cloudflare_r2_access_key_id' => getenv('CLOUDFLARE_R2_ACCESS_KEY_ID') ?: '',
         'cloudflare_r2_secret_access_key' => getenv('CLOUDFLARE_R2_SECRET_ACCESS_KEY') ?: '',
@@ -64,6 +65,7 @@ admission_define_config_constant('DB_USER', isset($admissionConfig['db_user']) ?
 admission_define_config_constant('DB_PASS', isset($admissionConfig['db_pass']) ? $admissionConfig['db_pass'] : '');
 admission_define_config_constant('DB_CHARSET', isset($admissionConfig['db_charset']) && $admissionConfig['db_charset'] !== '' ? $admissionConfig['db_charset'] : 'utf8mb4');
 admission_define_config_constant('ADMISSION_API_KEY', isset($admissionConfig['api_key']) ? $admissionConfig['api_key'] : '');
+admission_define_config_constant('ADMIN_NOTIFICATION_EMAIL', isset($admissionConfig['admin_notification_email']) ? $admissionConfig['admin_notification_email'] : '');
 admission_define_config_constant('CLOUDFLARE_R2_ACCOUNT_ID', isset($admissionConfig['cloudflare_r2_account_id']) ? $admissionConfig['cloudflare_r2_account_id'] : '');
 admission_define_config_constant('CLOUDFLARE_R2_ACCESS_KEY_ID', isset($admissionConfig['cloudflare_r2_access_key_id']) ? $admissionConfig['cloudflare_r2_access_key_id'] : '');
 admission_define_config_constant('CLOUDFLARE_R2_SECRET_ACCESS_KEY', isset($admissionConfig['cloudflare_r2_secret_access_key']) ? $admissionConfig['cloudflare_r2_secret_access_key'] : '');
