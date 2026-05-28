@@ -287,6 +287,7 @@ function chat_d_template_status_label($status)
         'processing_template' => '樣板製作中',
         'template_ready' => '樣板已完成',
         'template_failed' => '樣板產生失敗',
+        'manual_canva_required' => '待人工 Canva',
         'template_expired' => '樣板已逾期',
         'canva_template_selected' => '已選定樣板',
         'canva_proposals_ready' => '樣板已完成',
@@ -311,6 +312,8 @@ function chat_d_template_error_label($errorCode)
         'worker_exception' => '自動流程失敗',
         'template_proposals_invalid' => '提案資料不完整',
         'template_batch_locked' => '已有有效樣板批次',
+        'manual_canva_required' => '待人工 Canva',
+        'trigger_worker_requested' => '已要求 Chat G 處理',
     );
 
     if (isset($labels[$errorCode])) {
@@ -428,6 +431,358 @@ function chat_d_reset_template_generation($projectId)
     }
 
     return $newBatchId;
+}
+
+function chat_d_admin_action_allowed_actions()
+{
+    return array('requeue_template', 'manual_canva', 'trigger_worker');
+}
+
+function chat_d_admin_action_label($action)
+{
+    $labels = array(
+        'requeue_template' => '重新排入待樣板提案',
+        'manual_canva' => '交給人工 Canva',
+        'trigger_worker' => '立刻觸發 Chat G',
+    );
+
+    return isset($labels[$action]) ? $labels[$action] : $action;
+}
+
+function chat_d_admin_action_table_ensure()
+{
+    db_exec(
+        'CREATE TABLE IF NOT EXISTS admin_action_tokens (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            project_id VARCHAR(64) NOT NULL,
+            action VARCHAR(64) NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            used_ip VARCHAR(64) NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_admin_action_token_hash (token_hash),
+            KEY idx_admin_action_project (project_id),
+            KEY idx_admin_action_lookup (project_id, action, expires_at, used_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+        '',
+        array()
+    );
+}
+
+function chat_d_admin_action_token_hash($token)
+{
+    return hash('sha256', (string) $token);
+}
+
+function chat_d_admin_action_base_url()
+{
+    $base = '';
+    if (defined('APP_BASE_URL')) {
+        $base = trim((string) constant('APP_BASE_URL'));
+    }
+
+    if ($base === '' && function_exists('app_url')) {
+        return app_url('admin-action.php');
+    }
+
+    if ($base === '') {
+        $base = 'https://ftm.com.tw/demo/admission-system';
+    }
+
+    return rtrim($base, '/') . '/admin-action.php';
+}
+
+function chat_d_admin_action_url($action, $projectId, $token)
+{
+    return chat_d_admin_action_base_url()
+        . '?action=' . rawurlencode($action)
+        . '&project_id=' . rawurlencode($projectId)
+        . '&token=' . rawurlencode($token);
+}
+
+function chat_d_admin_action_create_token($projectId, $action, $ttlHours)
+{
+    $projectId = trim((string) $projectId);
+    $action = trim((string) $action);
+    $ttlHours = (int) $ttlHours;
+    if ($ttlHours <= 0 || $ttlHours > 168) {
+        $ttlHours = 24;
+    }
+
+    if ($projectId === '') {
+        throw new Exception('project_id_required');
+    }
+    if (!in_array($action, chat_d_admin_action_allowed_actions(), true)) {
+        throw new Exception('unsupported_action');
+    }
+
+    $project = chat_d_project_by_id($projectId);
+    if (!$project) {
+        throw new Exception('project_not_found');
+    }
+
+    chat_d_admin_action_table_ensure();
+
+    $token = chat_d_random_token() . chat_d_random_token();
+    $expiresAt = date('Y-m-d H:i:s', time() + ($ttlHours * 3600));
+
+    db_exec(
+        'INSERT INTO admin_action_tokens (
+            project_id, action, token_hash, expires_at, used_at, used_ip, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, NULL, NULL, ?, ?)',
+        'ssssss',
+        array($projectId, $action, chat_d_admin_action_token_hash($token), $expiresAt, now(), now())
+    );
+
+    return array(
+        'action' => $action,
+        'label' => chat_d_admin_action_label($action),
+        'project_id' => $projectId,
+        'token' => $token,
+        'url' => chat_d_admin_action_url($action, $projectId, $token),
+        'expires_at' => $expiresAt,
+    );
+}
+
+function chat_d_admin_action_create_links($projectId, $ttlHours)
+{
+    $links = array();
+    foreach (chat_d_admin_action_allowed_actions() as $action) {
+        $links[$action] = chat_d_admin_action_create_token($projectId, $action, $ttlHours);
+    }
+    return $links;
+}
+
+function chat_d_admin_action_consume_token($projectId, $action, $token)
+{
+    $projectId = trim((string) $projectId);
+    $action = trim((string) $action);
+    $token = trim((string) $token);
+
+    if ($projectId === '' || $token === '') {
+        throw new Exception('action_token_required');
+    }
+    if (!in_array($action, chat_d_admin_action_allowed_actions(), true)) {
+        throw new Exception('unsupported_action');
+    }
+
+    chat_d_admin_action_table_ensure();
+
+    $tokenHash = chat_d_admin_action_token_hash($token);
+    $row = db_one(
+        'SELECT * FROM admin_action_tokens
+         WHERE project_id = ? AND action = ? AND token_hash = ?
+         LIMIT 1',
+        'sss',
+        array($projectId, $action, $tokenHash)
+    );
+
+    if (!$row) {
+        throw new Exception('action_token_invalid');
+    }
+    if (!empty($row['used_at'])) {
+        throw new Exception('action_token_used');
+    }
+    if (strtotime((string) $row['expires_at']) < time()) {
+        throw new Exception('action_token_expired');
+    }
+
+    $usedIp = isset($_SERVER['REMOTE_ADDR']) ? substr((string) $_SERVER['REMOTE_ADDR'], 0, 64) : '';
+    db_exec(
+        'UPDATE admin_action_tokens
+         SET used_at = ?, used_ip = ?, updated_at = ?
+         WHERE id = ? AND used_at IS NULL',
+        'sssi',
+        array(now(), $usedIp, now(), (int) $row['id'])
+    );
+
+    return true;
+}
+
+function chat_d_mark_manual_canva_required($projectId)
+{
+    $project = chat_d_project_by_id($projectId);
+    if (!$project) {
+        throw new Exception('project_not_found');
+    }
+
+    $sql = 'UPDATE course_projects
+            SET project_status = ?, template_status = ?, needs_template_proposal = 0, updated_at = ?';
+    $types = 'sss';
+    $params = array('待人工 Canva', 'manual_canva_required', now());
+
+    if (chat_d_column_exists('course_projects', 'template_error_code')) {
+        $sql .= ', template_error_code = ?';
+        $types .= 's';
+        $params[] = 'manual_canva_required';
+    }
+    if (chat_d_column_exists('course_projects', 'template_error_message')) {
+        $sql .= ', template_error_message = ?';
+        $types .= 's';
+        $params[] = '已由一次性安全連結改為人工 Canva 處理。';
+    }
+    if (chat_d_column_exists('course_projects', 'template_processing_started_at')) {
+        $sql .= ', template_processing_started_at = NULL';
+    }
+    if (chat_d_column_exists('course_projects', 'template_processing_by')) {
+        $sql .= ', template_processing_by = NULL';
+    }
+
+    $sql .= ' WHERE project_id = ?';
+    $types .= 's';
+    $params[] = $projectId;
+    db_exec($sql, $types, $params);
+
+    if (!empty($project['intake_id']) && chat_d_table_exists('course_intakes')) {
+        db_exec(
+            'UPDATE course_intakes SET intake_status = ?, updated_at = ? WHERE ' . chat_d_course_intakes_primary_key() . ' = ?',
+            'ssi',
+            array('待人工 Canva', now(), (int) $project['intake_id'])
+        );
+    }
+
+    chat_d_log_notification(
+        $projectId,
+        isset($project['client_id']) ? (int) $project['client_id'] : null,
+        'manual_canva_required',
+        'admin_action',
+        '',
+        array(),
+        '已透過一次性安全連結改為人工 Canva 處理。',
+        'recorded'
+    );
+}
+
+function chat_d_request_template_worker($projectId)
+{
+    $project = chat_d_project_by_id($projectId);
+    if (!$project) {
+        throw new Exception('project_not_found');
+    }
+
+    $status = isset($project['template_status']) ? (string) $project['template_status'] : '';
+    if (in_array($status, array('template_ready', 'canva_proposals_ready', 'canva_template_selected'), true)) {
+        return 'project_already_ready';
+    }
+
+    $sql = 'UPDATE course_projects
+            SET project_status = ?, template_status = ?, needs_template_proposal = 1, updated_at = ?';
+    $types = 'sss';
+    $params = array('待樣板提案', 'pending_template', now());
+
+    if (chat_d_column_exists('course_projects', 'template_processing_started_at')) {
+        $sql .= ', template_processing_started_at = NULL';
+    }
+    if (chat_d_column_exists('course_projects', 'template_processing_by')) {
+        $sql .= ', template_processing_by = NULL';
+    }
+    if (chat_d_column_exists('course_projects', 'template_error_code')) {
+        $sql .= ', template_error_code = ?';
+        $types .= 's';
+        $params[] = 'trigger_worker_requested';
+    }
+    if (chat_d_column_exists('course_projects', 'template_error_message')) {
+        $sql .= ', template_error_message = ?';
+        $types .= 's';
+        $params[] = '已透過一次性安全連結要求 Chat G worker 儘快處理。';
+    }
+
+    $sql .= ' WHERE project_id = ?';
+    $types .= 's';
+    $params[] = $projectId;
+    db_exec($sql, $types, $params);
+
+    chat_d_log_notification(
+        $projectId,
+        isset($project['client_id']) ? (int) $project['client_id'] : null,
+        'trigger_worker_requested',
+        'admin_action',
+        '',
+        array(),
+        '已透過一次性安全連結要求 Chat G worker 處理。',
+        'recorded'
+    );
+
+    if (function_exists('chat_a_trigger_for_project')) {
+        $triggerResult = chat_a_trigger_for_project($projectId);
+        if (is_array($triggerResult) && !empty($triggerResult['ok'])) {
+            return 'trigger_sent';
+        }
+        if (is_array($triggerResult) && isset($triggerResult['status']) && $triggerResult['status'] === 'queued') {
+            return 'worker_requested';
+        }
+        return 'trigger_failed';
+    }
+
+    return 'worker_requested';
+}
+
+function chat_d_admin_action_execute($projectId, $action, $token)
+{
+    chat_d_admin_action_consume_token($projectId, $action, $token);
+
+    if ($action === 'requeue_template') {
+        $batchId = chat_d_reset_template_generation($projectId);
+        return array(
+            'ok' => true,
+            'title' => '已重新排入待樣板提案',
+            'message' => '案件已回到待樣板提案狀態，Chat G worker 可在下一輪領取。',
+            'project_id' => $projectId,
+            'batch_id' => $batchId,
+        );
+    }
+
+    if ($action === 'manual_canva') {
+        chat_d_mark_manual_canva_required($projectId);
+        return array(
+            'ok' => true,
+            'title' => '已交給人工 Canva',
+            'message' => '案件已標記為待人工 Canva，系統不會再自動 claim 這筆案件。',
+            'project_id' => $projectId,
+        );
+    }
+
+    if ($action === 'trigger_worker') {
+        $result = chat_d_request_template_worker($projectId);
+        if ($result === 'project_already_ready') {
+            return array(
+                'ok' => true,
+                'title' => '樣板已完成',
+                'message' => '這筆案件已經有完成的樣板提案，不需要重新觸發。',
+                'project_id' => $projectId,
+            );
+        }
+
+        if ($result === 'trigger_sent') {
+            return array(
+                'ok' => true,
+                'title' => '已立刻觸發 Chat G',
+                'message' => '系統已送出 worker 觸發請求，案件正在等待回寫樣板結果。',
+                'project_id' => $projectId,
+            );
+        }
+
+        if ($result === 'trigger_failed') {
+            return array(
+                'ok' => true,
+                'title' => '已嘗試觸發，但需要檢查 worker',
+                'message' => '系統已記錄觸發失敗，案件仍可在下一輪排程或人工流程中處理。',
+                'project_id' => $projectId,
+            );
+        }
+
+        return array(
+            'ok' => true,
+            'title' => '已送出 Chat G 觸發要求',
+            'message' => '案件已設為可被 Chat G worker 領取；若本機 worker 正常運作，下一輪會處理。',
+            'project_id' => $projectId,
+        );
+    }
+
+    throw new Exception('unsupported_action');
 }
 
 function chat_d_claim_template_projects($limit, $workerRunId, $workerName)
