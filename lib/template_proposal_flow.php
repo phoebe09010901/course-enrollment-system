@@ -580,6 +580,13 @@ function chat_d_mark_template_failed($projectId, $workerRunId, $errorCode, $erro
         $params[] = function_exists('mb_substr') ? mb_substr($errorMessage, 0, 1000, 'UTF-8') : substr($errorMessage, 0, 1000);
     }
 
+    if (chat_d_column_exists('course_projects', 'template_processing_started_at')) {
+        $sql .= ', template_processing_started_at = NULL';
+    }
+    if (chat_d_column_exists('course_projects', 'template_processing_by')) {
+        $sql .= ', template_processing_by = NULL';
+    }
+
     $sql .= ' WHERE project_id = ?';
     $types .= 's';
     $params[] = $projectId;
