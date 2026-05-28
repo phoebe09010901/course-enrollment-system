@@ -61,6 +61,7 @@
 - 已補上 Chat F 提醒的排程 / Worker 安全規格：取件 atomic lock、processing 20 到 30 分鐘逾時回收、可重試 / 不可重試錯誤分類、30 到 60 分鐘 retry cooldown、`worker_run_id` 與 `worker_runs` log schema。
 - 已補上 Chat A / Canva proposal ready gate：proposal 必須剛好 3 筆且為 A / B / C，三筆都要有真實 `canva_url`、`primary_template_id`、`secondary_template_id`、`source_url`、`secondary_source_url`，缺任一欄不可 ready，也不可在同一 project 自動建立第二批有效 proposal batch。
 - 已建立 `docs/CHAT_D_INFRA_REQUEST.md`，整理 Chat G direct claim 前 DNS / host resolution 失敗與後端健康檢查需求。
+- 已建立 `docs/CHAT_E_AUTOMATION_INFRA_REPORT.md`，整理 Chat G stale worktree context 事件；Chat G automation configured cwd 已由舊的 `945c` 改為目前最新且存在的 `e89a`。
 
 ## 目前 FORM_URL 狀態
 
@@ -129,7 +130,7 @@ FORM_URL
 - 樣板提案 worker 若未依規格實作鎖定，兩輪排程或兩台 worker 可能同時處理同一個 `project_id`。
 - 若缺資料仍被排程重試，可能造成每 10 分鐘重撞 Chat A / Canva；需用 `needs_data` / `template_failed` 停止自動重試。
 - Chat G：Canva 三案提案自動化曾遇到 `ftm.com.tw` 間歇性 DNS / host resolution 失敗；目前 direct API POST 應針對 `curl: (6) Could not resolve host` 做最多 3 次 bounded retry，仍失敗時標記 infra blocker。
-- 若排程 run context 指向不存在 worktree，例如 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，需檢查 scheduler cache / session / 殘留 automation，避免 stale worktree drift。
+- 若排程 run context 指向不存在或非 configured cwd 的 worktree，例如 `/Users/phoebe/.codex/worktrees/4d27/課程招生 - 系統` 或 `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統`，必須在 DNS / claim / Canva generation 前停止，並記錄 `stale_worktree_context`。
 
 ## 下一步建議
 
@@ -143,5 +144,5 @@ FORM_URL
 4. Chat D 確認表單送出後能寫入資料庫。
 5. Chat E 測試表單送出後 Email 與三款預覽通知。
 6. Chat E / Chat D 實作排程 worker 前，先建立 `worker_runs` 與 `course_projects` 鎖定欄位 migration。
-7. 每日巡檢 Chat G automation 的 `cwds` 是否仍指向存在的 worktree，並檢查 direct claim DNS 失敗是否重複發生。
+7. 每日巡檢 Chat G automation 的 `cwds` 是否仍指向 `/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統`，並檢查 direct claim DNS 失敗是否重複發生。
 8. Chat D 檢查 `ftm.com.tw` API access log、DNS 穩定性與 health endpoint，詳見 `docs/CHAT_D_INFRA_REQUEST.md`。

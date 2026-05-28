@@ -13,18 +13,22 @@
 - 錯誤：`curl: (6) Could not resolve host: ftm.com.tw`
 - 同一輪已連續重試 3 次仍失敗。
 - 失敗發生在 direct claim 前，沒有 claimed project，也沒有 Canva proposal 產出。
+- 後續另有一輪 `chat-g-20260528111256` 在 direct claim 前因 `stale_worktree_context` 停止：expected cwd 為 `945c`，actual cwd 為已不存在的 `4d27`。
 
 ## Chat E 已確認
 
 - 正式 automation 設定檔：`/Users/phoebe/.codex/automations/chat-g-canva-proposals-automation/automation.toml`
-- 正式 automation `cwds`：`/Users/phoebe/.codex/worktrees/945c/課程招生 - 系統`
-- `945c` worktree 目前存在。
+- 正式 automation `cwds` 已更新為：`/Users/phoebe/.codex/worktrees/e89a/課程招生 - 系統`
+- 舊的 `945c` worktree 目前存在，但為 detached HEAD 且停在較舊 commit。
+- `/Users/phoebe/.codex/worktrees/4d27/課程招生 - 系統` 目前不存在。
 - `/Users/phoebe/.codex/worktrees/1210/課程招生 - 系統` 目前不存在。
-- 目前正式 automation 設定中未找到 `1210` 殘留。
+- 目前正式 automation 設定中未找到 `4d27` 或 `1210` 殘留。
 - 2026-05-28 11:07 左右，本機連續 5 次 preflight 都可解析 `ftm.com.tw` 到 `60.249.109.44`。
 - `claim.php` route 有回應；以非 POST 測試時回 `405`，代表 host / route 目前可達。
+- 2026-05-28 11:18，本機 health endpoint 回 `ok=true`、`authenticated=true`、`db_ok=true`；該檢查未呼叫 claim。
 - Chat G automation 已補強：
-  - 啟動時檢查 cwd 是否為有效 worktree。
+  - 啟動時檢查 cwd 是否等於 configured cwd `e89a`。
+  - cwd 不一致時，在 DNS / health / claim / callback / Canva generation 前停止並記錄 `stale_worktree_context`。
   - DNS / host resolution 失敗最多 3 次 bounded retry。
   - DNS 無法解析時不嘗試 POST fail callback，改記錄 infra blocker。
 
@@ -58,3 +62,4 @@
 - 每日巡檢 Chat G automation 的 `cwds` 是否仍指向存在 worktree。
 - 若再次出現 `curl: (6)`，保留 memory log 並標記 infra blocker。
 - 若 Chat D 提供 health endpoint，將 Chat G preflight 改成先打 health endpoint，再 claim。
+- 若下一輪仍從非 `e89a` cwd 啟動，需視為 scheduler / run session cache 問題，優先重建 automation 或清除 stale scheduler context。
