@@ -221,6 +221,19 @@ pre {
   padding: 7px 10px;
   color: var(--muted);
   cursor: pointer;
+  min-width: 74px;
+}
+
+.mini.copied {
+  border-color: rgba(29, 111, 95, 0.35);
+  background: #eaf4f1;
+  color: var(--accent);
+}
+
+.mini.failed {
+  border-color: rgba(161, 59, 42, 0.35);
+  background: #fff1ee;
+  color: var(--danger);
 }
 
 @media (max-width: 780px) {

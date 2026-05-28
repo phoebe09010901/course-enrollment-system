@@ -78,6 +78,48 @@ const runAction = async (path) => {
   }
 };
 
+const copyText = async (button, text) => {
+  const original = button.textContent;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      fallbackCopyText(text);
+    }
+    button.textContent = "Copied";
+    button.classList.add("copied");
+  } catch {
+    try {
+      fallbackCopyText(text);
+      button.textContent = "Copied";
+      button.classList.add("copied");
+    } catch {
+      button.textContent = "Copy failed";
+      button.classList.add("failed");
+    }
+  } finally {
+    window.setTimeout(() => {
+      button.textContent = original;
+      button.classList.remove("copied", "failed");
+    }, 1400);
+  }
+};
+
+const fallbackCopyText = (text) => {
+  const field = document.createElement("textarea");
+  field.value = text;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.top = "-9999px";
+  field.style.left = "-9999px";
+  document.body.appendChild(field);
+  field.focus();
+  field.select();
+  const ok = document.execCommand("copy");
+  field.remove();
+  if (!ok) throw new Error("execCommand copy failed");
+};
+
 const escapeHtml = (value) =>
   value.replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
@@ -97,8 +139,8 @@ $("#kickstartBtn").addEventListener("click", () => {
   if (ok) runAction("/api/kickstart");
 });
 $("#refreshBtn").addEventListener("click", refresh);
-$("#copyLogBtn").addEventListener("click", () => navigator.clipboard.writeText($("#latestLog").textContent));
-$("#copyMemoryBtn").addEventListener("click", () => navigator.clipboard.writeText($("#memoryLog").textContent));
+$("#copyLogBtn").addEventListener("click", (event) => copyText(event.currentTarget, $("#latestLog").textContent));
+$("#copyMemoryBtn").addEventListener("click", (event) => copyText(event.currentTarget, $("#memoryLog").textContent));
 
 refresh();
 setInterval(refresh, 8000);
