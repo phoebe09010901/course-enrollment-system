@@ -16,8 +16,10 @@ $values = array(
     'course_type' => '',
     'course_format' => '',
     'course_location' => '',
-    'expected_launch_date' => '',
-    'expected_start_date' => '',
+    'expected_launch_start_date' => '',
+    'expected_launch_end_date' => '',
+    'expected_course_start_date' => '',
+    'expected_course_end_date' => '',
     'course_capacity' => '',
     'course_price' => '',
     'target_audience' => '',
@@ -273,8 +275,10 @@ function validate_course_intake_form($values)
         'course_type' => '請填寫課程類型。',
         'course_format' => '請填寫課程形式。',
         'course_location' => '請填寫上課地點。',
-        'expected_launch_date' => '請選擇預計招生日期。',
-        'expected_start_date' => '請選擇預計開課日期。',
+        'expected_launch_start_date' => '請選擇招生日期開始。',
+        'expected_launch_end_date' => '請選擇招生日期結束。',
+        'expected_course_start_date' => '請選擇上課日期開始。',
+        'expected_course_end_date' => '請選擇上課日期結束。',
         'course_capacity' => '請填寫課程名額。',
         'course_price' => '請填寫課程費用。',
         'target_audience' => '請填寫適合對象。',
@@ -297,20 +301,35 @@ function validate_course_intake_form($values)
     }
 
     $today = date('Y-m-d');
-    if ($values['expected_launch_date'] !== '' && $values['expected_launch_date'] <= $today) {
-        $errors[] = '預計招生日期必須是未來日期。';
+    if ($values['expected_launch_start_date'] !== '' && $values['expected_launch_start_date'] <= $today) {
+        $errors[] = '招生日期開始必須是未來日期。';
     }
 
-    if ($values['expected_start_date'] !== '' && $values['expected_start_date'] <= $today) {
-        $errors[] = '預計開課日期必須是未來日期。';
+    if ($values['expected_launch_end_date'] !== '' && $values['expected_launch_end_date'] <= $today) {
+        $errors[] = '招生日期結束必須是未來日期。';
     }
 
-    if (
-        $values['expected_launch_date'] !== ''
-        && $values['expected_start_date'] !== ''
-        && $values['expected_launch_date'] === $values['expected_start_date']
-    ) {
-        $errors[] = '預計開課日期不可等於預計招生日期。';
+    if ($values['expected_course_start_date'] !== '' && $values['expected_course_start_date'] <= $today) {
+        $errors[] = '上課日期開始必須是未來日期。';
+    }
+
+    if ($values['expected_course_end_date'] !== '' && $values['expected_course_end_date'] <= $today) {
+        $errors[] = '上課日期結束必須是未來日期。';
+    }
+
+    if ($values['expected_launch_start_date'] !== '' && $values['expected_launch_end_date'] !== ''
+        && $values['expected_launch_end_date'] < $values['expected_launch_start_date']) {
+        $errors[] = '招生日期結束不可早於招生日期開始。';
+    }
+
+    if ($values['expected_course_start_date'] !== '' && $values['expected_course_end_date'] !== ''
+        && $values['expected_course_end_date'] < $values['expected_course_start_date']) {
+        $errors[] = '上課日期結束不可早於上課日期開始。';
+    }
+
+    if ($values['expected_launch_end_date'] !== '' && $values['expected_course_start_date'] !== ''
+        && $values['expected_course_start_date'] < $values['expected_launch_end_date']) {
+        $errors[] = '上課日期開始不可早於招生日期結束。';
     }
 
     if ($values['course_capacity'] !== '' && !ctype_digit($values['course_capacity'])) {
@@ -837,9 +856,9 @@ function insert_form_course_intake($clientId, $recordId, $values)
             $values['course_type'],
             $values['course_format'],
             $values['course_location'],
-            $values['expected_launch_date'],
+            $values['expected_launch_start_date'],
             'provided',
-            $values['expected_start_date'],
+            $values['expected_course_start_date'],
             'provided',
             $values['target_audience'],
             $values['course_features'] . "\n\n課後支援：" . $values['post_course_support'],
@@ -867,9 +886,13 @@ function build_form_raw_payload($values, $photoAssets)
             'course_type' => $values['course_type'],
             'course_format' => $values['course_format'],
             'course_location' => $values['course_location'],
-            'expected_launch_date' => $values['expected_launch_date'],
+            'expected_launch_start_date' => $values['expected_launch_start_date'],
+            'expected_launch_end_date' => $values['expected_launch_end_date'],
+            'expected_course_start_date' => $values['expected_course_start_date'],
+            'expected_course_end_date' => $values['expected_course_end_date'],
+            'expected_launch_date' => $values['expected_launch_start_date'],
             'expected_launch_date_status' => 'provided',
-            'expected_start_date' => $values['expected_start_date'],
+            'expected_start_date' => $values['expected_course_start_date'],
             'expected_start_date_status' => 'provided',
             'course_capacity' => $values['course_capacity'],
             'course_price' => $values['course_price'],
@@ -1167,13 +1190,21 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
           <label class="form-field">上課地點
             <input type="text" name="course_location" value="<?php echo h($values['course_location']); ?>" required>
           </label>
-          <label class="form-field">預計招生日期
-            <input type="date" name="expected_launch_date" value="<?php echo h($values['expected_launch_date']); ?>" min="<?php echo h($tomorrow); ?>" required>
+          <label class="form-field">招生日期 開始
+            <input type="date" name="expected_launch_start_date" value="<?php echo h($values['expected_launch_start_date']); ?>" min="<?php echo h($tomorrow); ?>" required>
             <p class="form-hint">限定未來日期。</p>
           </label>
-          <label class="form-field">預計開課日期
-            <input type="date" name="expected_start_date" value="<?php echo h($values['expected_start_date']); ?>" min="<?php echo h($tomorrow); ?>" required>
-            <p class="form-hint">限定未來日期，且不可等於招生日期。</p>
+          <label class="form-field">招生日期 結束
+            <input type="date" name="expected_launch_end_date" value="<?php echo h($values['expected_launch_end_date']); ?>" min="<?php echo h($tomorrow); ?>" required>
+            <p class="form-hint">不可早於招生日期開始。</p>
+          </label>
+          <label class="form-field">上課日期 開始
+            <input type="date" name="expected_course_start_date" value="<?php echo h($values['expected_course_start_date']); ?>" min="<?php echo h($tomorrow); ?>" required>
+            <p class="form-hint">限定未來日期，且不可早於招生日期結束。</p>
+          </label>
+          <label class="form-field">上課日期 結束
+            <input type="date" name="expected_course_end_date" value="<?php echo h($values['expected_course_end_date']); ?>" min="<?php echo h($tomorrow); ?>" required>
+            <p class="form-hint">客戶招生網頁會在課程結束後兩天下架。</p>
           </label>
           <label class="form-field">課程名額
             <input type="number" name="course_capacity" value="<?php echo h($values['course_capacity']); ?>" min="1" step="1" inputmode="numeric" required>
@@ -1239,15 +1270,25 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
   <script>
     (function () {
       var form = document.getElementById('courseIntakeForm');
-      var launchDate = form.elements.expected_launch_date;
-      var startDate = form.elements.expected_start_date;
+      var launchStartDate = form.elements.expected_launch_start_date;
+      var launchEndDate = form.elements.expected_launch_end_date;
+      var courseStartDate = form.elements.expected_course_start_date;
+      var courseEndDate = form.elements.expected_course_end_date;
       var lineLink = form.elements.line_id_link;
       var fileInputs = form.querySelectorAll('input[type="file"][data-max-files]');
 
       function setDateMessage() {
-        startDate.setCustomValidity('');
-        if (launchDate.value && startDate.value && launchDate.value === startDate.value) {
-          startDate.setCustomValidity('預計開課日期不可等於預計招生日期。');
+        launchEndDate.setCustomValidity('');
+        courseStartDate.setCustomValidity('');
+        courseEndDate.setCustomValidity('');
+        if (launchStartDate.value && launchEndDate.value && launchEndDate.value < launchStartDate.value) {
+          launchEndDate.setCustomValidity('招生日期結束不可早於招生日期開始。');
+        }
+        if (launchEndDate.value && courseStartDate.value && courseStartDate.value < launchEndDate.value) {
+          courseStartDate.setCustomValidity('上課日期開始不可早於招生日期結束。');
+        }
+        if (courseStartDate.value && courseEndDate.value && courseEndDate.value < courseStartDate.value) {
+          courseEndDate.setCustomValidity('上課日期結束不可早於上課日期開始。');
         }
       }
 
@@ -1272,8 +1313,10 @@ $tomorrow = date('Y-m-d', strtotime('+1 day'));
         }
       }
 
-      launchDate.addEventListener('change', setDateMessage);
-      startDate.addEventListener('change', setDateMessage);
+      launchStartDate.addEventListener('change', setDateMessage);
+      launchEndDate.addEventListener('change', setDateMessage);
+      courseStartDate.addEventListener('change', setDateMessage);
+      courseEndDate.addEventListener('change', setDateMessage);
       lineLink.addEventListener('input', setLineLinkMessage);
       for (var i = 0; i < fileInputs.length; i++) {
         fileInputs[i].addEventListener('change', function () {

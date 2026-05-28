@@ -74,6 +74,7 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
     $projectId = $existing && !empty($existing['project_id'])
         ? $existing['project_id']
         : chat_d_project_id_for_intake($intakeId);
+    $previewExpiresAt = chat_d_preview_expires_at_from_values($values);
 
     $rawPayload = array(
         'source' => 'public_course_intake_form',
@@ -83,8 +84,12 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
             'course_type' => isset($values['course_type']) ? $values['course_type'] : '',
             'course_format' => isset($values['course_format']) ? $values['course_format'] : '',
             'course_location' => isset($values['course_location']) ? $values['course_location'] : '',
-            'expected_launch_date' => isset($values['expected_launch_date']) ? $values['expected_launch_date'] : '',
-            'expected_start_date' => isset($values['expected_start_date']) ? $values['expected_start_date'] : '',
+            'expected_launch_start_date' => isset($values['expected_launch_start_date']) ? $values['expected_launch_start_date'] : '',
+            'expected_launch_end_date' => isset($values['expected_launch_end_date']) ? $values['expected_launch_end_date'] : '',
+            'expected_course_start_date' => isset($values['expected_course_start_date']) ? $values['expected_course_start_date'] : '',
+            'expected_course_end_date' => isset($values['expected_course_end_date']) ? $values['expected_course_end_date'] : '',
+            'expected_launch_date' => isset($values['expected_launch_start_date']) ? $values['expected_launch_start_date'] : '',
+            'expected_start_date' => isset($values['expected_course_start_date']) ? $values['expected_course_start_date'] : '',
             'course_capacity' => isset($values['course_capacity']) ? $values['course_capacity'] : '',
             'course_price' => isset($values['course_price']) ? $values['course_price'] : '',
             'target_audience' => isset($values['target_audience']) ? $values['target_audience'] : '',
@@ -98,9 +103,9 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
         db_exec(
             'UPDATE course_projects
              SET client_id = ?, record_id = ?, source = ?, course_name = ?, course_type = ?, course_format = ?, course_location = ?,
-                 project_status = ?, template_status = ?, needs_template_proposal = 1, raw_payload = ?, updated_at = ?
+                 project_status = ?, template_status = ?, needs_template_proposal = 1, preview_expires_at = ?, raw_payload = ?, updated_at = ?
              WHERE project_id = ?',
-            'isssssssssss',
+            'issssssssssss',
             array(
                 (int) $clientId,
                 $recordId,
@@ -111,6 +116,7 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
                 $values['course_location'],
                 '待樣板提案',
                 'pending_template',
+                $previewExpiresAt,
                 chat_d_json($rawPayload),
                 now(),
                 $projectId,
@@ -120,9 +126,9 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
         db_exec(
             'INSERT INTO course_projects (
                 project_id, client_id, intake_id, record_id, source, course_name, course_type, course_format, course_location,
-                project_status, template_status, needs_template_proposal, raw_payload, created_at, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)',
-            'siisssssssssss',
+                project_status, template_status, needs_template_proposal, preview_expires_at, raw_payload, created_at, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?)',
+            'siissssssssssss',
             array(
                 $projectId,
                 (int) $clientId,
@@ -135,6 +141,7 @@ function chat_d_ensure_project_from_intake($clientId, $intakeId, $recordId, $val
                 $values['course_location'],
                 '待樣板提案',
                 'pending_template',
+                $previewExpiresAt,
                 chat_d_json($rawPayload),
                 now(),
                 now(),
@@ -182,6 +189,77 @@ function chat_d_project_selection_url($projectId)
     }
 
     return app_url('course-template-proposals.php?t=' . rawurlencode($token));
+}
+
+function chat_d_preview_expires_at_from_values($values)
+{
+    $courseEndDate = '';
+    if (isset($values['expected_course_end_date'])) {
+        $courseEndDate = trim((string) $values['expected_course_end_date']);
+    } elseif (isset($values['course_project']['expected_course_end_date'])) {
+        $courseEndDate = trim((string) $values['course_project']['expected_course_end_date']);
+    } elseif (isset($values['expected_start_date'])) {
+        $courseEndDate = trim((string) $values['expected_start_date']);
+    }
+
+    if ($courseEndDate === '') {
+        return null;
+    }
+
+    $timestamp = strtotime($courseEndDate . ' +2 days');
+    if ($timestamp === false) {
+        return null;
+    }
+
+    return date('Y-m-d 23:59:59', $timestamp);
+}
+
+function chat_d_project_preview_expires_at($project, $fallback)
+{
+    if (isset($project['preview_expires_at']) && trim((string) $project['preview_expires_at']) !== '') {
+        return (string) $project['preview_expires_at'];
+    }
+
+    if (!empty($project['raw_payload'])) {
+        $payload = json_decode((string) $project['raw_payload'], true);
+        if (is_array($payload)) {
+            $expiresAt = chat_d_preview_expires_at_from_values($payload);
+            if ($expiresAt !== null) {
+                return $expiresAt;
+            }
+        }
+    }
+
+    return $fallback;
+}
+
+function chat_d_project_is_preview_expired($project)
+{
+    if (!is_array($project) || empty($project['preview_expires_at'])) {
+        return false;
+    }
+
+    $timestamp = strtotime((string) $project['preview_expires_at']);
+    if ($timestamp === false) {
+        return false;
+    }
+
+    return $timestamp < time();
+}
+
+function chat_d_mark_project_preview_expired($projectId)
+{
+    if ($projectId === '' || !chat_d_table_exists('course_projects')) {
+        return;
+    }
+
+    db_exec(
+        'UPDATE course_projects
+         SET project_status = ?, template_status = ?, needs_template_proposal = 0, updated_at = ?
+         WHERE project_id = ?',
+        'ssss',
+        array('招生頁已下架', 'template_expired', now(), $projectId)
+    );
 }
 
 function chat_d_project_by_selection_token($token)
@@ -302,7 +380,6 @@ function chat_d_reset_template_generation($projectId)
             'selected_canva_direction',
             'selected_canva_url',
             'template_selected_at',
-            'preview_expires_at',
         );
 
         if (chat_d_column_exists('course_projects', 'proposal_batch_id')) {
@@ -883,7 +960,7 @@ function chat_d_sync_template_proposals($projectId, $proposals, $expiresAt, $inc
     }
 
     sort($proposalExpires);
-    $projectExpiresAt = count($proposalExpires) ? $proposalExpires[0] : $expiresAt;
+    $projectExpiresAt = chat_d_project_preview_expires_at($project, count($proposalExpires) ? $proposalExpires[0] : $expiresAt);
 
     $projectUpdateSql = 'UPDATE course_projects
          SET project_status = ?, template_status = ?, needs_template_proposal = 0, preview_expires_at = ?, updated_at = ?';
@@ -921,6 +998,10 @@ function chat_d_select_template_proposal($projectId, $proposalId)
     $project = chat_d_project_by_id($projectId);
     if (!$project) {
         throw new Exception('project_not_found');
+    }
+    if (chat_d_project_is_preview_expired($project)) {
+        chat_d_mark_project_preview_expired($projectId);
+        throw new Exception('project_expired');
     }
 
     $proposal = db_one(

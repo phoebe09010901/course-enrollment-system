@@ -72,6 +72,25 @@ function course_project_edit_asset_name($asset, $index)
     return '圖片 ' . (string) $index;
 }
 
+function course_project_edit_validate_dates($values)
+{
+    $errors = array();
+    if ($values['expected_launch_start_date'] !== '' && $values['expected_launch_end_date'] !== ''
+        && $values['expected_launch_end_date'] < $values['expected_launch_start_date']) {
+        $errors[] = '招生日期結束不可早於招生日期開始。';
+    }
+    if ($values['expected_course_start_date'] !== '' && $values['expected_course_end_date'] !== ''
+        && $values['expected_course_end_date'] < $values['expected_course_start_date']) {
+        $errors[] = '上課日期結束不可早於上課日期開始。';
+    }
+    if ($values['expected_launch_end_date'] !== '' && $values['expected_course_start_date'] !== ''
+        && $values['expected_course_start_date'] < $values['expected_launch_end_date']) {
+        $errors[] = '上課日期開始不可早於招生日期結束。';
+    }
+
+    return $errors;
+}
+
 $projectId = trim(get('project_id', ''));
 $project = $projectId !== '' ? chat_d_project_by_id($projectId) : null;
 if (!$project) {
@@ -85,14 +104,17 @@ $values = array(
     'course_type' => isset($project['course_type']) ? $project['course_type'] : '',
     'course_format' => isset($project['course_format']) ? $project['course_format'] : '',
     'course_location' => isset($project['course_location']) ? $project['course_location'] : '',
-    'expected_launch_date' => course_project_edit_value($payload, 'expected_launch_date', ''),
-    'expected_start_date' => course_project_edit_value($payload, 'expected_start_date', ''),
+    'expected_launch_start_date' => course_project_edit_value($payload, 'expected_launch_start_date', course_project_edit_value($payload, 'expected_launch_date', '')),
+    'expected_launch_end_date' => course_project_edit_value($payload, 'expected_launch_end_date', ''),
+    'expected_course_start_date' => course_project_edit_value($payload, 'expected_course_start_date', course_project_edit_value($payload, 'expected_start_date', '')),
+    'expected_course_end_date' => course_project_edit_value($payload, 'expected_course_end_date', ''),
     'course_capacity' => course_project_edit_value($payload, 'course_capacity', ''),
     'course_price' => course_project_edit_value($payload, 'course_price', ''),
     'target_audience' => course_project_edit_value($payload, 'target_audience', ''),
     'course_features' => course_project_edit_value($payload, 'course_features', ''),
     'post_course_support' => course_project_edit_value($payload, 'post_course_support', ''),
 );
+$formErrors = array();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
@@ -114,25 +136,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($values as $key => $value) {
         $payload['course_project'][$key] = $value;
     }
+    $payload['course_project']['expected_launch_date'] = $values['expected_launch_start_date'];
+    $payload['course_project']['expected_start_date'] = $values['expected_course_start_date'];
+    $previewExpiresAt = chat_d_preview_expires_at_from_values($values);
 
-    db_exec(
-        'UPDATE course_projects
-         SET course_name = ?, course_type = ?, course_format = ?, course_location = ?, raw_payload = ?, updated_at = ?
-         WHERE project_id = ?',
-        'sssssss',
-        array(
-            $values['course_name'],
-            $values['course_type'],
-            $values['course_format'],
-            $values['course_location'],
-            chat_d_json($payload),
-            now(),
-            $projectId,
-        )
-    );
+    $formErrors = course_project_edit_validate_dates($values);
+    if (empty($formErrors)) {
+        db_exec(
+            'UPDATE course_projects
+             SET course_name = ?, course_type = ?, course_format = ?, course_location = ?, preview_expires_at = ?, raw_payload = ?, updated_at = ?
+             WHERE project_id = ?',
+            'ssssssss',
+            array(
+                $values['course_name'],
+                $values['course_type'],
+                $values['course_format'],
+                $values['course_location'],
+                $previewExpiresAt,
+                chat_d_json($payload),
+                now(),
+                $projectId,
+            )
+        );
 
-    $_SESSION['flash'] = '專案資料已儲存。';
-    redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
+        $_SESSION['flash'] = '專案資料已儲存。';
+        redirect('course-project-edit.php?project_id=' . rawurlencode($projectId));
+    }
 }
 
 $client = null;
@@ -179,6 +208,10 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
   </form>
 </div>
 
+<?php if (!empty($formErrors)) { ?>
+  <div class="alert error"><?php echo h(implode(' ', $formErrors)); ?></div>
+<?php } ?>
+
 <section class="panel">
   <h2>專案狀態</h2>
   <div class="detail-grid">
@@ -192,6 +225,7 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
       <div class="detail-row"><dt class="detail-label">Worker</dt><dd class="detail-value"><?php echo h(isset($project['worker_run_id']) ? $project['worker_run_id'] : ''); ?></dd></div>
       <div class="detail-row"><dt class="detail-label">開始處理</dt><dd class="detail-value"><?php echo h(isset($project['template_processing_started_at']) ? $project['template_processing_started_at'] : ''); ?></dd></div>
       <div class="detail-row"><dt class="detail-label">錯誤</dt><dd class="detail-value"><?php echo h(chat_d_template_error_label(isset($project['template_error_code']) ? $project['template_error_code'] : '')); ?><?php echo !empty($project['template_error_message']) ? '：' . h($project['template_error_message']) : ''; ?></dd></div>
+      <div class="detail-row"><dt class="detail-label">招生頁下架</dt><dd class="detail-value"><?php echo h(isset($project['preview_expires_at']) ? $project['preview_expires_at'] : ''); ?></dd></div>
       <div class="detail-row"><dt class="detail-label">更新時間</dt><dd class="detail-value"><?php echo h($project['updated_at']); ?></dd></div>
     </dl>
   </div>
@@ -211,8 +245,10 @@ include dirname(__FILE__) . '/../templates/admin-header.php';
       </select>
     </div>
     <div><label>上課地點</label><input name="course_location" value="<?php echo h($values['course_location']); ?>"></div>
-    <div><label>預計招生日期</label><input type="date" name="expected_launch_date" value="<?php echo h($values['expected_launch_date']); ?>"></div>
-    <div><label>預計開課日期</label><input type="date" name="expected_start_date" value="<?php echo h($values['expected_start_date']); ?>"></div>
+    <div><label>招生日期 開始</label><input type="date" name="expected_launch_start_date" value="<?php echo h($values['expected_launch_start_date']); ?>"></div>
+    <div><label>招生日期 結束</label><input type="date" name="expected_launch_end_date" value="<?php echo h($values['expected_launch_end_date']); ?>"></div>
+    <div><label>上課日期 開始</label><input type="date" name="expected_course_start_date" value="<?php echo h($values['expected_course_start_date']); ?>"></div>
+    <div><label>上課日期 結束</label><input type="date" name="expected_course_end_date" value="<?php echo h($values['expected_course_end_date']); ?>"></div>
     <div><label>課程名額</label><input name="course_capacity" value="<?php echo h($values['course_capacity']); ?>"></div>
     <div><label>課程費用</label><input name="course_price" value="<?php echo h($values['course_price']); ?>"></div>
   </div>

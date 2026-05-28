@@ -7,12 +7,18 @@ $project = chat_d_project_by_selection_token($token);
 $errors = array();
 $selected = false;
 $selectedProposal = null;
+$isExpired = false;
 
 if (!$project) {
     http_response_code(404);
+} elseif (chat_d_project_is_preview_expired($project)) {
+    $isExpired = true;
+    chat_d_mark_project_preview_expired($project['project_id']);
+    $project = chat_d_project_by_selection_token($token);
+    http_response_code(410);
 }
 
-if ($project && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($project && !$isExpired && $_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $proposalId = post('proposal_id', '');
     if ($proposalId === '') {
@@ -182,19 +188,21 @@ function proposal_page_text($value, $fallback)
     <?php if (!$project) { ?>
       <div class="notice error">找不到此案件的選版資料，請回到表單重新送出或聯絡客服。</div>
     <?php } else { ?>
-      <?php if ($selected) { ?>
+      <?php if ($isExpired) { ?>
+        <div class="notice error">這個課程招生頁已於課程結束後兩天下架。若需要重新開放，請聯絡客服協助。</div>
+      <?php } elseif ($selected) { ?>
         <div class="notice ok">已收到你的選擇：<?php echo proposal_page_h($selectedProposal['proposal_name']); ?>。</div>
       <?php } ?>
 
-      <?php if (!empty($errors)) { ?>
+      <?php if (!$isExpired && !empty($errors)) { ?>
         <div class="notice error"><?php echo proposal_page_h(implode(' ', $errors)); ?></div>
       <?php } ?>
 
-      <?php if (count($proposals) < 3) { ?>
+      <?php if (!$isExpired && count($proposals) < 3) { ?>
         <div class="notice">資料已送出成功。三款 Canva 樣板尚在準備中，完成後會在這個頁面顯示。</div>
       <?php } ?>
 
-      <div class="proposal-grid">
+      <?php if (!$isExpired) { ?><div class="proposal-grid">
         <?php if (count($proposals) >= 1) { ?>
           <?php foreach ($proposals as $proposal) { ?>
             <article class="proposal-card">
@@ -225,7 +233,7 @@ function proposal_page_text($value, $fallback)
             </article>
           <?php } ?>
         <?php } ?>
-      </div>
+      </div><?php } ?>
     <?php } ?>
   </main>
 </body>
