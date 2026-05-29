@@ -10,6 +10,8 @@
 
 目前流程已正式調整：所有招生頁新樣板不得直接由 Codex 進入 HTML/CSS，必須先由 Chat A 使用 Canva 製作視覺樣板草案，確認方向後才交給 Chat B / Codex 前端實作。
 
+目前已確認正式部署目標是外部租用主機，而不是本機主機。外部主機規格為 PHP 5.6、MySQL 5.7.44、cPanel 主機；本機 PHP 8.4.21、MySQL 8.0.46、Apache 2.4.67 僅作為開發輔助。
+
 ## 已確認存在
 
 - `.git`
@@ -20,6 +22,8 @@
 - `docs/COLLABORATION_SETUP.md`
 - `docs/TEMPLATE_REFERENCE.md`
 - `docs/CLIENT_SELECTION_FLOW.md`
+- `docs/WEBSITE_FACTORY_MIGRATION.md`
+- `docs/WEBSITE_FACTORY_INVENTORY.md`
 - `styles/README.md`
 - `styles/course-brand-template-v1.json`
 - `styles/tokens/course-brand.css`
@@ -66,6 +70,11 @@
 - 正式停止新樣板直接前端改版流程，改為先 Canva 視覺確認，再進入 Chat B / Codex 前端實作。
 - 補充三款樣板提案與限時選版流程：待樣板提案、三款 Canva 核心區塊、三天選擇期限、一次小幅調整、不允許無限修改。
 - 補充 Chat A / B / C / D / E 分工。
+- 建立 `docs/WEBSITE_FACTORY_MIGRATION.md`，定義 Replit website factory zip 的移植分工與第一輪 chat 插入方式。
+- 補充正式部署環境限制：外部 cPanel 主機、PHP 5.6、MySQL 5.7.44 優先於本機 PHP 8.4 / MySQL 8。
+- 建立 `docs/WEBSITE_FACTORY_INVENTORY.md`，完成 Replit website factory zip 的第一輪盤點與模組分類。
+- 補充「正式開啟網站工廠」口令與 Chat M：網站工廠啟動流程。
+- 補充網站工廠獨立分工：Chat M-A 網站工廠核心 / Zip 匯出、Chat M-B 課程招生資料注入格式、Chat M-C Zip 驗收 / 品管、Chat M-D 樣式系統 / 模板視覺規格。
 
 ## 尚未完成
 
@@ -82,12 +91,16 @@
 - 尚未建立正式圖片、攝影或生成圖資產流程。
 - 尚未建立任何測試、CI 或部署流程。
 - 尚未建立 LINE webhook、admin、worker 的責任分工。
+- 尚未依 `docs/WEBSITE_FACTORY_INVENTORY.md` 建立正式 `factory/`、`admin/`、`worker/` 目錄或規格。
+- 尚未建立 Chat M-A / M-B / M-C / M-D 對應的正式規格文件與目錄責任。
+- 尚未建立 PHP 5.6 / MySQL 5.7.44 相容性檢查流程。
 
 ## 目前風險
 
 - 專案已有前端模板實作，但 SQL、webhook、backend、admin、worker 等關鍵名詞仍只是未建立方向，容易被誤判為已有系統。
 - 如果 Chat B 不先查詢 `docs/TEMPLATE_REFERENCE.md` 就直接做前端，可能會回到自由發揮與模板感過重的問題。
 - 現有模板使用示範文案與示意視覺資產，正式招生前仍需替換成真實課程資料。
+- 本機環境版本高於正式外部主機；若用本機測試通過就判斷可部署，可能引入 PHP 7/8 或 MySQL 8 only 語法，導致 cPanel 主機無法執行。
 
 ## 下一步建議
 

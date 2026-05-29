@@ -34,11 +34,12 @@ templates/course-brand-template-v1/index.html
 2. `docs/PROJECT_STATUS.md`
 3. `docs/STYLE_SYSTEM.md`
 4. `docs/COLLABORATION_SETUP.md`
-5. `styles/course-brand-template-v1.json`
-6. `styles/layout-rules/landing-page.md`
-7. `styles/typography/course-brand.md`
-8. `styles/motion/animation-style.md`
-9. `styles/tokens/course-brand.css`
+5. `docs/WEBSITE_FACTORY_MIGRATION.md`
+6. `styles/course-brand-template-v1.json`
+7. `styles/layout-rules/landing-page.md`
+8. `styles/typography/course-brand.md`
+9. `styles/motion/animation-style.md`
+10. `styles/tokens/course-brand.css`
 
 ## 目前工作範圍
 

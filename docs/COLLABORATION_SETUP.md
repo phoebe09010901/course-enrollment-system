@@ -8,6 +8,16 @@
 
 目前 repo 已有 `docs/`、`styles/` 與 `templates/course-brand-template-v1/`。前端模板已落地第一版；後端、SQL、webhook、admin、worker 與 form schema 仍未建立。
 
+本專案正式執行環境以外部租用主機為準，不以本機主機為準：
+
+| 環境 | 外部租用主機 | 本機主機 |
+| --- | --- | --- |
+| PHP | 5.6 | 8.4.21 |
+| MySQL | 5.7.44 | 8.0.46 |
+| Web Server | cPanel 主機 | Apache 2.4.67 |
+
+任何後端、SQL、匯出、後台或 worker 設計，都必須優先相容外部 cPanel 主機、PHP 5.6 與 MySQL 5.7.44。本機 PHP 8.4 / MySQL 8 只能作為開發輔助，不可作為正式部署相容性的判斷依據。
+
 AI Agent 在開始任何工作前，應先閱讀：
 
 1. `docs/PROJECT_CONTEXT.md`
@@ -36,6 +46,9 @@ AI Agent 在開始任何工作前，應先閱讀：
 - 修改文件時要同步更新狀態與缺口。
 - 新增大型功能前，先建立 README 或規格文件，說明目錄責任。
 - 不要把美術風格、模板、skill、webhook、admin、worker 混在同一層未命名邏輯中。
+- 若新增 PHP，必須使用 PHP 5.6 相容語法，不得使用 PHP 7 / PHP 8 only 語法。
+- 若新增 SQL，必須使用 MySQL 5.7.44 相容語法，不得使用 MySQL 8 only 功能。
+- 若設計自動化或 worker，必須先假設只能透過 cPanel cron 觸發短任務。
 
 ## Chat A / Chat B / Chat C / Chat D / Chat E 合作方式
 
@@ -104,6 +117,8 @@ Chat D 負責資料結構、後台與案件狀態管理：
 
 Chat D 不負責美術風格決策；樣板方向需依 Chat A 的 template reference 與 Canva 選版結果。
 
+Chat D 所有 PHP / SQL / admin 規格必須以外部 cPanel 主機為正式環境：PHP 5.6、MySQL 5.7.44。
+
 ### Chat E：自動化與 AI Worker
 
 Chat E 負責自動化與排程：
@@ -115,6 +130,8 @@ Chat E 負責自動化與排程：
 - 逾期前提醒。
 
 Chat E 不負責自由生成新樣板；只能觸發 Chat A 定義的選版流程。
+
+Chat E 的自動化應優先設計為 cPanel cron 可觸發的短任務，不可假設有長駐 worker、queue daemon、Node runtime 或 MySQL 8。
 
 ### 三款樣板提案流程
 
@@ -153,6 +170,27 @@ git pull
 ```
 
 完成後回報目前 branch、最新 commit，以及是否有衝突或本機未提交變更。
+
+當使用者說「開啟網站工廠」或「正式開啟網站工廠」時，AI Agent 應進入 Chat M：網站工廠模式，並先閱讀：
+
+1. `docs/PROJECT_CONTEXT.md`
+2. `docs/PROJECT_STATUS.md`
+3. `docs/COLLABORATION_SETUP.md`
+4. `docs/WEBSITE_FACTORY_MIGRATION.md`
+5. `docs/WEBSITE_FACTORY_INVENTORY.md`
+
+完成後回報網站工廠目前狀態、Replit sandbox 是否存在、正式主機限制，以及下一步應交給 Chat M-A / M-B / M-C / M-D 的哪一條線。不得因為開啟網站工廠就直接搬移 Replit 原始碼進 repo。
+
+### Chat M-A / M-B / M-C / M-D：網站工廠獨立分工
+
+若使用者要讓網站工廠獨立運作，優先使用以下四條分工，而不是直接混入原本 Chat A / B / D / E：
+
+- Chat M-A：網站工廠核心 / Zip 匯出。負責 `factory/` 核心、block registry、template assembly、preview source、zip export scope 與 cPanel 可部署輸出。
+- Chat M-B：課程招生資料注入格式。負責把課程招生資料轉成網站工廠可吃的 JSON/schema/block data contract。
+- Chat M-C：Zip 驗收 / 品管。負責驗收輸出 zip 的路徑、檔案範圍、PHP 5.6 相容性、cPanel 風險、檔案大小與不該打包內容。
+- Chat M-D：樣式系統 / 模板視覺規格。負責網站工廠可套用的 style preset、theme preset、template family、CSS token 對接與視覺規格。
+
+Chat M-A 不設計課程資料語意與樣式規格；Chat M-B 不處理 zip 匯出實作；Chat M-C 不修改核心與 schema，只做驗收與退回修正清單；Chat M-D 不處理 zip 匯出、資料內容欄位或驗收。
 
 當使用者說「結束專案」時，AI Agent 應協助把目前工作保存到 git：
 
