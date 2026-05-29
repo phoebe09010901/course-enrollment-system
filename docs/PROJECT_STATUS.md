@@ -24,6 +24,7 @@
 - `docs/CLIENT_SELECTION_FLOW.md`
 - `docs/WEBSITE_FACTORY_MIGRATION.md`
 - `docs/WEBSITE_FACTORY_INVENTORY.md`
+- `docs/WEBSITE_FACTORY_TEMPLATE_REGISTRY.md`
 - `styles/README.md`
 - `styles/course-brand-template-v1.json`
 - `styles/tokens/course-brand.css`
@@ -75,6 +76,7 @@
 - 建立 `docs/WEBSITE_FACTORY_INVENTORY.md`，完成 Replit website factory zip 的第一輪盤點與模組分類。
 - 補充「正式開啟網站工廠」口令與 Chat M：網站工廠啟動流程。
 - 補充網站工廠獨立分工：Chat M-A 網站工廠核心 / Zip 匯出、Chat M-B 課程招生資料注入格式、Chat M-C Zip 驗收 / 品管、Chat M-D 樣式系統 / 模板視覺規格。
+- 建立 `docs/WEBSITE_FACTORY_TEMPLATE_REGISTRY.md`，登記 `style-001` 包含 `template-001`、`template-002`、`template-003`，以及 `style-002` 包含 draft `template-004`、`template-005`、`template-006`。
 
 ## 尚未完成
 
@@ -93,6 +95,7 @@
 - 尚未建立 LINE webhook、admin、worker 的責任分工。
 - 尚未依 `docs/WEBSITE_FACTORY_INVENTORY.md` 建立正式 `factory/`、`admin/`、`worker/` 目錄或規格。
 - 尚未建立 Chat M-A / M-B / M-C / M-D 對應的正式規格文件與目錄責任。
+- 尚未將 `docs/WEBSITE_FACTORY_TEMPLATE_REGISTRY.md` 轉成正式 `factory/template-registry.json`。
 - 尚未建立 PHP 5.6 / MySQL 5.7.44 相容性檢查流程。
 
 ## 目前風險
